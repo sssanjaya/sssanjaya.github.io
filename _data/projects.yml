@@ -1,9 +1,19 @@
 # Project template
 - layout: top-middle
-  name: Project name
-  link: Link to project (eg. sproogen.github.io/modern-resume-theme)(optional)
-  github: Github page for project (eg. sproogen/modern-resume-theme)(optional)
+  name: Display Multiplex
+  link: github.com/sssanjaya/dotfiles
+  github: github.com/sssanjaya/dotfiles
   quote: >
-    Short overview of the project (optional)
-  description: | # this will include new lines to allow paragraphs
-    Description about the work on/with the project
+    Building library for android/linux screen mirroring with both way control on intranet with <mark>libav</mark> <mark>sdl2</mark> <mark>ffmpeg</mark>
+  # description: | # this will include new lines to allow paragraphs
+  #   Building library for android screen mirroring with both way control
+
+- layout: top-middle
+  name: DevOps Swiss Knife
+  link: github.com/sssanjaya/myDevOpsFiles
+  github: github.com/sssanjaya/myDevOpsFiles
+  quote: >
+    Tools for generating CI/CD scripts, dockerfile, deployment configs for multiple programming language
+  # description: | # this will include new lines to allow paragraphs
+  #   Building library for android screen mirroring with both way control
+   
