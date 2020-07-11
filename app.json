@@ -1,18 +1,18 @@
-{
-  "addons": [
+// {
+//   "addons": [
 
-  ],
-  "buildpacks": [
-    {
-      "url": "heroku/ruby"
-    }
-  ],
-  "env": {
-  },
-  "formation": {
-  },
-  "name": "modern-resume-theme",
-  "scripts": {
-  },
-  "stack": "heroku-18"
-}
+//   ],
+//   "buildpacks": [
+//     {
+//       "url": "heroku/ruby"
+//     }
+//   ],
+//   "env": {
+//   },
+//   "formation": {
+//   },
+//   "name": "modern-resume-theme",
+//   "scripts": {
+//   },
+//   "stack": "heroku-18"
+// }
