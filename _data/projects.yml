@@ -1,19 +1,26 @@
 # Project template
 - layout: top-middle
-  name: Display Multiplex
-  link: github.com/sssanjaya/dotfiles
-  github: github.com/sssanjaya/dotfiles
+  name: Two Way Screen Mirror & Controll
+  link: https://github.com/sssanjaya/two-way-screen-mirror-control
+  github: https://github.com/sssanjaya/two-way-screen-mirror-control
   quote: >
     Building library for android/linux screen mirroring with both way control on intranet with <mark>libav</mark> <mark>sdl2</mark> <mark>ffmpeg</mark>
   # description: | # this will include new lines to allow paragraphs
   #   Building library for android screen mirroring with both way control
 
 - layout: top-middle
-  name: DevOps Swiss Knife
-  link: github.com/sssanjaya/myDevOpsFiles
-  github: github.com/sssanjaya/myDevOpsFiles
+  name: My portfolio on github
+  link: https://github.com/sssanjaya/sssanjaya.github.io
+  github: https://github.com/sssanjaya/sssanjaya.github.io
   quote: >
-    Tools for generating CI/CD scripts, dockerfile, deployment configs for multiple programming language
-  # description: | # this will include new lines to allow paragraphs
-  #   Building library for android screen mirroring with both way control
-   
+    This project is inspired by [sproogen](https://github.com/sproogen/modern-resume-theme) 
+  # description: | 
+
+- layout: top-middle
+  name: IoT with NodeMCU and adafruit
+  link: https://github.com/sssanjaya/adafruit-mqtt-esp8266
+  github: https://github.com/sssanjaya/adafruit-mqtt-esp8266
+  quote: >
+    This project can be handy for water tank, door lock, etc. This is work on progress
+  # description: | 
+    

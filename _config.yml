@@ -31,7 +31,7 @@ about_content: | # this will include new lines to allow paragraphs
   
 
 
-  I like: <mark>Linux</mark> <mark>Nu-Metal</mark> <mark>Pencil Sketch</mark> <mark>Trekking</mark> <mark>Swimming</mark> <mark>Mobile Photography</mark>
+  I like: <mark>Linux</mark> <mark>devops</mark> <mark>IoT</mark> <mark>Nu-Metal</mark> <mark>Pencil Sketch</mark> <mark>Traveling</mark> <mark>Swimming</mark> <mark>Mobile Photography</mark>
 #Education Section
 education_title: Education #(Use this to override about education section title)
 education_content: |
