@@ -1,10 +1,10 @@
 # Project template
-- layout: top-middle
-  name: Two Way Screen Mirror & Controll
-  link: https://github.com/sssanjaya/two-way-screen-mirror-control
-  github: https://github.com/sssanjaya/two-way-screen-mirror-control
-  quote: >
-    Building library for android/linux screen mirroring with both way control on intranet with <mark>libav</mark> <mark>sdl2</mark> <mark>ffmpeg</mark>
+# - layout: top-middle
+#   name: Two Way Screen Mirror & Controll
+#   link: https://github.com/sssanjaya/two-way-screen-mirror-control
+#   github: https://github.com/sssanjaya/two-way-screen-mirror-control
+#   quote: >
+#     Building library for android/linux screen mirroring with both way control on intranet with <mark>libav</mark> <mark>sdl2</mark> <mark>ffmpeg</mark>
   # description: | # this will include new lines to allow paragraphs
   #   Building library for android screen mirroring with both way control
 
