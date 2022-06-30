@@ -1,9 +1,37 @@
 # Experience template
 - layout: left
+  company: Geo
+  link: https://geoworkforcesolutions.com/
+  job_title: DevOps Engineer
+  dates: July 2021 - Presend
+  quote: >
+   things I did and learned here
+  description: | # this will include new lines to allow paragraphs
+    <mark>AWS</mark>
+    <mark>CloudFormation</mark>
+    <mark>CodeBuild</mark>
+    <mark>Lambda</mark>
+    <mark>Nodejs</mark>
+    <mark>Microservice</mark>
+    <mark>Postgres</mark>
+    <mark>Mongodb</mark>
+    <mark>Redis</mark>
+    <mark>Terraform</mark>
+    <mark>Dotnet</mark>
+    <mark>Docker</mark>
+    <mark>Kubernetes</mark>
+    <mark>helm</mark>
+    <mark>Graphana</mark>
+    <mark>Prometheus</mark>
+    <mark>ELK</mark>
+    <mark>Gitlab CI</mark>
+    <mark>Okta</mark>
+
+- layout: left
   company: BeyondID Inc
   link: https://beyondid.com/
   job_title: DevOps Engineer
-  dates: April 2021 - present
+  dates: April 2021 - June 2022
   quote: >
    things I did and learned here
   description: | # this will include new lines to allow paragraphs
