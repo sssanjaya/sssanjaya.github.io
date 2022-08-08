@@ -3,29 +3,19 @@
   company: Geo
   link: https://geoworkforcesolutions.com/
   job_title: DevOps Engineer
-  dates: July 2021 - Presend
+  dates: July 2021 - Present
   quote: >
    things I did and learned here
   description: | # this will include new lines to allow paragraphs
     <mark>AWS</mark>
-    <mark>CloudFormation</mark>
-    <mark>CodeBuild</mark>
     <mark>Lambda</mark>
-    <mark>Nodejs</mark>
-    <mark>Microservice</mark>
+    <mark>PHP</mark>
     <mark>Postgres</mark>
-    <mark>Mongodb</mark>
     <mark>Redis</mark>
     <mark>Terraform</mark>
-    <mark>Dotnet</mark>
     <mark>Docker</mark>
-    <mark>Kubernetes</mark>
-    <mark>helm</mark>
-    <mark>Graphana</mark>
-    <mark>Prometheus</mark>
-    <mark>ELK</mark>
-    <mark>Gitlab CI</mark>
-    <mark>Okta</mark>
+    <mark>GitHub</mark>
+    <mark>New Relic</mark>
 
 - layout: left
   company: BeyondID Inc
