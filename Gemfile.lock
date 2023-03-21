@@ -8,7 +8,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (5.2.8.15)
+    activesupport (6.1.7.3)
       i18n (~> 0.7)
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
@@ -41,7 +41,7 @@ GEM
     forwardable-extended (2.6.0)
     gemoji (3.0.1)
     github-pages (198)
-      activesupport (= 5.2.8.15)
+      activesupport (= 6.1.7.3)
       github-pages-health-check (= 1.16.1)
       jekyll (= 3.8.5)
       jekyll-avatar (= 0.6.0)
@@ -95,7 +95,7 @@ GEM
       activesupport (>= 2)
       nokogiri (>= 1.13.10)
     html-proofer (3.10.2)
-      activesupport (>= 5.2, < 6.0)
+      activesupport (>= 6.1, < 6.1)
       addressable (~> 2.3)
       colorize (~> 0.8)
       mercenary (~> 0.3.2)
