@@ -28,33 +28,3 @@
     Objective:
 
     Build a web-based dashboard that aggregates and displays key metrics from your CI/CD pipeline, infrastructure, and application security scans. The dashboard will provide real-time insights into the health, performance, and security of your infrastructure and applications.
-
-    Key Features:
-
-      1.	CI/CD Pipeline Monitoring:
-      •	Display the status of recent builds, tests, and deployments.
-      •	Integrate with GitHub Actions/GitLab CI to show real-time build logs, test results, and deployment history.
-      2.	Security Scan Results:
-      •	Show results from static code analysis tools (e.g., Bandit) and infrastructure security checks (e.g., Checkov).
-      •	Highlight any vulnerabilities or issues that need attention.
-      3.	Infrastructure Health:
-      •	Monitor infrastructure resources (e.g., CPU, memory usage) via Prometheus and Grafana.
-      •	Provide insights on network security, such as open ports and traffic patterns.
-      4.	Alerting System:
-      •	Set up alerts for critical issues such as failed deployments, high CPU usage, or detected vulnerabilities.
-      •	Integrate with Slack, email, or other notification systems for real-time alerts.
-      5.	User Access and Security:
-      •	Implement role-based access control (RBAC) for different user levels (e.g., admin, developer, viewer).
-      •	Secure the dashboard using best practices (e.g., HTTPS, secure authentication).
-
-    Tech Stack:
-
-      •	Frontend: Python Flask or Django for the web framework.
-      •	Backend: Python for API development, along with necessary libraries for security scans.
-      •	Database: PostgreSQL or SQLite for storing logs, scan results, and metrics.
-      •	CI/CD: GitHub Actions or GitLab CI for building, testing, and deploying the dashboard.
-      •	Infrastructure: Terraform for setting up cloud resources, Docker for containerization.
-      •	Continuous Deployment: ArgoCD for managing Kubernetes deployments.
-      •	Monitoring: Prometheus for metrics collection, Grafana for visualization.
-      •	Security: Bandit, Checkov, and other security tools integrated into the pipeline.
-    
