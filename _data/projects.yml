@@ -21,10 +21,10 @@
   link: https://github.com/sssanjaya/devsecops-dashboard
   github: https://github.com/sssanjaya/devsecops-dashboard
   quote: >
-    Working on
-  description: | 
-      DevSecOps Dashboard for Monitoring and Alerting
-
+    DevSecOps Dashboard for Monitoring and Alerting
+  description: > 
+    Build a web-based dashboard that aggregates and displays key metrics from your CI/CD pipeline, infrastructure, and application security scans. The dashboard will provide real-time insights into the health, performance, and security of your infrastructure and applications.
+    
     Objective:
 
     Build a web-based dashboard that aggregates and displays key metrics from your CI/CD pipeline, infrastructure, and application security scans. The dashboard will provide real-time insights into the health, performance, and security of your infrastructure and applications.
