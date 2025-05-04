@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="description" content="Sanjay Hona - DevOps/DevSecOps Engineer Portfolio in Linux Terminal Style" />
   <title>Sanjay Hona - Terminal Portfolio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <style>
     :root {
       --bg-color: #282a36;
@@ -97,18 +94,18 @@
 
       about: `I'm Sanjay Hona, a DevOps/DevSecOps Engineer passionate about automation, cloud infrastructure, and building secure systems.`,
 
-      projects: `View my projects at: https://github.com/sanjayhona`,
+      projects: `View my projects at: <a href="https://github.com/sanjayhona" target="_blank">github.com/sanjayhona</a>`,
 
-      resume: `Download my resume: <a href="resume.pdf" target="_blank" rel="noopener noreferrer">resume.pdf</a>`,
+      resume: `Download my resume: <a href="resume.pdf" target="_blank">resume.pdf</a>`,
 
-      contact: `Email: sanjay.hona@gmail.com
+      contact: `Email: sanjayhona@gmail.com
 LinkedIn: https://linkedin.com/in/sanjayhona`,
 
       date: () => new Date().toString(),
 
-      whoami: `Sanjay Hona
+      whoami: `sanjay
 ROLE: DevOps/DevSecOps Engineer
-LOCATION: Canada`,
+LOCATION: Ottawa, Canada`,
 
       skills: `Skills:
 - Cloud: AWS, Azure, DigitalOcean
@@ -119,7 +116,8 @@ LOCATION: Canada`,
 - Tools: Trivy, Checkov, SonarQube, Grafana`,
 
       clear: () => {
-        terminal.innerHTML = "";
+        terminal.innerHTML = `<p>Welcome to Sanjay Hona's portfolio terminal.</p>
+<p>Type <code>help</code> to get started.</p>`;
       },
     };
 
@@ -130,10 +128,16 @@ LOCATION: Canada`,
         prompt.innerHTML = `<span class="prompt">sanjay@portfolio:~$</span> ${value}`;
         terminal.appendChild(prompt);
 
-        if (commands[value]) {
-          const result = typeof commands[value] === "function" ? commands[value]() : commands[value];
+        if (typeof commands[value] === "function") {
+          const result = commands[value]();
+          if (result !== undefined) {
+            const output = document.createElement("div");
+            output.innerHTML = result;
+            terminal.appendChild(output);
+          }
+        } else if (commands[value]) {
           const output = document.createElement("div");
-          output.innerHTML = result;
+          output.innerHTML = commands[value];
           terminal.appendChild(output);
         } else {
           const error = document.createElement("div");
