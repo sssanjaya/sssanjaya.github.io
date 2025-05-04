@@ -90,7 +90,13 @@
 - date:      Show current date & time
 - whoami:    Show system user info
 - skills:    Show my technical skills
-- clear:     Clear the terminal`,
+- clear:     Clear the terminal
+- certs:     View certifications
+- blog:      Read my blog posts
+- tools:     Explore my DevOps toolbelt
+- learning:  See what I'm currently learning
+- motd:      Message of the Day
+- uptime:    Show portfolio uptime`,
 
       about: `I'm Sanjay Hona, a DevOps/DevSecOps Engineer passionate about automation, cloud infrastructure, and building secure systems.`,
 
@@ -98,7 +104,7 @@
 
       resume: `Download my resume: <a href="resume.pdf" target="_blank">resume.pdf</a>`,
 
-      contact: `Email: sanjayhona@gmail.com
+      contact: `Email: sanjay.hona@gmail.com
 LinkedIn: https://linkedin.com/in/sanjayhona`,
 
       date: () => new Date().toString(),
@@ -118,6 +124,43 @@ LOCATION: Ottawa, Canada`,
       clear: () => {
         terminal.innerHTML = `<p>Welcome to Sanjay Hona's portfolio terminal.</p>
 <p>Type <code>help</code> to get started.</p>`;
+      },
+
+      certs: `Certifications:
+- GitLab Certified CI/CD Associate
+- Okta Certified Professional
+- Infrastructure Automation with Terraform
+- Google Cybersecurity Certificate
+- CKA (in progress)`,
+
+      blog: `Check out my DevOps blogs:
+- <a href="https://dev.to/sanjayhona" target="_blank">dev.to/sanjayhona</a>
+- <a href="https://medium.com/@sanjayhona" target="_blank">medium.com/@sanjayhona</a>`,
+
+      tools: `Toolbelt:
+- Monitoring: Grafana, Prometheus, ELK
+- Security: Trivy, Checkov, SonarQube
+- Messaging: Slack, Discord Webhooks
+- VCS: GitHub, GitLab, Bitbucket`,
+
+      learning: `I'm continuously upskilling in DevSecOps and Cybersecurity:
+- Practicing for the CKA exam
+- Enrolled in Security Operations Analyst program by NPower Canada
+- Exploring tools like Falco, Wazuh, and Open Policy Agent
+- Reading: "Designing Data-Intensive Applications", "The DevOps Handbook"
+- Daily LinkedIn posts about lessons learned from hands-on labs and challenges`,
+
+      motd: `📢 Message of the Day:
+"Stay curious. Keep automating. Secure everything." — DevSecOps philosophy`,
+
+      uptime: () => {
+        const start = new Date('2024-01-01T00:00:00Z');
+        const now = new Date();
+        const diff = now - start;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        return `Uptime: ${days} days, ${hours} hours, ${minutes} minutes`;
       },
     };
 
