@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="Sanjay Hona - DevOps/DevSecOps Engineer Portfolio in Linux Terminal Style" />
+  <title>Sanjay Hona - Terminal Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <style>
+    :root {
+      --bg-color: #282a36;
+      --text-color: #f8f8f2;
+      --green: #50fa7b;
+      --blue: #8be9fd;
+      --purple: #bd93f9;
+      --red: #ff5555;
+      --yellow: #f1fa8c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: monospace;
+      font-size: 1rem;
+      line-height: 1.5;
+      padding: 20px;
+    }
+
+    main {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    #terminal {
+      white-space: pre-wrap;
+    }
+
+    .input-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .prompt {
+      color: var(--green);
+    }
+
+    input[type="text"] {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      flex: 1;
+      outline: none;
+      font-family: monospace;
+      font-size: 1rem;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main role="main" aria-label="Terminal Portfolio Interface">
+    <section id="terminal" aria-live="polite">
+      <p>Welcome to Sanjay Hona's portfolio terminal.</p>
+      <p>Type <code>help</code> to get started.</p>
+    </section>
+    <div class="input-line">
+      <label for="cmd" class="prompt">sanjay@portfolio:~$</label>
+      <input id="cmd" type="text" autocomplete="off" aria-label="Terminal Command Input" autofocus />
+    </div>
+  </main>
+
+  <script>
+    const terminal = document.getElementById("terminal");
+    const input = document.getElementById("cmd");
+
+    const commands = {
+      help: `Available commands:
+- about:     Learn more about me
+- projects:  View my projects
+- resume:    Download my resume
+- contact:   Get in touch
+- date:      Show current date & time
+- whoami:    Show system user info
+- skills:    Show my technical skills
+- clear:     Clear the terminal`,
+
+      about: `I'm Sanjay Hona, a DevOps/DevSecOps Engineer passionate about automation, cloud infrastructure, and building secure systems.`,
+
+      projects: `View my projects at: https://github.com/sanjayhona`,
+
+      resume: `Download my resume: <a href="resume.pdf" target="_blank" rel="noopener noreferrer">resume.pdf</a>`,
+
+      contact: `Email: sanjayhona@gmail.com
+LinkedIn: https://linkedin.com/in/sanjayhona`,
+
+      date: () => new Date().toString(),
+
+      whoami: `sanjay
+ROLE: DevOps/DevSecOps Engineer
+LOCATION: Ottawa, Canada`,
+
+      skills: `Skills:
+- Cloud: AWS, Azure, DigitalOcean
+- IaC: Terraform, Ansible, Pulumi
+- CI/CD: GitLab CI/CD, GitHub Actions, ArgoCD
+- Containers: Docker, Kubernetes, Helm
+- Languages: Python, Java, JavaScript, Bash
+- Tools: Trivy, Checkov, SonarQube, Grafana`,
+
+      clear: () => {
+        terminal.innerHTML = "";
+      },
+    };
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const value = input.value.trim();
+        const prompt = document.createElement("div");
+        prompt.innerHTML = `<span class="prompt">sanjay@portfolio:~$</span> ${value}`;
+        terminal.appendChild(prompt);
+
+        if (commands[value]) {
+          const result = typeof commands[value] === "function" ? commands[value]() : commands[value];
+          const output = document.createElement("div");
+          output.innerHTML = result;
+          terminal.appendChild(output);
+        } else {
+          const error = document.createElement("div");
+          error.innerHTML = `<span style="color: var(--red);">Command not found: ${value}</span>`;
+          terminal.appendChild(error);
+        }
+
+        input.value = "";
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    });
+  </script>
+</body>
+</html>
