@@ -96,7 +96,9 @@
 - tools:     Explore my DevOps toolbelt
 - learning:  See what I'm currently learning
 - motd:      Message of the Day
-- uptime:    Show portfolio uptime`,
+- uptime:    Show portfolio uptime
+- hi/hello/hey: Greet the terminal
+- exit/bye:  Exit the terminal`,
 
       about: `I'm Sanjay Hona, a DevOps/DevSecOps Engineer passionate about automation, cloud infrastructure, and building secure systems.`,
 
@@ -161,6 +163,25 @@ LOCATION: Ottawa, Canada`,
         const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((diff / (1000 * 60)) % 60);
         return `Uptime: ${days} days, ${hours} hours, ${minutes} minutes`;
+      },
+
+      // Greetings
+      hi: `Hello! 👋 How can I help you today?`,
+      hello: `Hello! 👋 How can I help you today?`,
+      hey: `Hey there! 👋 What can I do for you?`,
+
+      // Exit/Bye
+      exit: () => {
+        setTimeout(() => {
+          terminal.innerHTML = `<p>Welcome to Sanjay Hona's portfolio terminal.</p>\n<p>Type <code>help</code> to get started.</p>`;
+        }, 1200);
+        return `Goodbye! 👋 Have a great day!`;
+      },
+      bye: () => {
+        setTimeout(() => {
+          terminal.innerHTML = `<p>Welcome to Sanjay Hona's portfolio terminal.</p>\n<p>Type <code>help</code> to get started.</p>`;
+        }, 1200);
+        return `Goodbye! 👋 Have a great day!`;
       },
     };
 
