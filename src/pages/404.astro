@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+import TopBar from "../components/TopBar.astro";
+import { site } from "../data/site.ts";
+---
+
+<Base title={`404 — ${site.name}`} description="Page not found.">
+  <TopBar />
+  <main>
+    <header>
+      <div class="wrap">
+        <div class="hero-top">
+          <div style="grid-column: 1 / 4;">
+            <h1>404<br /><span class="o">not</span> found.</h1>
+          </div>
+        </div>
+        <div class="lede">
+          <p class="mono" style="font-size:13px;">
+            <span style="color:var(--acc);">$</span> cd {Astro.url.pathname}<br />
+            <span style="color:var(--acc);">zsh:</span> no such file or directory
+            — try the index.
+          </p>
+          <a class="scroll" href="/">← BACK TO INDEX</a>
+        </div>
+      </div>
+    </header>
+  </main>
+  <footer>
+    <div class="wrap">
+      <div class="inner">
+        <span>Designed &amp; built by {site.name}</span>
+        <span>Astro · No trackers · View source welcome</span>
+      </div>
+    </div>
+  </footer>
+</Base>

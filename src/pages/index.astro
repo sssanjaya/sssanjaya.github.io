@@ -1,0 +1,29 @@
+---
+import Base from "../layouts/Base.astro";
+import TopBar from "../components/TopBar.astro";
+import Hero from "../components/Hero.astro";
+import Experience from "../components/Experience.astro";
+import Projects from "../components/Projects.astro";
+import About from "../components/About.astro";
+import Contact from "../components/Contact.astro";
+import { site } from "../data/site.ts";
+---
+
+<Base>
+  <TopBar />
+  <main>
+    <Hero />
+    <Experience />
+    <Projects />
+    <About />
+    <Contact />
+  </main>
+  <footer>
+    <div class="wrap">
+      <div class="inner">
+        <span>Designed &amp; built by {site.name}</span>
+        <span>Astro · No trackers · View source welcome</span>
+      </div>
+    </div>
+  </footer>
+</Base>

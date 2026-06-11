@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+
+const projects = (await getCollection("projects")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<section id="projects">
+  <div class="wrap rv">
+    <div class="shead">
+      <span class="sn">02</span>
+      <h2>Selected Projects</h2>
+      <span class="meta">FIELD + LAB</span>
+    </div>
+    <div class="projgrid">
+      {
+        projects.map((p) => (
+          <a class="proj" href={`/projects/${p.id}/`}>
+            <div class="pn">[ {p.data.kind} ]</div>
+            <h3>{p.data.title}</h3>
+            <p>{p.data.summary}</p>
+            <div class="arrow">→ read case study</div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>

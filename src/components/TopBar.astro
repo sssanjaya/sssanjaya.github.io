@@ -1,0 +1,17 @@
+---
+import { site } from "../data/site.ts";
+---
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="row">
+      <span>{site.shortName} © 2026</span>
+      <span>{site.role}</span>
+      <span>{site.location.split(",")[0]} · <span data-clock>--:--</span> {site.timezoneLabel}</span>
+      <span class="av">
+        {site.available ? "● " + site.availableLabel : "○ Heads-down"}
+        <button class="toggle mono" data-toggle aria-label="Toggle theme">☾</button>
+      </span>
+    </div>
+  </div>
+</div>

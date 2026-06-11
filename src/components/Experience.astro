@@ -1,0 +1,31 @@
+---
+import { experience } from "../data/experience.ts";
+---
+
+<section id="experience">
+  <div class="wrap rv">
+    <div class="shead">
+      <span class="sn">01</span>
+      <h2>Experience</h2>
+      <span class="meta">{experience.length} ROLES · 2016—NOW</span>
+    </div>
+    {
+      experience.map((r) => (
+        <div class="xrow">
+          <div class="yr">{r.year}</div>
+          <div>
+            <h3>
+              {r.title} <span class="at">/ {r.company}</span>
+            </h3>
+            <p>{r.blurb}</p>
+            <div class="tags">
+              {r.tags.map((t) => (
+                <span class="tag">{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

@@ -1,0 +1,45 @@
+---
+import { site } from "../data/site.ts";
+---
+
+<section id="about">
+  <div class="wrap rv">
+    <div class="shead">
+      <span class="sn">03</span>
+      <h2>About</h2>
+      <span class="meta">KATHMANDU → OTTAWA</span>
+    </div>
+    <div class="about">
+      <div>
+        <p>
+          My path started in Kathmandu and runs through seven years of
+          production systems — Java services first, then containers, then entire
+          platforms on AWS and Azure. The lesson that defines how I work: <b
+            >the best infrastructure is the kind nobody has to think about.</b
+          >
+        </p>
+        <p>
+          Off the clock I keep a three-node Kubernetes homelab, practice Vim like
+          it's a sport, and work through the CKA. I believe in automating
+          anything done twice, treating observability as a love language, and
+          learning in public. Currently keeping a fleet of edge AI devices alive
+          at <b>{site.currentCompany}</b> in {site.location.split(",")[0]}.
+        </p>
+      </div>
+      <div class="currently" aria-label="Currently">
+        {
+          site.currently.map((c) => (
+            <div class="crow">
+              <span class="ck">{c.key}</span>
+              <span class="cv">{c.value}</span>
+            </div>
+          ))
+        }
+        <div class="crow">
+          <span class="ck">Status</span>
+          <span class="cv"><span class="live"></span>{site.availableLabel}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

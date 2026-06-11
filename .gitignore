@@ -1,7 +1,26 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# brainstorm visual reference (local only)
+.design-reference.html
+
+# misc
+.DS_Store
+*.code-workspace
+
+# legacy jekyll leftovers
 *.gem
 .bundle
 .sass-cache
 _site
-*.code-workspace
 vendor
-.DS_Store
+
+# playwright screenshots
+.playwright-mcp/
+
+# serena mcp local cache
+.serena/
