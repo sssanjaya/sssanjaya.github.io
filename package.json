@@ -15,6 +15,6 @@
     "@fontsource/ibm-plex-sans": "^5.2.8",
     "@fontsource/inter": "^5.1.0",
     "@fontsource/jetbrains-mono": "^5.1.0",
-    "astro": "^5.8.0"
+    "astro": "^6.4.6"
   }
 }
