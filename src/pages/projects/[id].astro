@@ -11,11 +11,31 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const personId = `${site.url}/#person`;
+
+// TechArticle for the case study, authored by the referenced Person entity.
+const articleJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: project.data.title,
+  description: project.data.summary,
+  url: canonical,
+  image: new URL(site.ogImage, Astro.site).href,
+  keywords: project.data.tags.join(", "),
+  inLanguage: "en",
+  author: { "@type": "Person", "@id": personId, name: site.name },
+  publisher: { "@id": personId },
+  mainEntityOfPage: canonical,
+};
 ---
 
 <Base
   title={`${project.data.title} — ${site.name}`}
   description={project.data.summary}
+  type="article"
+  structuredData={articleJsonLd}
 >
   <TopBar />
   <main>

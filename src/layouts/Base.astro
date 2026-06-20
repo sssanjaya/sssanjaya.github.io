@@ -18,12 +18,72 @@ import { site } from "../data/site.ts";
 interface Props {
   title?: string;
   description?: string;
+  /** OG/Twitter card image — absolute path under /public. */
+  image?: string;
+  /** og:type — "website" for the home page, "article" for case studies. */
+  type?: "website" | "article";
+  /** Page-specific JSON-LD. Falls back to the Person + WebSite identity graph. */
+  structuredData?: object;
 }
 
 const {
   title = `${site.name} — ${site.currentTitle}`,
-  description = `${site.name} — ${site.role} based in ${site.location}. ${site.lede}`,
+  description = site.metaDescription,
+  image = site.ogImage,
+  type = "website",
+  structuredData,
 } = Astro.props;
+
+// Astro.site is set in astro.config.mjs, so these resolve to absolute URLs —
+// required by Open Graph (relative image paths are silently dropped by crawlers).
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImageUrl = new URL(image, Astro.site).href;
+
+// Identity graph: a single Person node other pages can reference by @id, plus
+// the WebSite. sameAs ties the social profiles into one entity for Google.
+const personId = `${site.url}/#person`;
+const identityGraph = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": personId,
+      name: site.name,
+      url: site.url,
+      image: ogImageUrl,
+      jobTitle: site.jobTitle,
+      email: `mailto:${site.email}`,
+      worksFor: { "@type": "Organization", name: site.currentCompany },
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Ottawa",
+        addressRegion: "ON",
+        addressCountry: "CA",
+      },
+      sameAs: site.socials
+        .filter((s) => s.href.startsWith("http"))
+        .map((s) => s.href),
+      knowsAbout: [
+        "Site Reliability Engineering",
+        "DevOps",
+        "Kubernetes",
+        "Terraform",
+        "Amazon Web Services",
+        "Observability",
+        "Edge Computing",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site.url}/#website`,
+      url: site.url,
+      name: `${site.name} — Portfolio`,
+      inLanguage: "en",
+      publisher: { "@id": personId },
+    },
+  ],
+};
+const jsonLd = structuredData ?? identityGraph;
 ---
 
 <!doctype html>
@@ -34,14 +94,44 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="author" content={site.name} />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1"
+    />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Icons & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="canonical" href={Astro.url.href} />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Open Graph -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={`${site.name} — Portfolio`} />
+    <meta property="og:locale" content="en_CA" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content={`${site.name}, ${site.jobTitle}`}
+    />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!-- JSON-LD structured data -->
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(jsonLd)}
+    />
 
     <!-- Theme color tracks resolved theme; updated by the bootstrap script -->
     <meta name="theme-color" content="#f4f3ee" id="theme-color" />

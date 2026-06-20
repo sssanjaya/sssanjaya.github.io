@@ -1,0 +1,13 @@
+{
+  "name": "Sanjay Hona — Portfolio",
+  "short_name": "S. Hona",
+  "description": "DevOps & Site Reliability Engineer in Ottawa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f3ee",
+  "theme_color": "#f4f3ee",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ]
+}

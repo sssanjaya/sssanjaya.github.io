@@ -16,6 +16,18 @@ export const site = {
   available: true,
   availableLabel: "Available",
 
+  // Canonical production origin (no trailing slash). Used for OG/JSON-LD.
+  url: "https://sanjayhona.com.np",
+  // 1200×630 social share card under /public.
+  ogImage: "/og.png",
+  jobTitle: "Site Reliability Engineer",
+
+  // Tight ≤160-char snippet for <meta name="description"> & social cards.
+  // The longer `lede` below is on-page hero copy, not the search snippet.
+  metaDescription:
+    "Sanjay Hona — DevOps & Site Reliability Engineer in Ottawa. 7+ years " +
+    "building Kubernetes platforms, Terraform, and edge-AI fleets that stay up.",
+
   // One-line lede shown under the hero headline.
   lede:
     "DevOps & Site Reliability engineer. For seven years I've built cloud " +
