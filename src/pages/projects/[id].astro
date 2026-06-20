@@ -1,7 +1,8 @@
 ---
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
-import TopBar from "../../components/TopBar.astro";
+import Rail from "../../components/Rail.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
 import { site } from "../../data/site.ts";
 
 export async function getStaticPaths() {
@@ -37,15 +38,15 @@ const articleJsonLd = {
   type="article"
   structuredData={articleJsonLd}
 >
-  <TopBar />
-  <main>
-    <article class="article">
-      <div class="wrap">
-        <a class="back" href="/#projects">← Index / Projects</a>
-        <span class="pn">[ {project.data.kind} ]</span>
+  <div class="shell">
+    <Rail />
+    <main class="content">
+      <article class="article">
+        <a class="back" href="/#work">← back to work</a>
+        <span class="pk">[ {project.data.kind} ]</span>
         <h1 class="title">{project.data.title}</h1>
         <p class="summary">{project.data.summary}</p>
-        <div class="tags" style="margin-top:16px;">
+        <div class="meta-tags">
           {project.data.tags.map((t) => <span class="tag">{t}</span>)}
           {
             project.data.links.map((l) => (
@@ -58,15 +59,8 @@ const articleJsonLd = {
         <div class="prose">
           <Content />
         </div>
-      </div>
-    </article>
-  </main>
-  <footer>
-    <div class="wrap">
-      <div class="inner">
-        <span>Designed &amp; built by {site.name}</span>
-        <span>Astro · No trackers · View source welcome</span>
-      </div>
-    </div>
-  </footer>
+      </article>
+      <SiteFooter />
+    </main>
+  </div>
 </Base>

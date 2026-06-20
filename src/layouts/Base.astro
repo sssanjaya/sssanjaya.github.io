@@ -1,16 +1,11 @@
 ---
 // Self-hosted fonts (only the weights actually used)
-import "@fontsource/archivo/500.css";
-import "@fontsource/archivo/700.css";
-import "@fontsource/archivo/800.css";
-import "@fontsource/archivo/900.css";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/600.css";
+import "@fontsource/jetbrains-mono/700.css";
 
 import "../styles/global.css";
 import { site } from "../data/site.ts";
@@ -66,11 +61,13 @@ const identityGraph = {
       knowsAbout: [
         "Site Reliability Engineering",
         "DevOps",
+        "DevSecOps",
         "Kubernetes",
         "Terraform",
         "Amazon Web Services",
+        "CI/CD",
         "Observability",
-        "Edge Computing",
+        "AIOps",
       ],
     },
     {
@@ -134,7 +131,7 @@ const jsonLd = structuredData ?? identityGraph;
     />
 
     <!-- Theme color tracks resolved theme; updated by the bootstrap script -->
-    <meta name="theme-color" content="#f4f3ee" id="theme-color" />
+    <meta name="theme-color" content="#eff1f5" id="theme-color" />
 
     <!-- No-flash theme bootstrap: stored choice wins, else follow system. -->
     <script is:inline>
@@ -147,36 +144,34 @@ const jsonLd = structuredData ?? identityGraph;
               window.matchMedia("(prefers-color-scheme: dark)").matches);
           if (dark) document.documentElement.setAttribute("data-theme", "dark");
           var tc = document.querySelector("#theme-color");
-          if (tc) tc.setAttribute("content", dark ? "#0b0b0c" : "#f4f3ee");
+          if (tc) tc.setAttribute("content", dark ? "#1e1e2e" : "#eff1f5");
         } catch (e) {}
       })();
     </script>
   </head>
   <body>
-    <div class="gridlines" aria-hidden="true">
-      <i></i><i></i><i></i><i></i>
-    </div>
-
     <slot />
 
-    <!-- Shared client behavior: theme toggle, live clock, scroll reveals. -->
+    <!-- Shared client behavior: theme toggle + active-section nav highlight. -->
     <script is:inline>
       (function () {
-        // Theme toggle
         var root = document.documentElement;
         var tc = document.querySelector("#theme-color");
-        function paintToggle() {
+        function paint() {
           var dark = root.getAttribute("data-theme") === "dark";
           document.querySelectorAll("[data-toggle]").forEach(function (b) {
-            b.textContent = dark ? "☀" : "☾";
+            var i = b.querySelector("[data-ti]");
+            var l = b.querySelector("[data-tl]");
+            if (i) i.textContent = dark ? "☀" : "☾";
+            if (l) l.textContent = dark ? "light" : "dark";
             b.setAttribute(
               "aria-label",
               dark ? "Switch to light theme" : "Switch to dark theme",
             );
           });
-          if (tc) tc.setAttribute("content", dark ? "#0b0b0c" : "#f4f3ee");
+          if (tc) tc.setAttribute("content", dark ? "#1e1e2e" : "#eff1f5");
         }
-        paintToggle();
+        paint();
         document.querySelectorAll("[data-toggle]").forEach(function (b) {
           b.addEventListener("click", function () {
             var dark = root.getAttribute("data-theme") === "dark";
@@ -185,49 +180,31 @@ const jsonLd = structuredData ?? identityGraph;
             try {
               localStorage.setItem("theme", dark ? "light" : "dark");
             } catch (e) {}
-            paintToggle();
+            paint();
           });
         });
 
-        // Live clock
-        var tz = document.documentElement.getAttribute("data-tz") || "UTC";
-        function tick() {
-          var t = new Date().toLocaleTimeString("en-CA", {
-            timeZone: tz,
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          });
-          document.querySelectorAll("[data-clock]").forEach(function (el) {
-            el.textContent = t;
-          });
-        }
-        tick();
-        setInterval(tick, 30000);
-
-        // Scroll reveal
-        var reduce = window.matchMedia(
-          "(prefers-reduced-motion: reduce)",
-        ).matches;
-        var rvs = document.querySelectorAll(".rv");
-        if (reduce || !("IntersectionObserver" in window)) {
-          rvs.forEach(function (el) {
-            el.classList.add("in");
-          });
-        } else {
+        // Highlight the nav item for whichever section is in view.
+        var links = [].slice.call(document.querySelectorAll("nav.sect a"));
+        var sections = document.querySelectorAll("section[id]");
+        if (links.length && sections.length && "IntersectionObserver" in window) {
           var io = new IntersectionObserver(
-            function (entries) {
-              entries.forEach(function (e) {
+            function (es) {
+              es.forEach(function (e) {
                 if (e.isIntersecting) {
-                  e.target.classList.add("in");
-                  io.unobserve(e.target);
+                  links.forEach(function (l) {
+                    l.classList.toggle(
+                      "on",
+                      (l.getAttribute("href") || "").indexOf("#" + e.target.id) >= 0,
+                    );
+                  });
                 }
               });
             },
-            { threshold: 0.1 },
+            { rootMargin: "-30% 0px -60% 0px" },
           );
-          rvs.forEach(function (el) {
-            io.observe(el);
+          sections.forEach(function (s) {
+            io.observe(s);
           });
         }
       })();

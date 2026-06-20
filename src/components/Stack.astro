@@ -1,0 +1,26 @@
+---
+import { site } from "../data/site.ts";
+---
+
+<section id="stack">
+  <div class="slabel">
+    <span class="ix">#</span><span class="tx">Stack</span><span class="ln"></span>
+  </div>
+  <div class="stack">
+    {
+      site.stack.map((s) => (
+        <div class="srow">
+          <span class="k">{s.key}</span>
+          <span class="v">
+            {s.items.map((it, i) => (
+              <>
+                {i > 0 ? <span class="d">·</span> : null}
+                {it}
+              </>
+            ))}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+</section>

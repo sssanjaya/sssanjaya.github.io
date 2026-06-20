@@ -1,0 +1,55 @@
+---
+// Sticky identity rail: name, disciplines, section nav, metadata, links, theme.
+import { site } from "../data/site.ts";
+
+const httpSocials = site.socials.filter((s) => s.href.startsWith("http"));
+---
+
+<aside class="rail">
+  <div class="nm">sanjay<span class="p">.</span><span class="b">hona</span></div>
+  <div class="rl">
+    {
+      site.disciplines.map((d, i) => (
+        <>
+          {i > 0 ? <span class="s"> / </span> : null}
+          {d}
+        </>
+      ))
+    }
+  </div>
+  <div class="rl2"><span class="a">→</span> learning <span class="v">{site.learning}</span></div>
+
+  <nav class="sect" aria-label="Sections">
+    {
+      site.nav.map((n) => (
+        <a href={n.href}>
+          <span class="c">~/</span>
+          {n.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <div class="meta" aria-label="Details">
+    <div><span class="k">loc</span> {site.location}</div>
+    <div><span class="k">tz</span> <span class="v">{site.timezone}</span></div>
+    <div><span class="k">exp</span> {site.yearsLabel}</div>
+    <div><span class="k">open</span> <span class="v">{site.available ? "true" : "false"}</span></div>
+  </div>
+
+  <div class="ext">
+    {
+      httpSocials.map((s) => (
+        <a href={s.href} target="_blank" rel="noopener">
+          {s.label} ↗
+        </a>
+      ))
+    }
+    <a href={site.resumeUrl} target="_blank" rel="noopener">Resume ↓</a>
+    <a href={`mailto:${site.email}`}>{site.email}</a>
+  </div>
+
+  <button class="toggle" data-toggle aria-label="Toggle theme">
+    <span data-ti>☀</span> <span data-tl>light</span>
+  </button>
+</aside>

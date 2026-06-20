@@ -4,7 +4,7 @@ summary: >-
   A three-node k3s cluster managed entirely by GitOps with a full
   Prometheus/Grafana stack — the proving ground for anything before it
   touches production.
-kind: "PLATFORM · HOMELAB"
+kind: "lab"
 tags: ["k3s", "ArgoCD", "Grafana"]
 status: live
 order: 2

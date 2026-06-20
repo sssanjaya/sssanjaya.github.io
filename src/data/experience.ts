@@ -14,28 +14,25 @@ export interface Role {
 
 export const experience: Role[] = [
   {
-    year: "2025 — NOW",
+    year: "2025 — now",
     title: "Site Reliability Engineer",
     company: "EdgeSignal",
     blurb:
-      "Operate a fleet of 40+ ARM edge devices (RK3588) running computer-" +
-      "vision inference in production — AWS IoT Greengrass deployments, " +
-      "containerized workloads, and remote device operations. Own health " +
-      "monitoring and incident response across the fleet with Datadog and " +
-      "CloudWatch, keeping cameras, inference, and uplinks honest in the field.",
-    tags: ["AWS IoT Greengrass", "Docker", "RK3588", "Datadog", "Python"],
+      "Own production reliability for a distributed system — deployment " +
+      "automation, fleet-wide observability, and incident response on Datadog " +
+      "and CloudWatch. Keep the rollout pipeline boring and the pager quiet.",
+    tags: ["AWS", "Docker", "Datadog", "CloudWatch", "Python"],
   },
   {
     year: "2021 — 2024",
-    title: "DevOps Engineer",
+    title: "DevOps / DevSecOps Engineer",
     company: "BeyondID",
     blurb:
-      "Engineered AWS EKS platforms with GitOps (ArgoCD, Helm), cutting " +
-      "deployment failures 15%. Led the company-wide Terraform migration — " +
-      "reusable modules took environment setup from 3+ days to under 2 hours — " +
-      "and built an ELK/Prometheus/Grafana observability stack that improved " +
-      "MTTR 30%. Passed a critical security audit with zero findings.",
-    tags: ["AWS EKS", "Terraform", "ArgoCD", "Prometheus", "Grafana"],
+      "Built AWS EKS platforms on GitOps (ArgoCD, Helm) and cut deploy " +
+      "failures 15%. Led the company-wide Terraform migration — env setup from " +
+      "3+ days to under 2 hours — and stood up ELK/Prometheus/Grafana that took " +
+      "30% off MTTR. Passed a critical security audit with zero findings.",
+    tags: ["AWS EKS", "Terraform", "ArgoCD", "Prometheus", "Security Audit"],
   },
   {
     year: "2019 — 2021",

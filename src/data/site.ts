@@ -43,6 +43,29 @@ export const site = {
 
   resumeUrl: "/resume.pdf",
 
+  // Identity rail — disciplines shown next to the name; AIOps is in-progress.
+  disciplines: ["DevOps", "DevSecOps", "SRE"],
+  learning: "AIOps",
+  yearsLabel: "7+ years",
+
+  // In-page section nav (absolute so it works from case-study pages too).
+  nav: [
+    { label: "experience", href: "/#experience" },
+    { label: "stack", href: "/#stack" },
+    { label: "work", href: "/#work" },
+    { label: "about", href: "/#about" },
+    { label: "contact", href: "/#contact" },
+  ],
+
+  // Stack table — rendered as key/value "syntax" rows.
+  stack: [
+    { key: "cloud", items: ["AWS", "Azure"] },
+    { key: "orchestration", items: ["Kubernetes", "Docker", "Helm", "ArgoCD"] },
+    { key: "iac_cicd", items: ["Terraform", "GitLab CI", "GitHub Actions"] },
+    { key: "observability", items: ["Datadog", "Prometheus", "Grafana", "ELK"] },
+    { key: "security", items: ["CloudTrail", "audits", "least-privilege", "supply-chain"] },
+  ],
+
   // Hero stat row — career highlights drawn from the resume.
   stats: [
     { value: "7+", label: "Years in production" },

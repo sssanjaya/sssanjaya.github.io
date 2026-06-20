@@ -2,20 +2,13 @@
 import { site } from "../data/site.ts";
 ---
 
-<div class="contact" id="contact">
-  <div class="wrap rv">
-    <span class="sn">04 — WHAT'S NEXT</span>
-    <h2>Let's build<br />something reliable.</h2>
-    <a class="mail" href={`mailto:${site.email}`}>{site.email}</a>
-    <div class="links">
-      {
-        site.socials.map((s) => (
-          <a href={s.href} target="_blank" rel="noopener">
-            {s.label} ↗
-          </a>
-        ))
-      }
-      <a href={site.resumeUrl} target="_blank" rel="noopener">Resume ↓</a>
-    </div>
+<section id="contact" class="contact">
+  <div class="slabel">
+    <span class="ix">#</span><span class="tx">Contact</span><span class="ln"></span>
   </div>
-</div>
+  <p>
+    Open to platform engineering, reliability, and security work. The fastest way
+    to reach me is email.
+  </p>
+  <a class="mail" href={`mailto:${site.email}`}>{site.email}</a>
+</section>
