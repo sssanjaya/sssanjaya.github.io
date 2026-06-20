@@ -12,7 +12,7 @@ export const site = {
   location: "Ottawa, Canada",
   timezone: "America/Toronto",
   timezoneLabel: "EDT",
-  email: "sanjay.hona@gmail.com",
+  email: "devops@sanjayhona.com.np",
   available: true,
   availableLabel: "Available",
 
@@ -25,8 +25,8 @@ export const site = {
   // Tight ≤160-char snippet for <meta name="description"> & social cards.
   // The longer `lede` below is on-page hero copy, not the search snippet.
   metaDescription:
-    "Sanjay Hona — DevOps & Site Reliability Engineer in Ottawa. 7+ years " +
-    "building Kubernetes platforms, Terraform, and edge-AI fleets that stay up.",
+    "Sanjay Hona — DevOps, DevSecOps & SRE engineer in Ottawa. 7+ years " +
+    "building secure, reliable cloud platforms on Kubernetes and Terraform.",
 
   // One-line lede shown under the hero headline.
   lede:
@@ -36,12 +36,9 @@ export const site = {
     "field. Boring deploys are a feature.",
 
   socials: [
-    { label: "GitHub", href: "https://github.com/sssanjaya" },
     { label: "LinkedIn", href: "https://linkedin.com/in/sanjayhona" },
-    { label: "Email", href: "mailto:sanjay.hona@gmail.com" },
+    { label: "Email", href: "mailto:devops@sanjayhona.com.np" },
   ],
-
-  resumeUrl: "/resume.pdf",
 
   // Identity rail — disciplines shown next to the name; AIOps is in-progress.
   disciplines: ["DevOps", "DevSecOps", "SRE"],
