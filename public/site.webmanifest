@@ -1,0 +1,13 @@
+{
+  "name": "Sanjay Hona — Portfolio",
+  "short_name": "S. Hona",
+  "description": "DevOps · DevSecOps · SRE engineer in Ottawa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1e2e",
+  "theme_color": "#1e1e2e",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ]
+}

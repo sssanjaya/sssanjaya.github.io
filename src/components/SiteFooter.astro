@@ -1,0 +1,19 @@
+---
+// Short git hash baked in at build time for a quiet "tech" footer detail.
+let hash = "";
+try {
+  const { execSync } = await import("node:child_process");
+  hash = execSync("git rev-parse --short HEAD").toString().trim();
+} catch {
+  hash = "";
+}
+---
+
+<footer class="site">
+  <div class="inner">
+    <span>© 2026 Sanjay Hona</span>
+    <span>
+      {hash ? <>build <span class="g">{hash}</span> · </> : null}astro · no trackers
+    </span>
+  </div>
+</footer>

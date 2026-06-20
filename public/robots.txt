@@ -1,0 +1,5 @@
+# sanjayhona.com.np — open to all well-behaved crawlers.
+User-agent: *
+Allow: /
+
+Sitemap: https://sanjayhona.com.np/sitemap-index.xml

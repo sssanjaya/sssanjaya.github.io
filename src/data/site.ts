@@ -16,6 +16,18 @@ export const site = {
   available: true,
   availableLabel: "Available",
 
+  // Canonical production origin (no trailing slash). Used for OG/JSON-LD.
+  url: "https://sanjayhona.com.np",
+  // 1200×630 social share card under /public.
+  ogImage: "/og.png",
+  jobTitle: "Site Reliability Engineer",
+
+  // Tight ≤160-char snippet for <meta name="description"> & social cards.
+  // The longer `lede` below is on-page hero copy, not the search snippet.
+  metaDescription:
+    "Sanjay Hona — DevOps & Site Reliability Engineer in Ottawa. 7+ years " +
+    "building Kubernetes platforms, Terraform, and edge-AI fleets that stay up.",
+
   // One-line lede shown under the hero headline.
   lede:
     "DevOps & Site Reliability engineer. For seven years I've built cloud " +
@@ -30,6 +42,29 @@ export const site = {
   ],
 
   resumeUrl: "/resume.pdf",
+
+  // Identity rail — disciplines shown next to the name; AIOps is in-progress.
+  disciplines: ["DevOps", "DevSecOps", "SRE"],
+  learning: "AIOps",
+  yearsLabel: "7+ years",
+
+  // In-page section nav (absolute so it works from case-study pages too).
+  nav: [
+    { label: "experience", href: "/#experience" },
+    { label: "stack", href: "/#stack" },
+    { label: "work", href: "/#work" },
+    { label: "about", href: "/#about" },
+    { label: "contact", href: "/#contact" },
+  ],
+
+  // Stack table — rendered as key/value "syntax" rows.
+  stack: [
+    { key: "cloud", items: ["AWS", "Azure"] },
+    { key: "orchestration", items: ["Kubernetes", "Docker", "Helm", "ArgoCD"] },
+    { key: "iac_cicd", items: ["Terraform", "GitLab CI", "GitHub Actions"] },
+    { key: "observability", items: ["Datadog", "Prometheus", "Grafana", "ELK"] },
+    { key: "security", items: ["CloudTrail", "audits", "least-privilege", "supply-chain"] },
+  ],
 
   // Hero stat row — career highlights drawn from the resume.
   stats: [
