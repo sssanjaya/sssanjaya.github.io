@@ -45,11 +45,10 @@ export const site = {
   learning: "AIOps",
   yearsLabel: "7+ years",
 
-  // In-page section nav (absolute so it works from case-study pages too).
+  // In-page section nav.
   nav: [
     { label: "experience", href: "/#experience" },
     { label: "stack", href: "/#stack" },
-    { label: "work", href: "/#work" },
     { label: "about", href: "/#about" },
     { label: "contact", href: "/#contact" },
   ],
