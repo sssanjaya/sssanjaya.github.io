@@ -1,0 +1,27 @@
+---
+// Blog page shell: the site's Base layout, top bar, and footer with blog nav.
+import Base from "../../../src/layouts/Base.astro";
+import TopBar from "../../../src/components/TopBar.astro";
+import SiteFooter from "../../../src/components/SiteFooter.astro";
+import { blog, blogNav } from "../lib/posts.ts";
+import "../styles/prose.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  type?: "website" | "article";
+  structuredData?: object;
+  noindex?: boolean;
+}
+const { description = blog.description, ...rest } = Astro.props;
+---
+
+<Base {...rest} description={description} siteName={blog.title} nav={blogNav}>
+  <link slot="head" rel="alternate" type="application/rss+xml" title={blog.title} href="/rss.xml" />
+  <div id="top"></div>
+  <TopBar nav={blogNav} crumb={["blog"]} />
+  <main id="main">
+    <slot />
+  </main>
+  <SiteFooter />
+</Base>

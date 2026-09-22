@@ -52,6 +52,7 @@ export const site = {
     { label: "stack", href: "/#stack" },
     { label: "about", href: "/#about" },
     { label: "contact", href: "/#contact" },
+    { label: "blog", href: "https://blog.sanjayhona.com.np/" },
   ],
 
   // Golden-signal panels — career numbers from the resume.

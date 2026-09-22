@@ -10,10 +10,10 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "@fontsource/jetbrains-mono/700.css";
 
-import { createHash } from "node:crypto";
 import "../styles/global.css";
 import CommandPalette from "../components/CommandPalette.astro";
 import { site } from "../data/site.ts";
+import { themeBootstrap, themeBootstrapHash } from "../lib/theme.ts";
 
 interface Props {
   title?: string;
@@ -26,6 +26,10 @@ interface Props {
   structuredData?: object;
   /** Keep the page out of search results (404). Also drops canonical/og:url. */
   noindex?: boolean;
+  /** og:site_name. */
+  siteName?: string;
+  /** Command palette nav. Defaults to the site's section nav. */
+  nav?: readonly { label: string; href: string }[];
 }
 
 const {
@@ -35,6 +39,8 @@ const {
   type = "website",
   structuredData,
   noindex = false,
+  siteName = `${site.name} — Portfolio`,
+  nav,
 } = Astro.props;
 
 // Astro.site is set in astro.config.mjs, so these resolve to absolute URLs —
@@ -91,22 +97,8 @@ const identityGraph = {
 // Escape "<" so data can never close the <script> block early.
 const jsonLd = JSON.stringify(structuredData ?? identityGraph).replace(/</g, "\\u003c");
 
-// No-flash theme bootstrap: dark by default, stored "light" opts out.
-// It must run inline in <head>, so the CSP (astro.config.mjs) allows it by
-// hash. The hash is computed here from the exact bytes rendered, so editing
-// the script can never leave a stale hash behind.
-const themeBootstrap = `(function () {
-  try {
-    if (localStorage.getItem("theme") === "light") {
-      document.documentElement.setAttribute("data-theme", "light");
-      var tc = document.querySelector("#theme-color");
-      if (tc) tc.setAttribute("content", "#f4f5f7");
-    }
-  } catch (e) {}
-})();`;
-Astro.csp?.insertScriptHash(
-  `sha256-${createHash("sha256").update(themeBootstrap).digest("base64")}`,
-);
+// Inline theme bootstrap (src/lib/theme.ts), allowed by the CSP via its hash.
+Astro.csp?.insertScriptHash(themeBootstrapHash);
 ---
 
 <!doctype html>
@@ -133,7 +125,7 @@ Astro.csp?.insertScriptHash(
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {!noindex && <meta property="og:url" content={canonical} />}
-    <meta property="og:site_name" content={`${site.name} — Portfolio`} />
+    <meta property="og:site_name" content={siteName} />
     <meta property="og:locale" content="en_CA" />
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
@@ -161,11 +153,12 @@ Astro.csp?.insertScriptHash(
 
     <!-- data-cfasync="false": Cloudflare Rocket Loader must not defer this. -->
     <script is:inline data-cfasync="false" set:html={themeBootstrap} />
+    <slot name="head" />
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
     <slot />
-    <CommandPalette />
+    <CommandPalette nav={nav} />
     <div class="toast" role="status" aria-live="polite" data-toast></div>
   </body>
 </html>

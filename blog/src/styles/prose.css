@@ -1,0 +1,233 @@
+/* Post body typography and Prism code colors, built on the site tokens in
+   src/styles/global.css so both themes work without extra variables. */
+
+.prose {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--fg-2);
+}
+.prose > * + * {
+  margin-top: 1.1em;
+}
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: var(--display);
+  color: var(--fg);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  scroll-margin-top: 88px;
+}
+.prose h2 {
+  font-size: 28px;
+  margin-top: 2em;
+  padding-top: 0.2em;
+}
+.prose h3 {
+  font-size: 21px;
+  margin-top: 1.6em;
+}
+.prose h4 {
+  font-size: 17px;
+  margin-top: 1.4em;
+}
+.prose h2::before {
+  content: "## ";
+  font-family: var(--mono);
+  font-size: 0.6em;
+  color: var(--ok);
+  vertical-align: 0.25em;
+}
+.prose a {
+  color: var(--ok);
+  text-decoration: underline;
+  text-decoration-color: var(--ok-line);
+  text-underline-offset: 3px;
+}
+.prose a:hover {
+  text-decoration-color: var(--ok);
+}
+.prose strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+.prose li + li {
+  margin-top: 0.35em;
+}
+.prose li::marker {
+  color: var(--dim);
+}
+.prose hr {
+  border: 0;
+  border-top: 1px dashed var(--line-2);
+  margin: 2.4em 0;
+}
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
+/* Callouts: > **Note:** ... renders as a quoted panel. */
+.prose blockquote {
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--info);
+  border-radius: 0 8px 8px 0;
+  background: var(--info-soft);
+  color: var(--fg-2);
+}
+.prose blockquote > * + * {
+  margin-top: 0.6em;
+}
+
+/* Tables */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  display: block;
+  overflow-x: auto;
+}
+.prose th,
+.prose td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.prose th {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mut);
+  border-bottom-color: var(--line-2);
+}
+
+/* Code */
+.prose :not(pre) > code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--fg);
+}
+.prose pre {
+  position: relative;
+  margin-top: 1.4em;
+  padding: 18px 20px;
+  overflow-x: auto;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg);
+  tab-size: 2;
+}
+.prose pre code {
+  font-family: inherit;
+}
+/* Language label, e.g. "yaml", in the block's corner. */
+.prose pre[class*="language-"]::before {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.prose pre.language-yaml::before { content: "yaml"; }
+.prose pre.language-bash::before,
+.prose pre.language-sh::before,
+.prose pre.language-shell::before { content: "shell"; }
+.prose pre.language-ts::before,
+.prose pre.language-typescript::before { content: "ts"; }
+.prose pre.language-js::before,
+.prose pre.language-javascript::before { content: "js"; }
+.prose pre.language-json::before { content: "json"; }
+.prose pre.language-hcl::before { content: "hcl"; }
+.prose pre.language-python::before { content: "python"; }
+.prose pre.language-diff::before { content: "diff"; }
+
+/* Prism tokens mapped to the status palette. */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--dim);
+  font-style: italic;
+}
+.token.punctuation {
+  color: var(--mut);
+}
+.token.keyword,
+.token.atrule,
+.token.important,
+.token.selector {
+  color: var(--info);
+}
+.token.string,
+.token.char,
+.token.attr-value,
+.token.inserted {
+  color: var(--ok);
+}
+.token.number,
+.token.boolean,
+.token.constant,
+.token.symbol {
+  color: var(--warn);
+}
+.token.function,
+.token.class-name,
+.token.builtin {
+  color: var(--fg);
+  font-weight: 500;
+}
+.token.key,
+.token.property,
+.token.attr-name,
+.token.tag,
+.token.variable {
+  color: var(--info);
+}
+.token.operator,
+.token.entity,
+.token.url {
+  color: var(--fg-2);
+}
+.token.deleted {
+  color: var(--crit);
+}
+.token.regex {
+  color: var(--warn);
+}
+
+@media (max-width: 720px) {
+  .prose {
+    font-size: 16px;
+  }
+  .prose h2 {
+    font-size: 24px;
+  }
+  .prose pre {
+    font-size: 12.5px;
+    padding: 14px 16px;
+    margin-left: calc(-1 * var(--gutter));
+    margin-right: calc(-1 * var(--gutter));
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}

@@ -1,0 +1,5 @@
+# blog.sanjayhona.com.np — open to all well-behaved crawlers.
+User-agent: *
+Allow: /
+
+Sitemap: https://blog.sanjayhona.com.np/sitemap-index.xml
