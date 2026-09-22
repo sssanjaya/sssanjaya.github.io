@@ -5,7 +5,7 @@ import SiteFooter from "../components/SiteFooter.astro";
 import { site } from "../data/site.ts";
 ---
 
-<Base title={`404 — ${site.name}`} description="Page not found.">
+<Base title={`404 — ${site.name}`} description="Page not found." noindex>
   <div id="top"></div>
   <TopBar />
   <main id="main" class="wrap nf">
@@ -63,7 +63,7 @@ import { site } from "../data/site.ts";
   }
 </style>
 
-<script is:inline>
-  var p = document.getElementById("nf-path");
+<script>
+  const p = document.getElementById("nf-path");
   if (p) p.textContent = location.pathname;
 </script>

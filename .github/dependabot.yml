@@ -1,0 +1,21 @@
+# Version updates. Security updates are enabled separately in repo settings
+# and still open their own PRs immediately.
+version: 2
+updates:
+  # Keeps the SHA-pinned actions in .github/workflows current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # One grouped PR a month for minor/patch npm updates; majors come alone.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
