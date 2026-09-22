@@ -1,4 +1,4 @@
-# Build the blog (blog/) and deploy it to Cloudflare Pages at
+# Build the blog (blog/) and deploy it to Cloudflare Pages with Wrangler at
 # blog.sanjayhona.com.np. The main site deploys separately (static.yml).
 #
 # One-time setup (repo Settings > Secrets and variables > Actions):
@@ -64,13 +64,18 @@ jobs:
           else
             echo "::warning::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set. Built the blog, skipped the deploy."
           fi
+      # Wrangler runs straight from npm at a pinned version: no third-party
+      # action in the path, and the version is explicit and reviewable.
       - name: Deploy to Cloudflare Pages
         if: steps.cf.outputs.ready == 'true'
-        uses: cloudflare/wrangler-action@1fe0517c9eb0b72d7f3cb0aba71a3d7719487ea6 # v4.1.1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.136.3"
-          # Creates the Pages project on first run; "already exists" after that is fine.
-          preCommands: npx wrangler pages project create ${{ env.PROJECT }} --production-branch=main || true
-          command: pages deploy blog/dist --project-name=${{ env.PROJECT }} --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER: wrangler@4.136.3
+        run: |
+          if npx --yes "$WRANGLER" pages project list | grep -qw "$PROJECT"; then
+            echo "Pages project $PROJECT exists."
+          else
+            npx --yes "$WRANGLER" pages project create "$PROJECT" --production-branch=main
+          fi
+          npx --yes "$WRANGLER" pages deploy blog/dist --project-name="$PROJECT" --branch=main --commit-dirty=true
