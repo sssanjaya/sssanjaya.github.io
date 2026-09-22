@@ -24,3 +24,9 @@ vendor
 
 # serena mcp local cache
 .serena/
+
+# local env and editor state
+.env
+.env.*
+.vscode/
+.idea/

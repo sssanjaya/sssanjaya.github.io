@@ -28,8 +28,8 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
 - About 4 KB of client JavaScript: theme toggle, local clock, command palette
-- Hosted on GitHub Pages, deployed by GitHub Actions
-- No trackers, no cookies, no third-party requests at runtime
+- Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
+- No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 
 ## Edit the content
 
@@ -68,7 +68,7 @@ public/         favicon, OG image, CNAME, robots.txt, web manifest
 
 ## Deploy
 
-Every push to `main` runs [`.github/workflows/static.yml`](.github/workflows/static.yml), which builds the site and publishes `dist/` to GitHub Pages. The custom domain comes from [`public/CNAME`](public/CNAME).
+Every push to `main` runs [`.github/workflows/static.yml`](.github/workflows/static.yml), which builds the site and publishes `dist/` to GitHub Pages. The custom domain is set in the repo's Pages settings; [`public/CNAME`](public/CNAME) mirrors it. Cloudflare proxies the domain in front of Pages.
 
 A few values are set at build time and refresh on each deploy: the commit hash in the footer, the status page's "updated" date and quarter cells, and the terminal's `AGE` column.
 
@@ -76,8 +76,10 @@ To roll back, revert the commit on `main`. The next deploy publishes the previou
 
 ## Dependencies and security
 
-- Dependabot opens PRs for vulnerable npm packages. Run `npm audit` to check the current state locally.
-- The build output is plain static files. There is no backend, no secrets in the build, and no user input stored anywhere.
+- **Dependencies:** Dependabot security updates open PRs right away. Version updates come monthly, grouped: one PR for npm minor/patch bumps, one for GitHub Actions ([`.github/dependabot.yml`](.github/dependabot.yml)). Run `npm audit` for the current state.
+- **CI:** every action is pinned to a full commit SHA. `npm ci --ignore-scripts` means no dependency install scripts run. The build job's token is read-only, and only the deploy job can write to Pages.
+- **Content-Security-Policy:** set as a `<meta>` tag from [`astro.config.mjs`](astro.config.mjs). Astro hashes the bundled scripts; [`Base.astro`](src/layouts/Base.astro) computes the hash of its inline theme script at build time, so editing that script can't leave a stale hash. Headers a `<meta>` tag can't carry (`frame-ancestors`, `X-Frame-Options`, `Permissions-Policy`) belong in a Cloudflare response-header rule.
+- **Surface:** plain static files. No backend, no forms, no secrets in the build.
 
 ## Contact
 

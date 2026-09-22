@@ -10,6 +10,7 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "@fontsource/jetbrains-mono/700.css";
 
+import { createHash } from "node:crypto";
 import "../styles/global.css";
 import CommandPalette from "../components/CommandPalette.astro";
 import { site } from "../data/site.ts";
@@ -23,6 +24,8 @@ interface Props {
   type?: "website" | "article";
   /** Page-specific JSON-LD. Falls back to the Person + WebSite identity graph. */
   structuredData?: object;
+  /** Keep the page out of search results (404). Also drops canonical/og:url. */
+  noindex?: boolean;
 }
 
 const {
@@ -31,6 +34,7 @@ const {
   image = site.ogImage,
   type = "website",
   structuredData,
+  noindex = false,
 } = Astro.props;
 
 // Astro.site is set in astro.config.mjs, so these resolve to absolute URLs —
@@ -84,7 +88,25 @@ const identityGraph = {
     },
   ],
 };
-const jsonLd = structuredData ?? identityGraph;
+// Escape "<" so data can never close the <script> block early.
+const jsonLd = JSON.stringify(structuredData ?? identityGraph).replace(/</g, "\\u003c");
+
+// No-flash theme bootstrap: dark by default, stored "light" opts out.
+// It must run inline in <head>, so the CSP (astro.config.mjs) allows it by
+// hash. The hash is computed here from the exact bytes rendered, so editing
+// the script can never leave a stale hash behind.
+const themeBootstrap = `(function () {
+  try {
+    if (localStorage.getItem("theme") === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+      var tc = document.querySelector("#theme-color");
+      if (tc) tc.setAttribute("content", "#f4f5f7");
+    }
+  } catch (e) {}
+})();`;
+Astro.csp?.insertScriptHash(
+  `sha256-${createHash("sha256").update(themeBootstrap).digest("base64")}`,
+);
 ---
 
 <!doctype html>
@@ -97,9 +119,9 @@ const jsonLd = structuredData ?? identityGraph;
     <meta name="author" content={site.name} />
     <meta
       name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1"
+      content={noindex ? "noindex" : "index, follow, max-image-preview:large, max-snippet:-1"}
     />
-    <link rel="canonical" href={canonical} />
+    {!noindex && <link rel="canonical" href={canonical} />}
 
     <!-- Icons & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -110,7 +132,7 @@ const jsonLd = structuredData ?? identityGraph;
     <meta property="og:type" content={type} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:site_name" content={`${site.name} — Portfolio`} />
     <meta property="og:locale" content="en_CA" />
     <meta property="og:image" content={ogImageUrl} />
@@ -131,24 +153,14 @@ const jsonLd = structuredData ?? identityGraph;
     <script
       type="application/ld+json"
       is:inline
-      set:html={JSON.stringify(jsonLd)}
+      set:html={jsonLd}
     />
 
     <!-- Theme color tracks resolved theme; updated by the bootstrap script -->
     <meta name="theme-color" content="#080b10" id="theme-color" />
 
-    <!-- No-flash theme bootstrap: dark by default, stored "light" opts out. -->
-    <script is:inline>
-      (function () {
-        try {
-          if (localStorage.getItem("theme") === "light") {
-            document.documentElement.setAttribute("data-theme", "light");
-            var tc = document.querySelector("#theme-color");
-            if (tc) tc.setAttribute("content", "#f4f5f7");
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <!-- data-cfasync="false": Cloudflare Rocket Loader must not defer this. -->
+    <script is:inline data-cfasync="false" set:html={themeBootstrap} />
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
