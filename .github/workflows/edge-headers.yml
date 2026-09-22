@@ -1,0 +1,66 @@
+# Apply the main site's security headers as a Cloudflare Response Header
+# Transform Rule (GitHub Pages can't set headers). Source of truth:
+# infra/cloudflare/security-headers.mjs.
+#
+# One-time setup: repo secret CLOUDFLARE_ZONE_TOKEN, a token scoped to the
+# sanjayhona.com.np zone with Zone > Zone > Read and Zone > Transform Rules > Edit.
+# Kept separate from the Pages-only blog token so neither is broader than needed.
+name: Edge headers
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "infra/cloudflare/**"
+      - ".github/workflows/edge-headers.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-headers
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - name: Check credentials
+        id: cf
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_TOKEN }}
+        run: |
+          if [ -n "$CF_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::CLOUDFLARE_ZONE_TOKEN is not set. Skipped applying edge headers."
+          fi
+      - name: Apply header rule
+        if: steps.cf.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_ZONE_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_TOKEN }}
+          CF_ZONE_NAME: sanjayhona.com.np
+        run: node infra/cloudflare/security-headers.mjs
+      - name: Verify live headers
+        if: steps.cf.outputs.ready == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            h=$(curl -sSI "https://sanjayhona.com.np/?edge=$RANDOM" | tr -d '\r')
+            if echo "$h" | grep -qi '^x-frame-options: DENY' && echo "$h" | grep -qi "^content-security-policy: frame-ancestors 'none'" && echo "$h" | grep -qi '^permissions-policy:'; then
+              echo "$h" | grep -iE '^(x-frame-options|content-security-policy|permissions-policy|referrer-policy|x-content-type-options):'
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Headers not visible on https://sanjayhona.com.np after 2 minutes"
+          echo "$h"
+          exit 1
