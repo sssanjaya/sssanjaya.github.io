@@ -1,0 +1,179 @@
+---
+// ⌘K / "/" command palette. Behavior lives in src/scripts/console.ts.
+import { site } from "../data/site.ts";
+
+const linkedin = site.socials.find((s) => s.label === "LinkedIn");
+
+type Cmd = { group: string; label: string; hint: string; cmd: string; arg?: string; keywords?: string };
+const cmds: Cmd[] = [
+  ...site.nav.map((n) => ({ group: "navigate", label: `Go to ${n.label}`, hint: n.href.replace("/", ""), cmd: "goto", arg: n.href })),
+  { group: "actions", label: "Email Sanjay", hint: "mailto", cmd: "mail", arg: site.email, keywords: "contact page hire" },
+  { group: "actions", label: "Copy email address", hint: site.email, cmd: "copy", arg: site.email, keywords: "clipboard contact" },
+  ...(linkedin ? [{ group: "actions", label: "Open LinkedIn", hint: "↗", cmd: "open", arg: linkedin.href, keywords: "social profile" }] : []),
+  { group: "actions", label: "Toggle theme", hint: "dark / light", cmd: "theme", keywords: "mode color appearance" },
+];
+const groups = [...new Set(cmds.map((c) => c.group))];
+---
+
+<dialog class="palette" data-palette aria-label="Command palette">
+  <div class="card">
+    <label class="bar">
+      <span class="pr" aria-hidden="true">❯</span>
+      <span class="sr-only">Type a command</span>
+      <input
+        type="text"
+        placeholder="Type a command or section…"
+        autocomplete="off"
+        spellcheck="false"
+        role="combobox"
+        aria-expanded="true"
+        aria-controls="palette-list"
+      />
+      <kbd>esc</kbd>
+    </label>
+    <ul id="palette-list" role="listbox" aria-label="Commands">
+      {
+        groups.map((g) => (
+          <>
+            <li class="grp" role="presentation" data-grp={g}>{g}</li>
+            {cmds
+              .filter((c) => c.group === g)
+              .map((c, i) => (
+                <li role="presentation" data-in={g}>
+                  <button
+                    type="button"
+                    role="option"
+                    id={`cmd-${g}-${i}`}
+                    data-cmd={c.cmd}
+                    data-arg={c.arg}
+                    data-keywords={c.keywords}
+                  >
+                    <span class="lb">{c.label}</span>
+                    <span class="hn">{c.hint}</span>
+                  </button>
+                </li>
+              ))}
+          </>
+        ))
+      }
+      <li class="empty" data-empty hidden>no matching command · exit 127</li>
+    </ul>
+    <div class="foot" aria-hidden="true">
+      <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
+      <span><kbd>↵</kbd> run</span>
+      <span><kbd><span data-mod>⌘</span>K</kbd> toggle</span>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .palette {
+    margin: 12vh auto auto;
+    width: min(560px, calc(100vw - 32px));
+    max-height: 70vh;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+  }
+  .palette::backdrop {
+    background: rgba(4, 7, 11, 0.62);
+    backdrop-filter: blur(3px);
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line-2);
+    border-radius: 12px;
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh;
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pr {
+    color: var(--ok);
+    font-family: var(--mono);
+  }
+  input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 15px;
+  }
+  input::placeholder {
+    color: var(--dim);
+  }
+  ul {
+    list-style: none;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .grp {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding: 10px 10px 6px;
+  }
+  button {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+  }
+  button[aria-selected="true"] {
+    background: var(--ok-soft);
+    box-shadow: inset 2px 0 0 var(--ok);
+  }
+  .hn {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .empty {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--mut);
+    padding: 16px 10px;
+  }
+  .foot {
+    display: flex;
+    gap: 18px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--dim);
+  }
+  .foot kbd {
+    margin-right: 3px;
+  }
+  @media (max-width: 720px) {
+    .foot {
+      display: none;
+    }
+  }
+</style>

@@ -1,5 +1,7 @@
 ---
-// Short git hash baked in at build time for a quiet "tech" footer detail.
+// Footer as a build stamp: commit hash and deploy date baked in at build time.
+import { site } from "../data/site.ts";
+
 let hash = "";
 try {
   const { execSync } = await import("node:child_process");
@@ -7,13 +9,60 @@ try {
 } catch {
   hash = "";
 }
+const built = new Date();
+const stamp = built.toISOString().slice(0, 10);
 ---
 
 <footer class="site">
-  <div class="inner">
-    <span>© 2026 Sanjay Hona</span>
-    <span>
-      {hash ? <>build <span class="g">{hash}</span> · </> : null}astro · no trackers
+  <div class="wrap inner">
+    <span>© {built.getFullYear()} {site.name}</span>
+    <span class="build">
+      <span class="dot" aria-hidden="true"></span>
+      {hash ? <>build <span class="g">{hash}</span> · </> : null}deployed {stamp} · static · no trackers
     </span>
+    <a href="#top" class="top">back to top ↑</a>
   </div>
 </footer>
+
+<style>
+  footer.site {
+    margin-top: 120px;
+    border-top: 1px solid var(--line);
+  }
+  .inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    padding-top: 22px;
+    padding-bottom: 40px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .build {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .build .dot {
+    width: 6px;
+    height: 6px;
+  }
+  .g {
+    color: var(--ok);
+  }
+  .top:hover {
+    color: var(--fg);
+  }
+  @media (max-width: 720px) {
+    footer.site {
+      margin-top: 88px;
+    }
+    .inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

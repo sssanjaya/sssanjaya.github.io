@@ -1,6 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
-import Rail from "../components/Rail.astro";
+import TopBar from "../components/TopBar.astro";
+import Hero from "../components/Hero.astro";
+import Signals from "../components/Signals.astro";
+import Status from "../components/Status.astro";
 import Experience from "../components/Experience.astro";
 import Stack from "../components/Stack.astro";
 import About from "../components/About.astro";
@@ -9,22 +12,16 @@ import SiteFooter from "../components/SiteFooter.astro";
 ---
 
 <Base>
-  <div class="shell">
-    <Rail />
-    <main class="content">
-      <p class="lead">
-        I build and secure cloud platforms that <b>ship fast and stay up</b>.
-        Seven years across Kubernetes, Terraform, and hardened CI/CD — plus the
-        observability and automation that keep production reliable.
-        <span class="q">Reliability and security, I treat as
-          <span class="hl">the same job</span>.</span>
-      </p>
-
-      <Experience />
-      <Stack />
-      <About />
-      <Contact />
-      <SiteFooter />
-    </main>
-  </div>
+  <div id="top"></div>
+  <TopBar />
+  <main id="main">
+    <Hero />
+    <Signals />
+    <Status />
+    <Experience />
+    <Stack />
+    <About />
+    <Contact />
+  </main>
+  <SiteFooter />
 </Base>

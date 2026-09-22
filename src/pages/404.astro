@@ -1,39 +1,66 @@
 ---
 import Base from "../layouts/Base.astro";
-import Rail from "../components/Rail.astro";
+import TopBar from "../components/TopBar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import { site } from "../data/site.ts";
 ---
 
 <Base title={`404 — ${site.name}`} description="Page not found.">
-  <div class="shell">
-    <Rail />
-    <main class="content">
-      <div class="notfound">
-        <div class="nf-code mono"><span class="ix">404</span> — not found</div>
-        <p class="nf-cmd mono">
-          <span class="pr">$</span> cat <span id="nf-path">.</span><br />
-          <span class="er">zsh:</span> no such file or directory
-        </p>
-        <a class="more mono" href="/">→ cd ~</a>
-      </div>
-      <SiteFooter />
-    </main>
-  </div>
+  <div id="top"></div>
+  <TopBar />
+  <main id="main" class="wrap nf">
+    <p class="pill warn"><span class="dot warn" aria-hidden="true"></span> incident · route not found</p>
+    <h1>404</h1>
+    <p class="msg">This path isn't served here. No postmortem needed.</p>
+
+    <pre class="term panel"><span class="ps">❯</span> curl -sI {site.url.replace("https://", "")}<span id="nf-path">/…</span>
+<span class="er">HTTP/2 404</span>
+<span class="k">content-type:</span> text/html
+<span class="k">x-incident:</span>   route-not-found
+<span class="k">x-runbook:</span>    cd ~</pre>
+
+    <a class="btn primary" href="/">cd ~ <span class="arr" aria-hidden="true">→</span></a>
+  </main>
+  <SiteFooter />
 </Base>
 
 <style>
-  .notfound { padding: 80px 0 0; }
-  .nf-code { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-  .nf-code .ix { color: var(--mauve); }
-  .nf-cmd { margin-top: 20px; font-size: 14px; line-height: 1.9; color: var(--mut); }
-  .nf-cmd .pr { color: var(--green); }
-  .nf-cmd .er { color: var(--peach); }
-  .notfound .more {
-    font-family: var(--mono); font-size: 13px; color: var(--blue);
-    margin-top: 22px; display: inline-block; border-bottom: 1px solid transparent;
+  .nf {
+    padding-top: 96px;
   }
-  .notfound .more:hover { border-bottom-color: var(--blue); }
+  h1 {
+    margin-top: 24px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(88px, 16vw, 168px);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    color: var(--warn);
+  }
+  .msg {
+    margin-top: 16px;
+    font-size: 18px;
+    color: var(--mut);
+  }
+  .term {
+    margin: 32px 0;
+    max-width: 560px;
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--fg);
+    overflow-x: auto;
+  }
+  .ps {
+    color: var(--ok);
+  }
+  .er {
+    color: var(--crit);
+  }
+  .k {
+    color: var(--info);
+  }
 </style>
 
 <script is:inline>
