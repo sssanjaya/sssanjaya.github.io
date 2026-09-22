@@ -1,0 +1,18 @@
+---
+// Shared section header: "01 // kicker ────" rule, then title + subtitle.
+interface Props {
+  index: string;
+  kicker: string;
+  title: string;
+  id: string;
+}
+const { index, kicker, title, id } = Astro.props;
+---
+
+<div class="shead" aria-hidden="true">
+  <span class="idx">{index}</span>
+  <span>// {kicker}</span>
+  <span class="rule"></span>
+</div>
+<h2 class="stitle" id={id}>{title}</h2>
+{Astro.slots.has("default") ? <p class="ssub"><slot /></p> : null}

@@ -1,0 +1,289 @@
+---
+// Golden signals: Grafana-style stat panels. Each viz is drawn from real
+// numbers in site.ts (no invented series).
+import SectionHead from "./SectionHead.astro";
+import { site } from "../data/site.ts";
+
+interface Signal {
+  label: string;
+  value: string;
+  unit: string;
+  note: string;
+  viz: "years" | "fleet" | "delta" | "zero";
+  count?: number;
+  before?: { label: string; n: number };
+  after?: { label: string; n: number };
+}
+const signals = site.signals as readonly Signal[];
+
+const now = new Date().getFullYear();
+const years = Array.from({ length: now - site.opsStart + 1 }, (_, i) => site.opsStart + i);
+const pct = (n: number, max: number) => `${Math.max(2, (n / max) * 100).toFixed(1)}%`;
+---
+
+<section id="signals" class="section wrap" aria-labelledby="signals-title">
+  <SectionHead index="01" kicker="golden signals" title="Numbers from production" id="signals-title">
+    The results I can point to, from real systems and real on-call rotations.
+  </SectionHead>
+
+  <div class="grid sbody">
+    {
+      signals.map((s) => (
+        <article class="sig panel">
+          <header>
+            <h3>{s.label}</h3>
+            <span class="dot" aria-hidden="true" />
+          </header>
+          <p class="val">
+            <span class="n">{s.value}</span>
+            <span class="u">{s.unit}</span>
+          </p>
+
+          {s.viz === "years" && (
+            <div class="viz years" aria-hidden="true">
+              <div class="bars">
+                {years.map((y, i) => (
+                  <span style={`--h:${((i + 1) / years.length) * 100}%`} class={y === now ? "live" : ""} />
+                ))}
+              </div>
+              <div class="axis">
+                <span>{site.opsStart}</span>
+                <span>now</span>
+              </div>
+            </div>
+          )}
+
+          {s.viz === "fleet" && (
+            <div class="viz fleet" aria-hidden="true">
+              {Array.from({ length: s.count ?? 0 }, (_, i) => (
+                <span style={`--d:${((i * 37) % 23) * 0.17}s`} />
+              ))}
+            </div>
+          )}
+
+          {s.viz === "delta" && s.before && s.after && (
+            <div class="viz delta" aria-hidden="true">
+              <div class="row">
+                <span class="k">before</span>
+                <span class="track">
+                  <span class="fill was" style={`width:${pct(s.before.n, Math.max(s.before.n, s.after.n))}`} />
+                </span>
+                <span class="lv">{s.before.label}</span>
+              </div>
+              <div class="row">
+                <span class="k">after</span>
+                <span class="track">
+                  <span class="fill" style={`width:${pct(s.after.n, Math.max(s.before.n, s.after.n))}`} />
+                </span>
+                <span class="lv ok">{s.after.label}</span>
+              </div>
+            </div>
+          )}
+
+          {s.viz === "zero" && (
+            <div class="viz zero" aria-hidden="true">
+              {["crit", "high", "med", "low"].map((sev) => (
+                <span>
+                  <b>0</b>
+                  {sev}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <p class="note">{s.note}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .sig {
+    display: flex;
+    flex-direction: column;
+    padding: 18px 20px 18px;
+    min-height: 236px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .sig:hover {
+    border-color: var(--ok-line);
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mut);
+  }
+  .val {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .n {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 48px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--ok);
+    font-variant-numeric: tabular-nums;
+  }
+  .u {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--mut);
+  }
+  .viz {
+    margin-top: auto;
+    padding-top: 22px;
+  }
+  .note {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--dim);
+  }
+
+  /* years: rising bars, one per year */
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 44px;
+  }
+  .bars span {
+    flex: 1;
+    height: var(--h);
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(to top, var(--ok-soft), var(--ok-line));
+    border-top: 2px solid var(--ok);
+  }
+  .bars .live {
+    background: linear-gradient(to top, var(--ok-soft), var(--ok));
+  }
+  .axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+  }
+
+  /* fleet: one dot per device, each with its own heartbeat */
+  .fleet {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    gap: 7px 5px;
+  }
+  .fleet span {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--ok);
+    opacity: 0.35;
+    animation: hb 3.4s ease-in-out var(--d) infinite;
+  }
+  @keyframes hb {
+    0%, 70%, 100% { opacity: 0.35; }
+    78% { opacity: 1; box-shadow: 0 0 8px var(--ok); }
+  }
+
+  /* delta: before/after bars */
+  .delta {
+    display: grid;
+    gap: 9px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 48px 1fr 64px;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+  }
+  .row .k {
+    color: var(--dim);
+  }
+  .track {
+    height: 8px;
+    border-radius: 99px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .fill {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--ok);
+  }
+  .fill.was {
+    background: var(--line-2);
+  }
+  .lv {
+    color: var(--mut);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .lv.ok {
+    color: var(--ok);
+  }
+
+  /* zero: severity counters */
+  .zero {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .zero span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 0 7px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--panel-2);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+  }
+  .zero b {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ok);
+  }
+
+  @media (max-width: 980px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 620px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .sig {
+      min-height: 0;
+    }
+  }
+</style>

@@ -1,14 +1,158 @@
 ---
+// Contact as an escalation policy. Email is the primary pager.
+import SectionHead from "./SectionHead.astro";
 import { site } from "../data/site.ts";
+
+const linkedin = site.socials.find((s) => s.label === "LinkedIn");
 ---
 
-<section id="contact" class="contact">
-  <div class="slabel">
-    <span class="ix">#</span><span class="tx">Contact</span><span class="ln"></span>
+<section id="contact" class="section wrap" aria-labelledby="contact-title">
+  <SectionHead index="06" kicker="escalation policy" title="Contact" id="contact-title" />
+
+  <div class="page panel sbody">
+    <div class="lead">
+      <p class="pill">
+        <span class="dot pulse" aria-hidden="true"></span>
+        {site.available ? "on call · accepting pages" : "heads-down · replies may be slow"}
+      </p>
+      <p class="big">
+        Open to platform engineering, reliability, and security work.
+      </p>
+      <p class="small">The fastest way to reach me is email.</p>
+      <div class="cta">
+        <a class="btn primary" href={`mailto:${site.email}`}>Page me <span class="arr" aria-hidden="true">→</span></a>
+        <button class="btn" type="button" data-copy={site.email}>Copy email</button>
+      </div>
+    </div>
+
+    <ol class="policy" aria-label="Escalation levels">
+      <li>
+        <span class="lvl">L1</span>
+        <span class="ch">Email</span>
+        <a class="tgt" href={`mailto:${site.email}`}>{site.email}</a>
+        <span class="pill">primary</span>
+      </li>
+      {
+        linkedin && (
+          <li>
+            <span class="lvl">L2</span>
+            <span class="ch">LinkedIn</span>
+            <a class="tgt" href={linkedin.href} target="_blank" rel="noopener">
+              {linkedin.handle} <span aria-hidden="true">↗</span>
+            </a>
+            <span class="pill idle">fallback</span>
+          </li>
+        )
+      }
+      <li>
+        <span class="lvl">TZ</span>
+        <span class="ch">Location</span>
+        <span class="tgt plain">{site.location} · <span data-clock>--:--</span> <span data-tzlabel>{site.timezoneLabel}</span></span>
+        <span class="pill idle">local time</span>
+      </li>
+    </ol>
   </div>
-  <p>
-    Open to platform engineering, reliability, and security work. The fastest way
-    to reach me is email.
-  </p>
-  <a class="mail" href={`mailto:${site.email}`}>{site.email}</a>
 </section>
+
+<style>
+  .page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    overflow: hidden;
+    background:
+      radial-gradient(520px 260px at 0% 0%, var(--ok-soft), transparent 70%),
+      var(--panel);
+  }
+  .lead {
+    padding: 36px;
+  }
+  .big {
+    margin-top: 22px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(26px, 3.4vw, 36px);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    max-width: 20ch;
+  }
+  .small {
+    margin-top: 12px;
+    color: var(--mut);
+  }
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .policy {
+    list-style: none;
+    border-left: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .policy li {
+    display: grid;
+    grid-template-columns: 34px 78px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 28px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .policy li + li {
+    border-top: 1px solid var(--line);
+  }
+  .lvl {
+    color: var(--ok);
+    font-weight: 700;
+  }
+  .ch {
+    color: var(--dim);
+  }
+  .tgt {
+    color: var(--fg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  a.tgt:hover {
+    color: var(--ok);
+  }
+
+  @media (max-width: 880px) {
+    .page {
+      grid-template-columns: 1fr;
+    }
+    .lead {
+      padding: 24px 20px;
+    }
+    .policy {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .policy li {
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      grid-template-areas:
+        "lvl ch pill"
+        "lvl tgt tgt";
+      gap: 4px 12px;
+      padding: 16px 20px;
+    }
+    .lvl {
+      grid-area: lvl;
+    }
+    .ch {
+      grid-area: ch;
+    }
+    .tgt {
+      grid-area: tgt;
+    }
+    .policy .pill {
+      grid-area: pill;
+    }
+  }
+</style>

@@ -1,26 +1,247 @@
 ---
+// Stack as a platform topology: core layers top → bottom, with security and
+// observability as cross-cutting bands wired into every layer.
+import SectionHead from "./SectionHead.astro";
 import { site } from "../data/site.ts";
+
+type Layer = { key: string; label: string; sub: string; place: string; flow?: string; items: readonly string[] };
+const layers = site.stack as readonly Layer[];
+const core = layers.filter((l) => l.place === "core");
+const left = layers.find((l) => l.place === "left");
+const right = layers.find((l) => l.place === "right");
 ---
 
-<section id="stack">
-  <div class="slabel">
-    <span class="ix">#</span><span class="tx">Stack</span><span class="ln"></span>
-  </div>
-  <div class="stack">
-    {
-      site.stack.map((s) => (
-        <div class="srow">
-          <span class="k">{s.key}</span>
-          <span class="v">
-            {s.items.map((it, i) => (
-              <>
-                {i > 0 ? <span class="d">·</span> : null}
-                {it}
-              </>
-            ))}
-          </span>
-        </div>
-      ))
-    }
+<section id="stack" class="section wrap" aria-labelledby="stack-title">
+  <SectionHead index="04" kicker="topology" title="Platform stack" id="stack-title">
+    What I run, drawn the way it runs: delivery on top of runtime on top of
+    cloud, with security and observability wired through every layer.
+  </SectionHead>
+
+  <div class="topo panel sbody">
+    <div class="tb" aria-hidden="true">
+      <span>platform.topology</span>
+      <span class="lg"><i class="solid"></i> core path <i class="dash"></i> cross-cutting</span>
+    </div>
+
+    <div class="graph">
+      {
+        left && (
+          <div class="band left">
+            <h3>{left.label}</h3>
+            <span class="bsub">{left.sub}</span>
+            <ul>{left.items.map((it) => <li class="chip">{it}</li>)}</ul>
+          </div>
+        )
+      }
+
+      <ol class="core">
+        {
+          core.map((l, i) => (
+            <li class="layer">
+              <div class="lh">
+                <h3>{l.label}</h3>
+                <span class="lsub">{l.sub}</span>
+                <span class="key" aria-hidden="true">{l.key}</span>
+              </div>
+              <ul>{l.items.map((it) => <li class="chip">{it}</li>)}</ul>
+              {i < core.length - 1 && l.flow ? (
+                <span class="flow" aria-hidden="true">
+                  <span>{l.flow}</span>
+                </span>
+              ) : null}
+            </li>
+          ))
+        }
+      </ol>
+
+      {
+        right && (
+          <div class="band right">
+            <h3>{right.label}</h3>
+            <span class="bsub">{right.sub}</span>
+            <ul>{right.items.map((it) => <li class="chip">{it}</li>)}</ul>
+          </div>
+        )
+      }
+    </div>
   </div>
 </section>
+
+<style>
+  .topo {
+    overflow: hidden;
+  }
+  .tb {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .lg {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lg i {
+    display: inline-block;
+    width: 18px;
+    border-top: 2px solid var(--ok);
+  }
+  .lg .dash {
+    margin-left: 10px;
+    border-top: 2px dashed var(--info);
+  }
+
+  .graph {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr) 210px;
+    gap: 28px;
+    padding: 28px;
+    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+  }
+  ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .band {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px;
+    border: 1.5px dashed color-mix(in srgb, var(--info) 50%, transparent);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--panel) 88%, var(--info) 4%);
+  }
+  .band h3 {
+    color: var(--info);
+  }
+  .bsub {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--dim);
+  }
+  .band ul {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 14px;
+  }
+
+  .core {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+  .layer {
+    position: relative;
+    padding: 18px 20px 20px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--panel);
+    box-shadow: inset 3px 0 0 var(--ok);
+  }
+  /* dashed wires from each core layer out to both cross-cutting bands */
+  .layer::before,
+  .layer::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 28px;
+    border-top: 1.5px dashed color-mix(in srgb, var(--info) 55%, transparent);
+  }
+  .layer::before {
+    right: 100%;
+  }
+  .layer::after {
+    left: 100%;
+  }
+  .lh {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-bottom: 14px;
+  }
+  .lsub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--mut);
+  }
+  .key {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .flow {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    border-left: 2px solid var(--ok);
+    transform: translateX(-1px);
+  }
+  .flow::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -6px;
+    border: 5px solid transparent;
+    border-top: 6px solid var(--ok);
+    border-bottom: 0;
+  }
+  .flow span {
+    margin-left: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ok);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 980px) {
+    .graph {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+    .core {
+      order: -1;
+    }
+    .layer::before,
+    .layer::after {
+      display: none;
+    }
+    .band ul {
+      flex-direction: row;
+    }
+  }
+  @media (max-width: 720px) {
+    .graph {
+      padding: 16px;
+    }
+    .lg {
+      display: none;
+    }
+    .key {
+      display: none;
+    }
+  }
+</style>

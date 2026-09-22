@@ -1,0 +1,245 @@
+---
+// Status page: each discipline tracked like a service, one cell per quarter
+// from careerStart to the build date. Cells before `since` are "no data".
+import SectionHead from "./SectionHead.astro";
+import { site } from "../data/site.ts";
+
+const built = new Date();
+const nowY = built.getFullYear();
+const nowQ = Math.floor(built.getMonth() / 3) + 1;
+
+const quarters: { y: number; q: number }[] = [];
+for (let y = site.careerStart; y <= nowY; y++) {
+  for (let q = 1; q <= 4 && (y < nowY || q <= nowQ); q++) quarters.push({ y, q });
+}
+// Axis labels: one per year, spanning that year's quarters (the current
+// year may be partial, so the span must not run past the grid).
+const years = [...new Set(quarters.map((c) => c.y))].map((y) => ({
+  y,
+  start: quarters.findIndex((c) => c.y === y) + 1,
+  span: quarters.filter((c) => c.y === y).length,
+}));
+
+const allOk = site.status.every((s) => s.state === "operational");
+const age = (since: number) => (nowY - since > 0 ? `${nowY - since}y` : "new");
+const stamp = built.toISOString().slice(0, 10);
+---
+
+<section id="status" class="section wrap" aria-labelledby="status-title">
+  <SectionHead index="02" kicker="status page" title="Service status" id="status-title">
+    Every discipline I run, tracked like a service. One cell per quarter
+    since {site.careerStart}.
+  </SectionHead>
+
+  <div class="board panel sbody">
+    <div class="banner">
+      <span class="dot pulse" aria-hidden="true"></span>
+      <strong>{allOk ? "All systems operational" : "Operational, one rollout in progress"}</strong>
+      <span class="upd">updated {stamp}</span>
+    </div>
+
+    <ul class="rows" style={`--n:${quarters.length}`}>
+      {
+        site.status.map((s) => {
+          const canary = s.state === "canary";
+          return (
+            <li class="srow">
+              <div class="meta">
+                <span class="name">{s.name}</span>
+                <span class="since">since {s.since} · {age(s.since)}</span>
+              </div>
+              <div class="cells" role="img" aria-label={`${s.name}: in production since ${s.since}`}>
+                {quarters.map((c) => (
+                  <span
+                    class={c.y >= s.since ? (canary ? "c warn" : "c on") : "c"}
+                    title={`${c.y} Q${c.q}`}
+                  />
+                ))}
+              </div>
+              <span class={`pill ${canary ? "warn" : ""}`}>
+                <span class={`dot ${canary ? "warn" : ""}`} aria-hidden="true" />
+                {canary ? "canary" : "operational"}
+              </span>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    <div class="foot">
+      <div class="axis" style={`--n:${quarters.length}`} aria-hidden="true">
+        {
+          years.map((a, i) => (
+            <span class={i % 2 ? "odd" : ""} style={`grid-column:${a.start} / span ${a.span}`}>
+              {a.y === nowY ? "now" : a.y}
+            </span>
+          ))
+        }
+      </div>
+      <ul class="legend">
+        <li><span class="c on"></span> in production</li>
+        <li><span class="c warn"></span> canary · learning</li>
+        <li><span class="c"></span> no data</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .board {
+    padding: 0;
+    overflow: hidden;
+  }
+  .banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(90deg, var(--ok-soft), transparent 60%);
+  }
+  .banner strong {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .upd {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .rows {
+    list-style: none;
+  }
+  .srow {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr) 128px;
+    align-items: center;
+    gap: 22px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .since {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--dim);
+  }
+  .cells {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 2px;
+    height: 30px;
+  }
+  .c {
+    display: block;
+    border-radius: 2px;
+    background: var(--line);
+  }
+  .c.on {
+    background: var(--ok);
+    opacity: 0.85;
+  }
+  .c.warn {
+    background: var(--warn);
+    opacity: 0.9;
+  }
+  .cells .c:hover {
+    opacity: 1;
+    outline: 1px solid var(--fg);
+  }
+  .srow .pill {
+    justify-self: end;
+  }
+  .srow .pill .dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .foot {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr) 128px;
+    gap: 22px;
+    padding: 12px 22px 16px;
+  }
+  .axis {
+    grid-column: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+  .legend {
+    grid-column: 1;
+    grid-row: 1;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend .c {
+    width: 10px;
+    height: 10px;
+  }
+
+  @media (max-width: 880px) {
+    .srow {
+      grid-template-columns: 1fr auto;
+      gap: 10px 12px;
+      padding: 16px;
+    }
+    .cells {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      height: 26px;
+      gap: 1.5px;
+    }
+    .banner {
+      padding: 16px;
+      flex-wrap: wrap;
+    }
+    .upd {
+      margin-left: 0;
+      width: 100%;
+      padding-left: 20px;
+    }
+    .foot {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 12px 16px 16px;
+    }
+    .axis {
+      grid-column: 1;
+    }
+    .axis .odd {
+      visibility: hidden;
+    }
+    .legend {
+      grid-row: auto;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+    }
+  }
+</style>

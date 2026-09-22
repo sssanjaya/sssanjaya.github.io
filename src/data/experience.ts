@@ -9,6 +9,8 @@ export interface Role {
   title: string;
   company: string;
   blurb: string;
+  /** Headline numbers from the blurb, shown as metric chips. Optional. */
+  impact?: string[];
   tags: string[];
 }
 
@@ -32,6 +34,7 @@ export const experience: Role[] = [
       "failures 15%. Led the company-wide Terraform migration — env setup from " +
       "3+ days to under 2 hours — and stood up ELK/Prometheus/Grafana that took " +
       "30% off MTTR. Passed a critical security audit with zero findings.",
+    impact: ["−15% deploy failures", "3+ days → <2 h env setup", "−30% MTTR", "0 audit findings"],
     tags: ["AWS EKS", "Terraform", "ArgoCD", "Prometheus", "Security Audit"],
   },
   {
@@ -43,6 +46,7 @@ export const experience: Role[] = [
       "standardized CI/CD across 10+ microservices — deployment errors down " +
       "35%, release frequency tripled. Built proactive security monitoring " +
       "with Prometheus and AWS CloudTrail.",
+    impact: ["−35% deployment errors", "3× release frequency", "10+ services on one CI/CD"],
     tags: ["Terraform", "GitLab CI", "CloudTrail"],
   },
   {
@@ -54,6 +58,7 @@ export const experience: Role[] = [
       "IoT traffic spike; built a real-time layer with Spring Boot and " +
       "WebSockets delivering sub-second fleet telemetry. Earlier, shipped " +
       "data-driven Java/JSP web apps on Nginx and Tomcat.",
+    impact: ["200% IoT traffic spike absorbed", "sub-second telemetry"],
     tags: ["Docker", "Spring Boot", "Node.js", "Java"],
   },
 ];

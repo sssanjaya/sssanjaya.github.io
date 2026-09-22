@@ -1,20 +1,23 @@
 // ─────────────────────────────────────────────────────────────────────────
-// Single source of truth for identity, contact, stats, and the "Currently"
-// block. Edit this file to update the site — no component changes needed.
+// Single source of truth for identity, contact, signals, status rows, stack
+// topology, and the "Currently" block. Edit this file to update the site —
+// no component changes needed.
 // ─────────────────────────────────────────────────────────────────────────
 
 export const site = {
   name: "Sanjay Hona",
-  shortName: "S. Hona",
-  role: "DevOps / SRE Engineer",
+  handle: "sanjay-hona",
   currentTitle: "Site Reliability Engineer",
   currentCompany: "EdgeSignal",
   location: "Ottawa, Canada",
+  // Decorative "region" shown in the console breadcrumb and terminal.
+  region: "ca-ottawa-1",
   timezone: "America/Toronto",
-  timezoneLabel: "EDT",
+  // Fallback label before the client-side clock resolves EDT/EST.
+  timezoneLabel: "ET",
   email: "devops@sanjayhona.com.np",
   available: true,
-  availableLabel: "Available",
+  availableLabel: "open to new roles",
 
   // Canonical production origin (no trailing slash). Used for OG/JSON-LD.
   url: "https://sanjayhona.com.np",
@@ -23,60 +26,126 @@ export const site = {
   jobTitle: "Site Reliability Engineer",
 
   // Tight ≤160-char snippet for <meta name="description"> & social cards.
-  // The longer `lede` below is on-page hero copy, not the search snippet.
   metaDescription:
     "Sanjay Hona — DevOps, DevSecOps & SRE engineer in Ottawa. 7+ years " +
     "building secure, reliable cloud platforms on Kubernetes and Terraform.",
 
-  // One-line lede shown under the hero headline.
-  lede:
-    "DevOps & Site Reliability engineer. For seven years I've built cloud " +
-    "infrastructure that ships fast and stays up — Kubernetes platforms, " +
-    "Terraform everywhere, and a fleet of 40+ edge devices running in the " +
-    "field. Boring deploys are a feature.",
-
   socials: [
-    { label: "LinkedIn", href: "https://linkedin.com/in/sanjayhona" },
-    { label: "Email", href: "mailto:devops@sanjayhona.com.np" },
+    { label: "LinkedIn", handle: "/in/sanjayhona", href: "https://linkedin.com/in/sanjayhona" },
+    { label: "Email", handle: "devops@sanjayhona.com.np", href: "mailto:devops@sanjayhona.com.np" },
   ],
 
-  // Identity rail — disciplines shown next to the name; AIOps is in-progress.
+  // Disciplines shown under the name; AIOps is in-progress.
   disciplines: ["DevOps", "DevSecOps", "SRE"],
   learning: "AIOps",
   yearsLabel: "7+ years",
+  // First year in production. Drives the status-page history bars.
+  careerStart: 2016,
+  // First year in DevOps. Drives the "years" signal and the terminal AGE.
+  opsStart: 2019,
 
-  // In-page section nav.
+  // In-page section nav (top bar + command palette).
   nav: [
+    { label: "signals", href: "/#signals" },
+    { label: "status", href: "/#status" },
     { label: "experience", href: "/#experience" },
     { label: "stack", href: "/#stack" },
     { label: "about", href: "/#about" },
     { label: "contact", href: "/#contact" },
   ],
 
-  // Stack table — rendered as key/value "syntax" rows.
+  // Golden-signal panels — career numbers from the resume.
+  //   viz "years": one cell per year since opsStart
+  //   viz "fleet": one dot per device (count)
+  //   viz "delta": before/after bars, widths scaled to the larger value
+  //   viz "zero":  severity counters, all zero
+  signals: [
+    {
+      label: "Time in production",
+      value: "7+",
+      unit: "years",
+      note: "DevOps → DevSecOps → SRE, since 2019",
+      viz: "years",
+    },
+    {
+      label: "Edge fleet operated",
+      value: "40+",
+      unit: "devices",
+      note: "Running in the field, watched remotely",
+      viz: "fleet",
+      count: 40,
+    },
+    {
+      label: "Incident resolution",
+      value: "−30%",
+      unit: "MTTR",
+      note: "ELK + Prometheus + Grafana · BeyondID",
+      viz: "delta",
+      before: { label: "baseline", n: 100 },
+      after: { label: "−30%", n: 70 },
+    },
+    {
+      label: "Release frequency",
+      value: "3×",
+      unit: "more releases",
+      note: "Standard CI/CD over 10+ services · Innovate Tech",
+      viz: "delta",
+      before: { label: "1×", n: 1 },
+      after: { label: "3×", n: 3 },
+    },
+    {
+      label: "Environment setup",
+      value: "<2h",
+      unit: "was 3+ days",
+      note: "Company-wide Terraform migration · BeyondID",
+      viz: "delta",
+      before: { label: "3+ days", n: 72 },
+      after: { label: "< 2 h", n: 2 },
+    },
+    {
+      label: "Critical security audit",
+      value: "0",
+      unit: "findings",
+      note: "Passed clean · BeyondID",
+      viz: "zero",
+    },
+  ],
+
+  // Status-page rows. `since` is the first year in production for that
+  // discipline; cells before it render as "no data".
+  status: [
+    { name: "Software engineering", since: 2016, state: "operational" },
+    { name: "DevOps", since: 2019, state: "operational" },
+    { name: "DevSecOps", since: 2021, state: "operational" },
+    { name: "SRE", since: 2025, state: "operational" },
+    { name: "AIOps", since: 2026, state: "canary" },
+  ],
+
+  // Stack topology. `place`: "core" layers stack top → bottom in order, and
+  // `flow` labels the arrow down to the next layer; "left"/"right" are
+  // cross-cutting bands on either side.
   stack: [
-    { key: "cloud", items: ["AWS", "Azure"] },
-    { key: "orchestration", items: ["Kubernetes", "Docker", "Helm", "ArgoCD"] },
-    { key: "iac_cicd", items: ["Terraform", "GitLab CI", "GitHub Actions"] },
-    { key: "observability", items: ["Datadog", "Prometheus", "Grafana", "ELK"] },
-    { key: "security", items: ["CloudTrail", "audits", "least-privilege", "supply-chain"] },
+    { key: "iac_cicd", label: "Delivery", sub: "IaC · CI/CD", place: "core", flow: "deploys to", items: ["Terraform", "GitLab CI", "GitHub Actions", "ArgoCD"] },
+    { key: "orchestration", label: "Runtime", sub: "Orchestration", place: "core", flow: "runs on", items: ["Kubernetes", "Docker", "Helm"] },
+    { key: "cloud", label: "Infrastructure", sub: "Cloud", place: "core", items: ["AWS", "Azure"] },
+    { key: "security", label: "Security", sub: "cross-cutting", place: "left", items: ["CloudTrail", "audits", "least-privilege", "supply-chain"] },
+    { key: "observability", label: "Observability", sub: "cross-cutting", place: "right", items: ["Datadog", "Prometheus", "Grafana", "ELK"] },
   ],
 
-  // Hero stat row — career highlights drawn from the resume.
-  stats: [
-    { value: "7+", label: "Years in production" },
-    { value: "40+", label: "Edge devices operated" },
-    { value: "−30%", label: "Incident resolution time" },
-    { value: "3×", label: "Release frequency" },
+  // Operating principles — pulled from my own copy elsewhere on the site.
+  principles: [
+    "Boring deploys are a feature.",
+    "Reliability and security are the same job.",
+    "The best infrastructure is the kind nobody notices.",
   ],
 
-  // "Currently" — the learning-in-public block. Update freely; keep it honest.
+  // "Currently" — rendered as `kubectl describe` in the hero. Keep it honest.
   currently: [
     { key: "Role", value: "SRE · EdgeSignal" },
     { key: "Focus", value: "AWS · K8s · Terraform" },
     { key: "Learning", value: "CKA · in progress" },
     { key: "Reading", value: "Designing Data-Intensive Apps" },
-    { key: "Practicing", value: "Vim — mastery goal 2027" },
+    { key: "Practicing", value: "Vim · mastery goal 2027" },
   ],
 } as const;
 

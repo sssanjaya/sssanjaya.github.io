@@ -1,20 +1,125 @@
 ---
-// Static prose — emphasis is meaningful, so it stays inline here.
+// About as a README, with operating principles in a runbook card.
+// Prose stays inline here because the emphasis is meaningful.
+import SectionHead from "./SectionHead.astro";
+import { site } from "../data/site.ts";
 ---
 
-<section id="about" class="about">
-  <div class="slabel">
-    <span class="ix">#</span><span class="tx">About</span><span class="ln"></span>
+<section id="about" class="section wrap" aria-labelledby="about-title">
+  <SectionHead index="05" kicker="README.md" title="About" id="about-title" />
+
+  <div class="grid sbody">
+    <div class="prose">
+      <p>
+        My path started in Kathmandu and runs through seven years of production
+        systems: Java services first, then containers, then whole platforms on AWS
+        and Azure. The thread: <b>the best infrastructure is the kind nobody notices,
+        and the most secure is the kind an attacker never gets a foothold in.</b>
+      </p>
+      <p>
+        Off the clock I run a three-node Kubernetes homelab, practice Vim, and I'm
+        working through <b>AIOps</b>: anomaly detection and automated remediation on
+        top of the observability I already run.
+      </p>
+    </div>
+
+    <aside class="runbook panel" aria-labelledby="principles-title">
+      <div class="rh">
+        <h3 id="principles-title">Operating principles</h3>
+        <span class="file" aria-hidden="true">runbook.md</span>
+      </div>
+      <ol>
+        {
+          site.principles.map((p, i) => (
+            <li>
+              <span class="id" aria-hidden="true">SLO-{i + 1}</span>
+              <span>{p}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </aside>
   </div>
-  <p>
-    My path started in Kathmandu and runs through seven years of production
-    systems — Java services first, then containers, then whole platforms on AWS
-    and Azure. The thread: <b>the best infrastructure is the kind nobody notices,
-    and the most secure is the kind an attacker never gets a foothold in.</b>
-  </p>
-  <p>
-    Off the clock I run a three-node Kubernetes homelab, practice Vim, and I'm
-    working through <b>AIOps</b> — anomaly detection and automated remediation on
-    top of the observability I already run.
-  </p>
 </section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  .prose p {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--mut);
+    max-width: 62ch;
+  }
+  .prose p + p {
+    margin-top: 18px;
+  }
+  .prose b {
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  .runbook {
+    overflow: hidden;
+  }
+  .rh {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mut);
+  }
+  .file {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--dim);
+  }
+  ol {
+    list-style: none;
+  }
+  li {
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 16px 20px;
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+  li + li {
+    border-top: 1px dashed var(--line);
+  }
+  .id {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ok);
+  }
+
+  @media (max-width: 880px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    .prose p {
+      font-size: 16px;
+    }
+  }
+</style>

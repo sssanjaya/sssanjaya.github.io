@@ -1,0 +1,368 @@
+---
+// Hero: identity + pitch on the left, a `kubectl` terminal on the right that
+// renders the "Currently" block. The typing/reveal is CSS-only, so the text
+// is in the HTML for crawlers and no-JS readers.
+import { site } from "../data/site.ts";
+
+const linkedin = site.socials.find((s) => s.label === "LinkedIn");
+const age = `${new Date().getFullYear() - site.opsStart}y`;
+const pad = (s: string, n: number) => s.padEnd(n, " ");
+
+type Line = { kind: "cmd" | "out" | "head" | "kv" | "gap"; text?: string; k?: string; v?: string };
+const lines: Line[] = [
+  { kind: "cmd", text: "kubectl get engineer" },
+  { kind: "head", text: `${pad("NAME", 14)}${pad("READY", 8)}${pad("STATUS", 10)}${pad("RESTARTS", 11)}AGE` },
+  { kind: "out", text: `${pad(site.handle, 14)}${pad("1/1", 8)}${pad("Running", 10)}${pad("0", 11)}${age}` },
+  { kind: "gap" },
+  { kind: "cmd", text: `kubectl describe engineer ${site.handle}` },
+  { kind: "kv", k: "Location", v: site.location },
+  ...site.currently.map((c) => ({ kind: "kv" as const, k: c.key, v: c.value })),
+  { kind: "kv", k: "Events", v: "" },
+  { kind: "out", text: `  Normal  ${site.available ? "Available" : "Heads-down"}  ${site.available ? site.availableLabel : "not looking right now"}` },
+];
+
+// Build a simple timeline: commands "type" at ~28ms/char, output lines pop in.
+let t = 400;
+const timed = lines.map((l) => {
+  const n = l.kind === "cmd" ? l.text!.length : 0;
+  const at = t;
+  const dur = n * 28;
+  t += l.kind === "cmd" ? dur + 260 : 70;
+  return { ...l, n, at, dur };
+});
+const cursorAt = t + 100;
+---
+
+<section class="hero wrap" aria-labelledby="hero-name">
+  <div class="copy">
+    <p class="pill status">
+      <span class="dot pulse" aria-hidden="true"></span>
+      all systems operational
+      {site.available ? <span class="sep">· {site.availableLabel}</span> : null}
+    </p>
+
+    <h1 id="hero-name">{site.name}<span class="cur" aria-hidden="true"></span></h1>
+    <p class="role">
+      {site.currentTitle} <span class="at">@ {site.currentCompany}</span>
+    </p>
+
+    <ul class="disc" aria-label="Disciplines">
+      {site.disciplines.map((d) => <li class="chip"><span class="dot" aria-hidden="true"></span>{d}</li>)}
+      <li class="chip learning"><span class="dot warn" aria-hidden="true"></span>{site.learning} <span class="dimtxt">· learning</span></li>
+    </ul>
+
+    <p class="lede">
+      I build and secure cloud platforms that <b>ship fast and stay up</b>.
+      Seven years across Kubernetes, Terraform, and hardened CI/CD, plus the
+      observability and automation that keep production reliable.{" "}
+      <span class="q">Reliability and security, I treat as <span class="hl">the same job</span>.</span>
+    </p>
+
+    <div class="cta">
+      <a class="btn primary" href={`mailto:${site.email}`}>Page me <span class="arr" aria-hidden="true">→</span></a>
+      {linkedin ? <a class="btn" href={linkedin.href} target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a> : null}
+      <span class="hint" aria-hidden="true">or press <kbd>/</kbd> for commands</span>
+    </div>
+  </div>
+
+  <figure class="term panel" aria-label="Terminal showing what Sanjay is working on now">
+    <div class="tbar" aria-hidden="true">
+      <span class="lights"><i></i><i></i><i></i></span>
+      <span class="ttl">{site.handle}@prod: ~</span>
+      <span class="ctx">ctx: {site.region}</span>
+    </div>
+    <pre class="screen">{
+      timed.map((l) =>
+        l.kind === "gap" ? (
+          <span class="ln gap" style={`--d:${l.at}ms`} />
+        ) : l.kind === "cmd" ? (
+          <span class="ln"><span class="ps">❯ </span><span class="typed" style={`--d:${l.at}ms;--t:${l.dur}ms;--n:${l.n}`}>{l.text}</span></span>
+        ) : l.kind === "kv" ? (
+          <span class="ln show" style={`--d:${l.at}ms`}><span class="k">{pad(`${l.k}:`, 13)}</span><span class="v">{l.v}</span></span>
+        ) : (
+          <span class={`ln show ${l.kind}`} style={`--d:${l.at}ms`}>{l.text}</span>
+        ),
+      )
+    }<span class="ln show" style={`--d:${cursorAt}ms`}><span class="ps">❯ </span><span class="caret" aria-hidden="true"></span></span></pre>
+  </figure>
+</section>
+
+<div class="beat" aria-hidden="true">
+  <svg viewBox="0 0 1200 48" preserveAspectRatio="none">
+    <path
+      class="base"
+      d="M0 24H260l10-14 12 30 10-22 8 6H560l10-14 12 30 10-22 8 6H860l10-14 12 30 10-22 8 6H1200"
+      pathLength="1000"></path>
+    <path
+      class="trace"
+      d="M0 24H260l10-14 12 30 10-22 8 6H560l10-14 12 30 10-22 8 6H860l10-14 12 30 10-22 8 6H1200"
+      pathLength="1000"></path>
+  </svg>
+</div>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    gap: 56px;
+    align-items: center;
+    padding-top: 88px;
+    padding-bottom: 40px;
+  }
+
+  .status {
+    margin-bottom: 28px;
+  }
+  .status .sep {
+    color: var(--fg-2);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(48px, 7.4vw, 92px);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+  }
+  .cur {
+    display: inline-block;
+    width: 0.09em;
+    height: 0.78em;
+    margin-left: 0.08em;
+    background: var(--ok);
+    vertical-align: -0.02em;
+    animation: blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .role {
+    margin-top: 18px;
+    font-family: var(--display);
+    font-size: clamp(19px, 2.2vw, 24px);
+    font-weight: 500;
+    color: var(--fg-2);
+    letter-spacing: -0.01em;
+  }
+  .role .at {
+    color: var(--ok);
+  }
+
+  .disc {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+  }
+  .disc .dot {
+    width: 6px;
+    height: 6px;
+  }
+  .disc .learning {
+    border-style: dashed;
+  }
+  .dimtxt {
+    color: var(--dim);
+  }
+
+  .lede {
+    margin-top: 26px;
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--fg-2);
+    max-width: 54ch;
+  }
+  .lede b {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .lede .q {
+    color: var(--mut);
+  }
+  .lede .hl {
+    color: var(--ok);
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 12px;
+    margin-top: 32px;
+  }
+  .hint {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    margin-left: 6px;
+  }
+
+  /* terminal */
+  .term {
+    overflow: hidden;
+    border-color: var(--line-2);
+  }
+  .tbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .lights {
+    display: flex;
+    gap: 6px;
+  }
+  .lights i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--line-2);
+  }
+  .lights i:first-child {
+    background: var(--crit);
+    opacity: 0.8;
+  }
+  .lights i:nth-child(2) {
+    background: var(--warn);
+    opacity: 0.8;
+  }
+  .lights i:nth-child(3) {
+    background: var(--ok);
+    opacity: 0.8;
+  }
+  .ttl {
+    color: var(--mut);
+  }
+  .ctx {
+    margin-left: auto;
+  }
+  .screen {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--fg-2);
+    padding: 18px 20px 22px;
+    overflow-x: auto;
+  }
+  .ln {
+    display: block;
+  }
+  .ps {
+    color: var(--ok);
+  }
+  .typed {
+    display: inline-block;
+    vertical-align: bottom;
+    overflow: hidden;
+    white-space: pre;
+    color: var(--fg);
+    width: calc(var(--n) * 1ch);
+    animation: type var(--t) steps(var(--n)) var(--d) both;
+  }
+  @keyframes type {
+    from { width: 0; }
+  }
+  .show {
+    animation: show 0.01s var(--d) both;
+  }
+  .gap {
+    height: 1.75em;
+  }
+  @keyframes show {
+    from { visibility: hidden; }
+  }
+  .head {
+    color: var(--dim);
+  }
+  .out {
+    color: var(--fg);
+  }
+  .k {
+    color: var(--info);
+  }
+  .v {
+    color: var(--fg);
+  }
+  .caret {
+    display: inline-block;
+    width: 0.6em;
+    height: 1.1em;
+    vertical-align: -0.2em;
+    background: var(--ok);
+    animation: blink 1.1s steps(1) infinite;
+  }
+
+  /* heartbeat divider */
+  .beat {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+    height: 48px;
+  }
+  .beat svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .beat path {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .beat .base {
+    stroke: var(--line-2);
+  }
+  .beat .trace {
+    stroke: var(--ok);
+    stroke-dasharray: 90 1000;
+    stroke-dashoffset: 1090;
+    filter: drop-shadow(0 0 4px var(--ok));
+    animation: trace 4.2s linear infinite;
+  }
+  @keyframes trace {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @media (max-width: 980px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 48px;
+      padding-top: 56px;
+    }
+  }
+  @media (max-width: 720px) {
+    .hero {
+      padding-top: 40px;
+    }
+    .lede {
+      font-size: 16.5px;
+    }
+    .screen {
+      font-size: 11.5px;
+      padding: 14px 14px 18px;
+    }
+    .ctx {
+      display: none;
+    }
+  }
+  @media (hover: none) {
+    .hint {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .beat .trace {
+      display: none;
+    }
+  }
+</style>
