@@ -1,0 +1,61 @@
+---
+import BlogLayout from "../../layouts/BlogLayout.astro";
+import PostList from "../../components/PostList.astro";
+import { blog, getPosts, tagSlug, type Post } from "../../lib/posts.ts";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const byTag = new Map<string, { name: string; posts: Post[] }>();
+  for (const p of posts) {
+    for (const t of p.data.tags) {
+      const slug = tagSlug(t);
+      if (!byTag.has(slug)) byTag.set(slug, { name: t, posts: [] });
+      byTag.get(slug)!.posts.push(p);
+    }
+  }
+  return [...byTag].map(([tag, v]) => ({ params: { tag }, props: v }));
+}
+
+interface Props {
+  name: string;
+  posts: Post[];
+}
+const { name, posts } = Astro.props;
+---
+
+<BlogLayout title={`#${name} — ${blog.title}`} description={`Posts tagged ${name}.`}>
+  <section class="wrap page">
+    <a class="back" href="/tags/">← all tags</a>
+    <h1>#{name}</h1>
+    <p class="count">{posts.length} {posts.length === 1 ? "post" : "posts"}</p>
+    <div class="list"><PostList posts={posts} /></div>
+  </section>
+</BlogLayout>
+
+<style>
+  .page {
+    padding-top: 56px;
+  }
+  .back {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--mut);
+  }
+  h1 {
+    margin-top: 24px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(36px, 5vw, 52px);
+    letter-spacing: -0.035em;
+    color: var(--info);
+  }
+  .count {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dim);
+  }
+  .list {
+    margin-top: 32px;
+  }
+</style>

@@ -1,0 +1,116 @@
+---
+// Posts as a log stream: timestamp, entry, tags, read time.
+import { isoDate, readingTime, tagSlug, type Post } from "../lib/posts.ts";
+
+interface Props {
+  posts: Post[];
+}
+const { posts } = Astro.props;
+---
+
+{
+  posts.length ? (
+    <ol class="log">
+      {posts.map((p) => (
+        <li class="entry">
+          <time class="ts" datetime={p.data.date.toISOString()}>
+            {isoDate(p.data.date)}
+          </time>
+          <div class="body">
+            <h2>
+              <a href={`/${p.id}/`}>{p.data.title}</a>
+            </h2>
+            <p class="desc">{p.data.description}</p>
+            <p class="meta">
+              {p.data.draft ? <span class="pill warn">draft</span> : null}
+              {p.data.tags.map((t) => (
+                <a class="tag" href={`/tags/${tagSlug(t)}/`}>#{t}</a>
+              ))}
+              <span class="rt">{readingTime(p.body)} min read</span>
+            </p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="empty panel">
+      <span class="dot idle" aria-hidden="true" /> no entries yet · check back soon
+    </p>
+  )
+}
+
+<style>
+  .log {
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+  .entry {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 24px;
+    padding: 26px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ts {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dim);
+    padding-top: 5px;
+    font-variant-numeric: tabular-nums;
+  }
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+  }
+  h2 a:hover {
+    color: var(--ok);
+  }
+  .desc {
+    margin-top: 8px;
+    color: var(--mut);
+    max-width: 68ch;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .tag {
+    color: var(--info);
+  }
+  .tag:hover {
+    text-decoration: underline;
+  }
+  .rt {
+    color: var(--dim);
+  }
+  .empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--mut);
+  }
+  @media (max-width: 640px) {
+    .entry {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      padding: 22px 0;
+    }
+    .ts {
+      padding-top: 0;
+    }
+    h2 {
+      font-size: 19px;
+    }
+  }
+</style>

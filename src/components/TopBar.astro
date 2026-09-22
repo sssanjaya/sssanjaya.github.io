@@ -2,6 +2,14 @@
 // Sticky console header: identity + breadcrumb, section nav, local clock,
 // command palette trigger, theme toggle.
 import { site } from "../data/site.ts";
+
+interface Props {
+  /** Section links. Defaults to the site's in-page nav. */
+  nav?: readonly { label: string; href: string }[];
+  /** Breadcrumb after the name, e.g. ["prod", "ca-ottawa-1"]. */
+  crumb?: readonly string[];
+}
+const { nav = site.nav, crumb = ["prod", site.region] } = Astro.props;
 ---
 
 <header class="topbar">
@@ -13,11 +21,11 @@ import { site } from "../data/site.ts";
         </svg>
       </span>
       <span class="nm">sanjay<span class="p">.</span>hona</span>
-      <span class="crumb" aria-hidden="true"><span>/</span> prod <span>/</span> {site.region}</span>
+      <span class="crumb" aria-hidden="true">{crumb.map((c, i) => <><span>/</span> {c}{i < crumb.length - 1 ? " " : ""}</>)}</span>
     </a>
 
     <nav class="nav" aria-label="Sections">
-      {site.nav.map((n) => <a href={n.href} data-nav>{n.label}</a>)}
+      {nav.map((n) => <a href={n.href} data-nav>{n.label}</a>)}
     </nav>
 
     <div class="tools">

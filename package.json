@@ -7,9 +7,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "dev:blog": "astro dev --root blog",
+    "build:blog": "astro build --root blog",
+    "preview:blog": "astro preview --root blog"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource/ibm-plex-sans": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.1.0",

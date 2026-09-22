@@ -2,11 +2,15 @@
 // ⌘K / "/" command palette. Behavior lives in src/scripts/console.ts.
 import { site } from "../data/site.ts";
 
+interface Props {
+  nav?: readonly { label: string; href: string }[];
+}
+const { nav = site.nav } = Astro.props;
 const linkedin = site.socials.find((s) => s.label === "LinkedIn");
 
 type Cmd = { group: string; label: string; hint: string; cmd: string; arg?: string; keywords?: string };
 const cmds: Cmd[] = [
-  ...site.nav.map((n) => ({ group: "navigate", label: `Go to ${n.label}`, hint: n.href.replace("/", ""), cmd: "goto", arg: n.href })),
+  ...nav.map((n) => ({ group: "navigate", label: `Go to ${n.label}`, hint: n.href.replace(/^https:\/\/|^\//, ""), cmd: "goto", arg: n.href })),
   { group: "actions", label: "Email Sanjay", hint: "mailto", cmd: "mail", arg: site.email, keywords: "contact page hire" },
   { group: "actions", label: "Copy email address", hint: site.email, cmd: "copy", arg: site.email, keywords: "clipboard contact" },
   ...(linkedin ? [{ group: "actions", label: "Open LinkedIn", hint: "↗", cmd: "open", arg: linkedin.href, keywords: "social profile" }] : []),

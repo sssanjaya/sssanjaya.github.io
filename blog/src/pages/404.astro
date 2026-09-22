@@ -1,0 +1,32 @@
+---
+import BlogLayout from "../layouts/BlogLayout.astro";
+---
+
+<BlogLayout title="404 — Blog" description="Page not found." noindex>
+  <section class="wrap nf">
+    <p class="pill warn"><span class="dot warn" aria-hidden="true"></span> incident · post not found</p>
+    <h1>404</h1>
+    <p class="msg">No entry at this path. It may have moved, or it never shipped.</p>
+    <a class="btn primary" href="/">all posts <span class="arr" aria-hidden="true">→</span></a>
+  </section>
+</BlogLayout>
+
+<style>
+  .nf {
+    padding-top: 96px;
+  }
+  h1 {
+    margin-top: 24px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(88px, 16vw, 168px);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    color: var(--warn);
+  }
+  .msg {
+    margin: 16px 0 32px;
+    font-size: 18px;
+    color: var(--mut);
+  }
+</style>

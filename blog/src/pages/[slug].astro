@@ -1,0 +1,255 @@
+---
+import { render } from "astro:content";
+import BlogLayout from "../layouts/BlogLayout.astro";
+import { getPosts, isoDate, readingTime, tagSlug, type Post } from "../lib/posts.ts";
+import { site } from "../../../src/data/site.ts";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
+  }));
+}
+
+interface Props {
+  post: Post;
+  newer?: Post;
+  older?: Post;
+}
+const { post, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const { title, description, date, updated, tags, draft } = post.data;
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: title,
+  description,
+  datePublished: date.toISOString(),
+  dateModified: (updated ?? date).toISOString(),
+  url: new URL(`/${post.id}/`, Astro.site).href,
+  keywords: tags.join(", "),
+  author: { "@type": "Person", name: site.name, url: site.url },
+};
+---
+
+<BlogLayout title={`${title} — ${site.name}`} description={description} type="article" structuredData={structuredData} noindex={draft}>
+  <article class="wrap post">
+    <header class="ph">
+      <a class="back" href="/">← all posts</a>
+      <p class="meta">
+        {draft ? <span class="pill warn">draft</span> : null}
+        <time datetime={date.toISOString()}>{isoDate(date)}</time>
+        <span>·</span>
+        <span>{readingTime(post.body)} min read</span>
+        {updated ? <><span>·</span><span>updated {isoDate(updated)}</span></> : null}
+      </p>
+      <h1>{title}</h1>
+      <p class="lede">{description}</p>
+      {
+        tags.length ? (
+          <p class="tags">
+            {tags.map((t) => (
+              <a class="chip" href={`/tags/${tagSlug(t)}/`}>#{t}</a>
+            ))}
+          </p>
+        ) : null
+      }
+    </header>
+
+    <div class={`layout ${toc.length ? "has-toc" : ""}`}>
+      {
+        toc.length ? (
+          <nav class="toc" aria-label="On this page">
+            <p class="tt">on this page</p>
+            <ol>
+              {toc.map((h) => (
+                <li class={`d${h.depth}`}>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        ) : null
+      }
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+
+    <footer class="pf">
+      <p class="reply">
+        Spotted a mistake or have a better way? <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Re: ${title}`)}`}>Email me</a>.
+      </p>
+      <nav class="pn" aria-label="More posts">
+        {newer ? <a class="panel" href={`/${newer.id}/`}><span>newer</span>{newer.data.title}</a> : <span />}
+        {older ? <a class="panel old" href={`/${older.id}/`}><span>older</span>{older.data.title}</a> : null}
+      </nav>
+    </footer>
+  </article>
+</BlogLayout>
+
+<style>
+  .post {
+    padding-top: 56px;
+  }
+  .ph {
+    max-width: 760px;
+  }
+  .back {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--mut);
+  }
+  .back:hover {
+    color: var(--ok);
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 28px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dim);
+  }
+  h1 {
+    margin-top: 14px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+  .lede {
+    margin-top: 16px;
+    font-size: 19px;
+    color: var(--fg-2);
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .tags .chip:hover {
+    border-color: var(--ok-line);
+    color: var(--ok);
+  }
+
+  .layout {
+    margin-top: 44px;
+    padding-top: 36px;
+    border-top: 1px solid var(--line);
+  }
+  .layout.has-toc {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) 220px;
+    gap: 64px;
+    align-items: start;
+  }
+  .toc {
+    order: 2;
+    position: sticky;
+    top: 92px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .tt {
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  .toc ol {
+    list-style: none;
+    border-left: 1px solid var(--line-2);
+  }
+  .toc li {
+    padding: 4px 0 4px 12px;
+  }
+  .toc .d3 {
+    padding-left: 24px;
+  }
+  .toc a {
+    color: var(--mut);
+  }
+  .toc a:hover {
+    color: var(--ok);
+  }
+  .prose {
+    max-width: 760px;
+    min-width: 0;
+  }
+
+  .pf {
+    max-width: 760px;
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .reply {
+    color: var(--mut);
+  }
+  .reply a {
+    color: var(--ok);
+  }
+  .pn {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .pn a {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+    font-family: var(--display);
+    font-weight: 600;
+  }
+  .pn a:hover {
+    border-color: var(--ok-line);
+  }
+  .pn a span {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 11.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .pn .old {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  @media (max-width: 1080px) {
+    .layout.has-toc {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+    .toc {
+      display: none;
+    }
+  }
+  @media (max-width: 720px) {
+    .post {
+      padding-top: 36px;
+    }
+    .lede {
+      font-size: 17px;
+    }
+    .pn {
+      grid-template-columns: 1fr;
+    }
+    .pn .old {
+      grid-column: 1;
+      text-align: left;
+    }
+  }
+</style>

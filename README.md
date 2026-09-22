@@ -66,11 +66,36 @@ src/
 public/         favicon, OG image, CNAME, robots.txt, web manifest
 ```
 
+## Blog
+
+The blog at [blog.sanjayhona.com.np](https://blog.sanjayhona.com.np) is a second Astro project in [`blog/`](blog/). It reuses the site's layout, top bar, command palette, styles, and CSP from `src/`, so both stay in one design.
+
+Write a post by adding a Markdown file to [`blog/src/content/posts/`](blog/src/content/posts/). The filename becomes the URL:
+
+```markdown
+---
+title: "Post title"
+description: "One or two sentences for the index, search, and social cards."
+date: 2026-09-22
+tags: [sre, kubernetes]
+draft: true   # shows in dev only; remove to publish
+---
+```
+
+```bash
+npm run dev:blog      # http://localhost:4321
+npm run build:blog    # static output in blog/dist/
+```
+
+It generates an RSS feed (`/rss.xml`), a sitemap, tag pages, and a table of contents per post. Response headers such as `X-Frame-Options` live in [`blog/public/_headers`](blog/public/_headers).
+
 ## Deploy
 
 Every push to `main` runs [`.github/workflows/static.yml`](.github/workflows/static.yml), which builds the site and publishes `dist/` to GitHub Pages. The custom domain is set in the repo's Pages settings; [`public/CNAME`](public/CNAME) mirrors it. Cloudflare proxies the domain in front of Pages.
 
 A few values are set at build time and refresh on each deploy: the commit hash in the footer, the status page's "updated" date and quarter cells, and the terminal's `AGE` column.
+
+The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
 
 To roll back, revert the commit on `main`. The next deploy publishes the previous version.
 
