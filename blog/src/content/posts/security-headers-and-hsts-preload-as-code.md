@@ -103,7 +103,7 @@ Against the mock, the first run moved `max_age` from 15552000 to 31536000, and t
 
 `includeSubDomains` with `preload` is the one setting here that is slow to take back. Once a domain is on the list, browsers force HTTPS for it and every subdomain, and the comment in the script notes that removal takes months to reach browsers. Any subdomain that cannot serve HTTPS becomes unreachable in those browsers.
 
-So the step before setting it was an inventory, recorded in the script's header comment: every hostname that had a certificate was checked. The ones that resolve serve HTTPS and redirect HTTP. The others do not resolve at all. That check is a point-in-time fact, dated in the comment. Any new subdomain has to serve HTTPS from its first DNS record.
+So the step before setting it was an inventory, recorded in the commit message and the script's header comment: every hostname that had a certificate was checked. The ones that resolve serve HTTPS and redirect HTTP. The others do not resolve at all. That check is a point-in-time fact, dated in the comment. Any new subdomain has to serve HTTPS from its first DNS record.
 
 ## Apply, then check the live site
 
@@ -124,7 +124,13 @@ Two properties of the job are worth knowing:
 - **`concurrency` queues, it does not cancel.** The group is `edge-headers` with `cancel-in-progress: false`, so a second run waits for the first to finish instead of cancelling it.
 - **It does not correct drift on its own.** There is no `schedule` trigger. A change made in the Cloudflare dashboard stays until the next push to those paths or a manual run, which puts the repo's rule and HSTS values back.
 
-There is one gap in the preload check. The step runs under the default `bash -e` shell, and the hstspreload.org call pipes `curl -f` into `python3`. If that API is down, `python3` fails to parse empty input, the assignment returns non-zero, and the step exits on the first attempt instead of retrying. The same pipeline fails the same way locally when pointed at a closed port. A red run there means "could not ask", not "not eligible", and a manual rerun settles it.
+The preload check had one gap, found while writing this post. The step runs under the default `bash -e` shell, and the hstspreload.org call pipes `curl -f` into `python3`. If that API was down, `python3` failed to parse empty input, the assignment returned non-zero, and the step exited on the first attempt with no error message instead of retrying. The fix is one fallback on the assignment:
+
+```bash
+errors=$(curl -fsS "https://hstspreload.org/api/v2/preloadable?domain=sanjayhona.com.np" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['errors']))") || errors="unknown (API call failed)"
+```
+
+A failed call now counts as "not yet", the loop retries, and if the API stays down the step ends with the same `::error::` line as any other timeout. Pointed at a closed port locally, the old version exits after one attempt and the new one retries all of them.
 
 ## No dependencies
 
