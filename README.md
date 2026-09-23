@@ -97,7 +97,7 @@ Every push to `main` runs [`.github/workflows/static.yml`](.github/workflows/sta
 
 A few values are set at build time and refresh on each deploy: the commit hash in the footer, the status page's "updated" date and quarter cells, and the terminal's `AGE` column.
 
-The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. A daily routine at claude.ai/code/routines writes one post, dated the next day, and merges it; delete the file before its date to cancel it. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
+The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. A daily routine at claude.ai/code/routines writes one post, dated the next free day, and merges it; delete the file before its date to cancel it. It picks topics from [`blog/ideas.md`](blog/ideas.md) first, so add real material there. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
 
 To roll back, revert the commit on `main`. The next deploy publishes the previous version.
 
