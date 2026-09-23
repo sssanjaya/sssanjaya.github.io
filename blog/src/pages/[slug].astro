@@ -40,7 +40,7 @@ const structuredData = {
       dateModified: (updated ?? date).toISOString(),
       url,
       mainEntityOfPage: url,
-      image: `${SITE}/og.png`,
+      image: { "@type": "ImageObject", url: `${SITE}/og/${post.id}.png`, width: 1200, height: 630 },
       inLanguage: "en",
       wordCount: words,
       keywords: tags.join(", "),
@@ -60,7 +60,7 @@ const structuredData = {
 };
 ---
 
-<BlogLayout title={`${title} — ${site.name}`} description={description} type="article" structuredData={structuredData} noindex={draft}>
+<BlogLayout title={`${title} — ${site.name}`} description={description} type="article" image={`/og/${post.id}.png`} imageAlt={`${title}, by ${site.name}`} structuredData={structuredData} noindex={draft}>
   <Fragment slot="head">
     <meta property="article:published_time" content={date.toISOString()} />
     <meta property="article:modified_time" content={(updated ?? date).toISOString()} />

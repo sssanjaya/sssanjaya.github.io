@@ -20,6 +20,8 @@ interface Props {
   description?: string;
   /** OG/Twitter card image — absolute path under /public. */
   image?: string;
+  /** Alt text for the card image. */
+  imageAlt?: string;
   /** og:type — "website" for the home page, "article" for case studies. */
   type?: "website" | "article";
   /** Page-specific JSON-LD. Falls back to the Person + WebSite identity graph. */
@@ -36,6 +38,7 @@ const {
   title = `${site.name} — ${site.currentTitle}`,
   description = site.metaDescription,
   image = site.ogImage,
+  imageAlt = `${site.name}, ${site.jobTitle}`,
   type = "website",
   structuredData,
   noindex = false,
@@ -130,16 +133,14 @@ Astro.csp?.insertScriptHash(themeBootstrapHash);
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content={`${site.name}, ${site.jobTitle}`}
-    />
+    <meta property="og:image:alt" content={imageAlt} />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={imageAlt} />
 
     <!-- JSON-LD structured data -->
     <script
