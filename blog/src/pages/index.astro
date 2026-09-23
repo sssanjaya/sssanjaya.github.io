@@ -8,10 +8,19 @@ const posts = await getPosts();
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "Blog",
+  "@id": "https://blog.sanjayhona.com.np/#blog",
   name: blog.title,
   url: Astro.site?.href,
   description: blog.description,
-  author: { "@type": "Person", name: site.name, url: site.url },
+  inLanguage: "en",
+  author: { "@type": "Person", "@id": `${site.url}/#person`, name: site.name, url: site.url },
+  blogPost: posts.map((p) => ({
+    "@type": "BlogPosting",
+    "@id": `https://blog.sanjayhona.com.np/${p.id}/#post`,
+    headline: p.data.title,
+    url: `https://blog.sanjayhona.com.np/${p.id}/`,
+    datePublished: p.data.date.toISOString(),
+  })),
 };
 ---
 

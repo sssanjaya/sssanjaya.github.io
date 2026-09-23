@@ -8,3 +8,15 @@
 
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Markdown copies and LLM indexes are for agents. Serve them as text and keep
+# them out of search results so they don't compete with the HTML pages.
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: noindex
+
+/llms.txt
+  X-Robots-Tag: noindex
+
+/llms-full.txt
+  X-Robots-Tag: noindex

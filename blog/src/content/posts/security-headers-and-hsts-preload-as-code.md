@@ -3,6 +3,12 @@ title: "Security headers and HSTS preload as code, for a site on GitHub Pages"
 description: "GitHub Pages can't set response headers. How this site gets them from a Cloudflare rule and preload-ready HSTS, both kept in the repo and checked after every apply."
 date: 2026-09-23T01:05:00Z
 tags: [security, cloudflare, github-actions, hsts]
+takeaways:
+  - "GitHub Pages can't set response headers, so a Cloudflare response header transform rule adds them at the edge."
+  - "Cloudflare's phase entry point PUT replaces every rule in the phase, so the script reads, swaps in its own rule by ref, and writes the full list back."
+  - "The HSTS preload list requires max-age of at least one year, includeSubDomains, and preload."
+  - "Check that every subdomain serves HTTPS before enabling includeSubDomains with preload; removal takes months to reach browsers."
+  - "The workflow applies both settings, then verifies the live headers and a clean hstspreload.org result."
 ---
 
 GitHub Pages serves your files and picks the response headers for you. There is no `_headers` file and no config for it. A `<meta>` Content-Security-Policy covers most of CSP, but it cannot carry `frame-ancestors`, and there is no meta equivalent for `X-Frame-Options`. For those, the header has to be added somewhere between Pages and the browser.

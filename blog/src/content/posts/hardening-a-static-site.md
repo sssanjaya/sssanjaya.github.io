@@ -3,6 +3,12 @@ title: "Hardening a static site: pinned actions, least privilege, and a CSP that
 description: "A portfolio site has no backend, but its build pipeline and the edge in front of it still deserve a threat model. What I changed and why."
 date: 2026-09-22
 tags: [security, github-actions, csp, cloudflare]
+takeaways:
+  - "A static site's attack surface is its build pipeline and the CDN in front of it, not the HTML."
+  - "Pin GitHub Actions to full commit SHAs with a version comment so Dependabot can still bump them."
+  - "Default workflow permissions to read-only and grant write access only to the deploy job."
+  - "Compute the inline script's CSP hash at build time from the same string you render, so the policy can't drift."
+  - "A <meta> CSP cannot carry frame-ancestors, so clickjacking protection must be a response header."
 ---
 
 A static site feels like it has nothing to attack. No database, no login, no API. But the site is only the output. The thing worth hardening is the path that produces it and the edge that serves it: a CI job that runs a few hundred npm packages with a token that can publish to production, and a CDN that rewrites the HTML on its way out.

@@ -15,6 +15,9 @@ const posts = defineCollection({
     date: z.coerce.date(),
     updated: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
+    // 2 to 5 one-sentence answers, shown above the post and used as the
+    // JSON-LD abstract. Written so a reader or an AI agent can quote them alone.
+    takeaways: z.array(z.string()).min(2).max(5).optional(),
     // Drafts show in `npm run dev:blog` only.
     draft: z.boolean().default(false),
   }),

@@ -1,19 +1,19 @@
 # Blog ideas
 
-Raw notes for the daily blog routine (claude.ai/code/routines). It reads
-this file first, writes one post from an idea, and removes that bullet in
-the same commit. With no usable idea here it falls back to topics from
-this repo's own code, and skips the day when those run out.
+Raw notes for the daily blog routine (claude.ai/code/routines). It writes one
+post a day from the **Ready** list, top first, and removes the bullet in the
+same commit. It never writes from **Needs your facts** until you add a
+`Facts:` line to that bullet, because it will not invent incidents, numbers,
+or anecdotes. With nothing usable it skips the day.
 
-Put real material in: incidents, fixes, numbers you're allowed to share,
-things you learned, tools you tried. Short bullets are fine. The routine
-will not invent details, so a bullet with no facts makes a thin post or
-none at all.
+To promote an idea: add a `Facts:` line with the real details (what broke,
+numbers you may share, what you changed, what you'd do differently) and move
+it to Ready. Two or three lines is enough.
 
 This file is public in the repo. Customer names, internal hostnames,
 credentials, and anything under NDA do not belong here.
 
-## Ideas
+## Ready
 
 - Cloudflare in front of GitHub Pages: what the edge rewrites (Rocket Loader,
   email obfuscation, analytics beacon) and how it interacts with a CSP
@@ -53,6 +53,58 @@ credentials, and anything under NDA do not belong here.
   version updates run monthly and grouped (one npm minor/patch PR, one
   GitHub Actions PR), and SHA pins keep their `# vX.Y.Z` comment so
   Dependabot can bump them
-- Follow-up once hstspreload.org lists the domain: what changed between
-  "pending" and "preloaded", how long it took (check the dates then, don't
-  guess), and what it now means for adding a subdomain
+- Making a blog readable by AI agents: `/llms.txt`, `/llms-full.txt`, a
+  Markdown copy of every post at `/<slug>.md` (noindex, so it doesn't compete
+  with the HTML), key takeaways in frontmatter that become the JSON-LD
+  `abstract`, and one author entity linked by `@id` across the portfolio and
+  the blog. All of it is in blog/src/pages and blog/src/lib/posts.ts
+- A command palette for a static site in about 4 KB of JavaScript:
+  src/scripts/console.ts and src/components/CommandPalette.astro. `/` and
+  Cmd/Ctrl+K open it; it jumps to sections, copies the email, switches theme
+- Dark mode with no flash under a strict CSP: the inline bootstrap in
+  src/lib/theme.ts runs before first paint, its sha256 is computed at build
+  time and passed to Astro's CSP, and `data-cfasync="false"` stops
+  Cloudflare Rocket Loader from deferring it
+- Runbook: rotating the Cloudflare tokens this site uses. Which workflow
+  reads which secret (blog.yml: CLOUDFLARE_API_TOKEN and
+  CLOUDFLARE_ACCOUNT_ID; edge-headers.yml: CLOUDFLARE_ZONE_TOKEN, falling
+  back to CLOUDFLARE_API_TOKEN), the permissions each needs, and how to
+  verify with a manual workflow run. Write it as numbered steps
+
+
+## Needs your facts
+
+- HSTS preload follow-up, once hstspreload.org lists the domain: what changed
+  between "pending" and "preloaded", how long it took, and what it means for
+  adding a subdomain. Needs: the date it was listed
+- An SRE's AI morning brief: routines that read the inbox, alerts, Jira, and
+  calendar before you do, cluster flapping alerts, and draft replies without
+  sending. Needs: what it caught that you'd have missed, what it got wrong,
+  the guardrails (draft-only, no send)
+- Alert storms as data: pairing triggered/recovered alerts, suppressing
+  flaps shorter than a window, and flagging clusters on one customer
+  account. Needs: window length, before/after alert volume
+- SLOs for devices nobody logs into: defining "up" for an edge camera or
+  gateway. Needs: the SLI you chose, the target, what it exposed
+- Rolling a deployment to an edge fleet without bricking it: canary size,
+  order, rollback trigger with AWS IoT Greengrass v2. Needs: your real
+  rollout steps and one rollout that went wrong
+- Debugging a device you can't touch: SSH tunnels vs SSM vs AWS IoT Secure
+  Tunneling. Needs: when you use each and one real session that needed it
+- RK3588 NPU inference in production: RKNN pitfalls, OOM kills, NPU access
+  from containers. Needs: the failure modes you hit and the fixes
+- Disk-full on edge devices: Docker images, logs, and the guardrail that
+  worked. Needs: cause, fix, how you roll it out
+- How MTTR dropped 30% with ELK, Prometheus, and Grafana (the number is on
+  the portfolio). Needs: what changed (alerts, dashboards, runbooks)
+- Terraform migration: environment setup from 3+ days to under 2 hours (on
+  the portfolio). Needs: module layout, state strategy, what was manual
+- A clean critical security audit: what you prepared. Needs: the generic
+  controls, nothing under NDA
+- A cost anomaly caught early on AWS. Needs: service, size, cause, guardrail
+- The first 10 commands I run when I inherit a system. Needs: your list and
+  why each one
+- CKA prep notes: what tripped me up. Needs: the topics, as you go
+- Designing Data-Intensive Applications, read by an SRE. Needs: the chapters
+  that changed how you work, and how
+- Vim on a remote box: the 20 commands that matter. Needs: your list
