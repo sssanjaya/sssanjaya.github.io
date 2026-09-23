@@ -16,9 +16,22 @@ export const blogNav = [
   { label: "sanjayhona.com.np", href: "https://sanjayhona.com.np/" },
 ] as const;
 
-/** Published posts, newest first. Drafts are included only in dev. */
+// Build time. Posts dated after it stay hidden until a later build; the daily
+// scheduled run in .github/workflows/blog.yml publishes them on their date.
+const now = new Date();
+
+/** True for a post dated in the future (only visible in dev). */
+export const isScheduled = (p: Post) => p.data.date > now;
+
+/**
+ * Published posts, newest first: not drafts, dated now or earlier.
+ * Dev shows everything, so drafts and scheduled posts can be previewed.
+ */
 export async function getPosts(): Promise<Post[]> {
-  const posts = await getCollection("posts", (p) => import.meta.env.DEV || !p.data.draft);
+  const posts = await getCollection(
+    "posts",
+    (p) => import.meta.env.DEV || (!p.data.draft && !isScheduled(p)),
+  );
   return posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 
