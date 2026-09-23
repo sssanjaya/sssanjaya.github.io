@@ -3,6 +3,11 @@ title: "Publishing on a schedule with no backend"
 description: "How this blog queues posts ahead of time using only a frontmatter date and a daily GitHub Actions cron, with no database or CMS."
 date: 2026-09-23T01:00:00Z
 tags: [github-actions, astro, static-sites]
+takeaways:
+  - "A future date in the frontmatter is the only scheduling state: the build filters out posts dated after build time."
+  - "A daily GitHub Actions cron at 11:00 UTC rebuilds the blog and deploys only when the built RSS post list differs from the live feed."
+  - "Comparing build output with the live site catches posts missed by a failed run and posts timestamped after 11:00 UTC."
+  - "GitHub pauses scheduled workflows after 60 days of repository inactivity."
 ---
 
 A static site has no publish button. There is no database row to flip from draft to live, no cron inside a CMS, nothing running at all between deploys. This blog still needed a way to write a post today and have it go live on a specific day later, without sitting at a keyboard at that exact time. Here is how that works with nothing but a date in the frontmatter and a scheduled workflow.

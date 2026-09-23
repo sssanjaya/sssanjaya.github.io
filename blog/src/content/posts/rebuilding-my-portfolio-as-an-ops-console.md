@@ -3,6 +3,12 @@ title: "Rebuilding my portfolio as an ops console, and hosting it for $0"
 description: "How I redesigned sanjayhona.com.np around SRE ideas, and how two static sites share one repo across GitHub Pages and Cloudflare Pages."
 date: 2026-09-22
 tags: [astro, static-sites, github-pages, cloudflare, design]
+takeaways:
+  - "Each section of the site maps to a tool an SRE reads daily: a terminal, stat panels, a status page, a deploy log, and an escalation policy."
+  - "All copy lives in two TypeScript data files, so updating the site means editing data, not markup."
+  - "GitHub Pages allows one custom domain per repository, so the blog is a second Astro project in the same repo, deployed to Cloudflare Pages."
+  - "Cloudflare Pages can set real response headers from a _headers file; GitHub Pages cannot."
+  - "Hosting both sites costs nothing beyond the domain."
 ---
 
 My old portfolio was a clean code-editor theme with a sidebar. It was fine, and it said nothing about the work I do. I run production systems, so I rebuilt the site to look and behave like the tools I use every day: a status page, dashboards, a deploy log.

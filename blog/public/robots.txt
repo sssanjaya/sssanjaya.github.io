@@ -1,5 +1,7 @@
-# blog.sanjayhona.com.np — open to all well-behaved crawlers.
+# blog.sanjayhona.com.np: open to search engines and AI agents alike.
 User-agent: *
 Allow: /
 
+# For LLMs and agents: a Markdown index at /llms.txt, all posts in one file at
+# /llms-full.txt, and each post as Markdown at /<slug>.md.
 Sitemap: https://blog.sanjayhona.com.np/sitemap-index.xml

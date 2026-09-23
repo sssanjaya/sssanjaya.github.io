@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from "astro:content";
+import { site } from "../../../src/data/site.ts";
 
 export type Post = CollectionEntry<"posts">;
 
@@ -42,3 +43,26 @@ export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
 export const tagSlug = (t: string) =>
   t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+export const SITE = "https://blog.sanjayhona.com.np";
+export const postUrl = (p: Post) => `${SITE}/${p.id}/`;
+export const markdownUrl = (p: Post) => `${SITE}/${p.id}.md`;
+
+/**
+ * A post as a standalone Markdown document for agents and LLM tools: title,
+ * metadata, takeaways, then the body exactly as written.
+ */
+export function markdownFor(p: Post): string {
+  const { title, description, date, updated, tags, takeaways } = p.data;
+  const meta = [
+    `- URL: ${postUrl(p)}`,
+    `- Author: ${site.name} (${site.url})`,
+    `- Published: ${isoDate(date)}`,
+    ...(updated ? [`- Updated: ${isoDate(updated)}`] : []),
+    ...(tags.length ? [`- Tags: ${tags.join(", ")}`] : []),
+  ];
+  const tldr = takeaways?.length
+    ? ["", "## Key takeaways", "", ...takeaways.map((t) => `- ${t}`)]
+    : [];
+  return [`# ${title}`, "", `> ${description}`, "", ...meta, ...tldr, "", (p.body ?? "").trim(), ""].join("\n");
+}

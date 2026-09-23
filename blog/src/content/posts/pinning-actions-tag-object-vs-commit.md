@@ -3,6 +3,12 @@ title: "Pinning a GitHub Action to a tag object instead of its commit"
 description: "The first blog deploy failed on a SHA-pinned action. The pin was a tag object, and the release had no dist/. How to resolve a tag to its commit and check every pin."
 date: 2026-09-23T01:10:00Z
 tags: [github-actions, security, ci, git]
+takeaways:
+  - "An annotated Git tag has its own object SHA; pinning that SHA instead of the commit breaks a GitHub Action."
+  - "git ls-remote shows the commit on the line ending in ^{}; a lightweight tag has only one line, and that SHA is the commit."
+  - "A JavaScript action runs the file named in runs.main from the pinned tree, and nothing builds it for you."
+  - "If an action only wraps a CLI, call the CLI at a pinned version and drop the action."
+  - "A short script can check that every pinned SHA matches the commit for the tag in its version comment."
 ---
 
 Every action in this repo is pinned to a full SHA with the version in a trailing comment. The first deploy of this blog failed on one of those pins. The SHA I had pinned was not a commit. It was an annotated tag object. And the commit behind it would not have worked either.

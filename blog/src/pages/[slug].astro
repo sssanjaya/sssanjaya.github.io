@@ -1,7 +1,7 @@
 ---
 import { render } from "astro:content";
 import BlogLayout from "../layouts/BlogLayout.astro";
-import { getPosts, isoDate, readingTime, tagSlug, type Post } from "../lib/posts.ts";
+import { getPosts, isoDate, markdownUrl, postUrl, readingTime, SITE, tagSlug, type Post } from "../lib/posts.ts";
 import { site } from "../../../src/data/site.ts";
 
 export async function getStaticPaths() {
@@ -20,22 +20,54 @@ interface Props {
 const { post, newer, older } = Astro.props;
 const { Content, headings } = await render(post);
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
-const { title, description, date, updated, tags, draft } = post.data;
+const { title, description, date, updated, tags, draft, takeaways } = post.data;
+const url = postUrl(post);
+const words = (post.body ?? "").split(/\s+/).filter(Boolean).length;
 
+// BlogPosting tied to the portfolio's Person node by @id, so search engines
+// and agents see one author entity across both sites. Breadcrumb for the
+// result snippet.
 const structuredData = {
   "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: title,
-  description,
-  datePublished: date.toISOString(),
-  dateModified: (updated ?? date).toISOString(),
-  url: new URL(`/${post.id}/`, Astro.site).href,
-  keywords: tags.join(", "),
-  author: { "@type": "Person", name: site.name, url: site.url },
+  "@graph": [
+    {
+      "@type": "BlogPosting",
+      "@id": `${url}#post`,
+      headline: title,
+      description,
+      ...(takeaways?.length ? { abstract: takeaways.join(" ") } : {}),
+      datePublished: date.toISOString(),
+      dateModified: (updated ?? date).toISOString(),
+      url,
+      mainEntityOfPage: url,
+      image: `${SITE}/og.png`,
+      inLanguage: "en",
+      wordCount: words,
+      keywords: tags.join(", "),
+      author: { "@type": "Person", "@id": `${site.url}/#person`, name: site.name, url: site.url },
+      publisher: { "@type": "Person", "@id": `${site.url}/#person`, name: site.name, url: site.url },
+      isPartOf: { "@type": "Blog", "@id": `${SITE}/#blog`, name: "Field notes", url: `${SITE}/` },
+      encoding: { "@type": "MediaObject", contentUrl: markdownUrl(post), encodingFormat: "text/markdown" },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Blog", item: `${SITE}/` },
+        { "@type": "ListItem", position: 2, name: title, item: url },
+      ],
+    },
+  ],
 };
 ---
 
 <BlogLayout title={`${title} — ${site.name}`} description={description} type="article" structuredData={structuredData} noindex={draft}>
+  <Fragment slot="head">
+    <meta property="article:published_time" content={date.toISOString()} />
+    <meta property="article:modified_time" content={(updated ?? date).toISOString()} />
+    <meta property="article:author" content={site.url} />
+    {tags.map((t) => <meta property="article:tag" content={t} />)}
+    <link rel="alternate" type="text/markdown" title="This post as Markdown" href={`/${post.id}.md`} />
+  </Fragment>
   <article class="wrap post">
     <header class="ph">
       <a class="back" href="/">← all posts</a>
@@ -75,6 +107,18 @@ const structuredData = {
         ) : null
       }
       <div class="prose">
+        {
+          takeaways?.length ? (
+            <aside class="tldr" aria-label="Key takeaways">
+              <p class="tt">key takeaways</p>
+              <ul>
+                {takeaways.map((t) => (
+                  <li>{t}</li>
+                ))}
+              </ul>
+            </aside>
+          ) : null
+        }
         <Content />
       </div>
     </div>
@@ -82,6 +126,7 @@ const structuredData = {
     <footer class="pf">
       <p class="reply">
         Spotted a mistake or have a better way? <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Re: ${title}`)}`}>Email me</a>.
+        Also available as <a href={`/${post.id}.md`}>Markdown</a>.
       </p>
       <nav class="pn" aria-label="More posts">
         {newer ? <a class="panel" href={`/${newer.id}/`}><span>newer</span>{newer.data.title}</a> : <span />}
@@ -184,6 +229,22 @@ const structuredData = {
   .prose {
     max-width: 760px;
     min-width: 0;
+  }
+  .tldr {
+    margin-bottom: 2em;
+    padding: 16px 20px;
+    border: 1px solid var(--ok-line);
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+  .tldr .tt {
+    color: var(--ok);
+  }
+  .tldr ul {
+    padding-left: 1.2em;
+  }
+  .tldr li + li {
+    margin-top: 0.4em;
   }
 
   .pf {

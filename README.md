@@ -78,6 +78,9 @@ title: "Post title"
 description: "One or two sentences for the index, search, and social cards."
 date: 2026-09-22
 tags: [sre, kubernetes]
+takeaways:    # optional, 2 to 5 one-sentence answers shown above the post
+  - "The main point, quotable on its own."
+  - "The second point."
 draft: true   # shows in dev only; remove to publish
 ---
 ```
@@ -89,7 +92,9 @@ npm run build:blog    # static output in blog/dist/
 
 **Scheduling:** give a post a future `date` and it stays hidden (index, page, RSS, sitemap) until that day. The blog workflow runs daily at 11:00 UTC (7:00 in Ottawa), builds, and deploys only when the built RSS feed lists different posts than the live one, so you can queue a week of posts at once and a failed run catches up the next day. Use a full timestamp such as `2026-10-01T13:00:00Z` for a specific time; it goes live at the first daily run after it. `npm run dev:blog` shows drafts and scheduled posts with a label. GitHub pauses scheduled workflows after 60 days with no repo activity; re-enable it under Actions if that happens.
 
-It generates an RSS feed (`/rss.xml`), a sitemap, tag pages, and a table of contents per post. Response headers such as `X-Frame-Options` live in [`blog/public/_headers`](blog/public/_headers).
+It generates an RSS feed (`/rss.xml`), a sitemap with last-modified dates, tag pages, and a table of contents per post.
+
+**Search engines and AI agents:** each post carries `BlogPosting` and `BreadcrumbList` JSON-LD tied to the portfolio's `Person` node by `@id`, plus `article:*` Open Graph tags. `takeaways` renders as a "key takeaways" box and becomes the JSON-LD `abstract`. For LLM tools there's [`/llms.txt`](https://blog.sanjayhona.com.np/llms.txt) (an index per [llmstxt.org](https://llmstxt.org)), `/llms-full.txt` (every post in one file), and a Markdown copy of each post at `/<slug>.md`. Those copies are `noindex`, so they don't compete with the HTML pages in search. `robots.txt` allows all crawlers, and none of these files include scheduled or draft posts. Response headers such as `X-Frame-Options` live in [`blog/public/_headers`](blog/public/_headers).
 
 ## Deploy
 
@@ -97,7 +102,7 @@ Every push to `main` runs [`.github/workflows/static.yml`](.github/workflows/sta
 
 A few values are set at build time and refresh on each deploy: the commit hash in the footer, the status page's "updated" date and quarter cells, and the terminal's `AGE` column.
 
-The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. A daily routine at claude.ai/code/routines writes one post, dated the next free day, and merges it; delete the file before its date to cancel it. It picks topics from [`blog/ideas.md`](blog/ideas.md) first, so add real material there. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
+The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. A daily routine at claude.ai/code/routines writes one post, dated the next free day, and merges it; delete the file before its date to cancel it. It picks topics from the Ready list in [`blog/ideas.md`](blog/ideas.md); ideas under "Needs your facts" wait until you add a `Facts:` line. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
 
 To roll back, revert the commit on `main`. The next deploy publishes the previous version.
 
