@@ -4,6 +4,10 @@ name: Deploy to Pages
 on:
   push:
     branches: ["main"]
+    # The blog deploys on its own (blog.yml); a commit that only touches
+    # blog/ doesn't change this site.
+    paths-ignore:
+      - "blog/**"
   workflow_dispatch:
 
 # Read-only by default; each job asks for exactly what it needs below.
