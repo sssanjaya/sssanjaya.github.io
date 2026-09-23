@@ -15,8 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Cloudflare in front of GitHub Pages: what the edge rewrites (Rocket Loader,
-  email obfuscation, analytics beacon) and how it interacts with a CSP
 - Proving a dependency upgrade changed nothing: before merging seven
   Dependabot PRs (one a critical RCE in Astro's image optimizer, not
   reachable in a static build), built old and new and pixel-diffed every
