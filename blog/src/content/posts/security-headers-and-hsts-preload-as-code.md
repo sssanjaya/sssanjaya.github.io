@@ -1,7 +1,7 @@
 ---
 title: "Security headers and HSTS preload as code, for a site on GitHub Pages"
 description: "GitHub Pages can't set response headers. How this site gets them from a Cloudflare rule and preload-ready HSTS, both kept in the repo and checked after every apply."
-date: 2026-09-25
+date: 2026-09-23T01:05:00Z
 tags: [security, cloudflare, github-actions, hsts]
 ---
 

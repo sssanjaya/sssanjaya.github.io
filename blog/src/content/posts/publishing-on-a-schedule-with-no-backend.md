@@ -1,7 +1,7 @@
 ---
 title: "Publishing on a schedule with no backend"
 description: "How this blog queues posts ahead of time using only a frontmatter date and a daily GitHub Actions cron, with no database or CMS."
-date: 2026-09-24
+date: 2026-09-23T01:00:00Z
 tags: [github-actions, astro, static-sites]
 ---
 
