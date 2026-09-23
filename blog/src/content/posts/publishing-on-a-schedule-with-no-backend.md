@@ -46,9 +46,9 @@ export async function getPosts(): Promise<Post[]> {
 
 This means "unpublished" is really just "not included in this build's output". The file exists in the repository and in git history the whole time. It becomes reachable the moment a build runs after its date.
 
-## A cron that skips itself
+## A cron that checks the live feed
 
-Committing a future-dated file is not enough on its own, because nothing rebuilds the site automatically when that date arrives. The blog's GitHub Actions workflow adds a daily trigger for exactly that:
+Committing a future-dated file is not enough on its own, because nothing rebuilds the site when that date arrives. The blog's GitHub Actions workflow adds a daily trigger for exactly that:
 
 ```yaml
 on:
@@ -60,39 +60,43 @@ on:
   workflow_dispatch:
 ```
 
-11:00 UTC was picked as a fixed, unremarkable time of day, not tied to when any particular post should go live. A cron-triggered run doesn't know whether anything is actually due, and rebuilding and redeploying the whole blog every day for nothing is wasteful. So the first step checks before doing any real work:
+11:00 UTC is 7:00 in Ottawa, 6:00 in winter. A cron-triggered run does not know whether anything is due, and redeploying an unchanged blog every day is noise. So the scheduled run builds the blog, then compares the posts in the fresh RSS feed against the posts in the live one:
 
 ```yaml
-- name: Check for posts due today
+- name: Check for newly due posts
   id: due
+  env:
+    FEED: https://blog.sanjayhona.com.np/rss.xml
   run: |
+    set -o pipefail
     if [ "$GITHUB_EVENT_NAME" != "schedule" ]; then
       echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
     fi
-    today=$(date -u +%F)
-    due=$(grep -lE "^date: *['\"]?${today}" blog/src/content/posts/*.md || true)
-    if [ -n "$due" ]; then
-      echo "Posts due ${today}:"; echo "$due"
+    links() { grep -o '<link>[^<]*</link>' | sort; }
+    built=$(links < blog/dist/rss.xml)
+    if ! live=$(curl -fsS --retry 3 "$FEED" | links); then
+      echo "::warning::Could not fetch $FEED. Deploying to be safe."
+      echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+    fi
+    if [ "$built" != "$live" ]; then
+      echo "Post list changed:"; diff <(echo "$live") <(echo "$built") || true
       echo "run=true" >> "$GITHUB_OUTPUT"
     else
-      echo "No posts dated ${today}. Nothing to publish."
+      echo "No newly due posts. Nothing to publish."
     fi
 ```
 
-A normal push to `main` always runs the full job, since editing a post or the site itself should deploy right away. On the daily schedule, the step greps every post file for today's UTC date in the frontmatter. If nothing matches, every later step is skipped through an `if: steps.due.outputs.run == 'true'` guard, and the run ends having done nothing but a checkout and a grep. If a post matches, the job installs dependencies, builds, and deploys to Cloudflare Pages exactly as a push would.
+A push to `main` always deploys, since editing a post or the site should go out right away. On the schedule, the deploy runs only if the post list changed, and the run logs the diff so you can see which post went out. If the live feed can't be fetched, it deploys anyway: a redundant deploy is cheaper than a missed post.
 
-That grep is intentionally naive. It does not parse the timestamp form or compare it against the current time, only the date part. A post scheduled for `2026-10-01T13:00:00Z` is treated as due for the whole of October 1st in UTC, and the actual publish moment is whenever that day's 11:00 UTC run happens to land, not the specific hour in the timestamp. Anyone reading the frontmatter closely could be misled by the timestamp form into expecting more precision than the schedule delivers.
+The first version of this step was simpler. It grepped the frontmatter for today's UTC date and deployed if anything matched. That had two gaps. A failed run on a post's day meant the post never went out, because the next day's grep looked for a different date. And a post with a timestamp later than 11:00 UTC matched the grep, but the build at 11:00 still treated it as future, so it stayed hidden with no later build to publish it. Comparing the build output against the live site fixes both, because it checks whether the site that should exist differs from the site that does.
 
-## Where this breaks
+## Timing rules
 
-A few things about this setup only show up at the edges:
-
-- **GitHub pauses scheduled workflows after 60 days of repository inactivity.** A blog that goes quiet for two months needs the cron re-enabled by hand in the Actions tab before the next queued post will go out on time.
-- **The comparison is UTC against UTC**, both in the `isScheduled()` check and in the workflow's `date -u +%F`. A post dated `2026-10-01` goes live at the first 11:00 UTC run on or after that date, which is already well into October 1st in every timezone west of UTC.
-- **A missed run is not retried.** If the 11:00 UTC run fails or GitHub Actions has an outage, the post simply waits for the next day's run to find it still due, since the grep re-checks every file's date against the current day every time it runs.
-
-None of these are bugs to fix so much as properties to know about before relying on exact timing.
+- **A post goes live at the first 11:00 UTC run on or after its date and time.** A plain `2026-10-01` means midnight UTC, so it goes out at 11:00 UTC that day. `2026-10-01T13:00:00Z` waits until 11:00 UTC on October 2.
+- **Missed runs catch up.** If a run fails or Actions has an outage, the next successful run sees the post missing from the live feed and deploys it.
+- **GitHub pauses scheduled workflows after 60 days of repository inactivity.** A blog that goes quiet for two months needs the cron re-enabled in the Actions tab before the next queued post goes out on time.
+- **Pushes publish anything already due.** Any push that triggers a deploy also publishes posts whose time has passed, even before 11:00 UTC.
 
 ## Why this over a CMS
 
-The alternative would be some system that holds publish state outside the repository: a database, a headless CMS, a serverless function on a timer. Any of those adds a service to run, a credential to protect, and a second source of truth that can drift from what is actually in git. Here, the frontmatter date is the schedule, the grep is the scheduler, and the daily workflow run is the only moving part. Writing a post ahead of time is a commit with a future date; canceling it is deleting that file before the date arrives. Both are ordinary git operations, reviewable in a diff, with no separate system to check.
+The alternative would be some system that holds publish state outside the repository: a database, a headless CMS, a serverless function on a timer. Any of those adds a service to run, a credential to protect, and a second source of truth that can drift from what is actually in git. Here, the frontmatter date is the schedule, the daily workflow run is the scheduler, and the live feed is the record of what is out. Writing a post ahead of time is a commit with a future date; canceling it is deleting that file before the date arrives. Both are ordinary git operations, reviewable in a diff, with no separate system to check.
