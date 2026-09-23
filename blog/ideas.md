@@ -15,7 +15,5 @@ credentials, and anything under NDA do not belong here.
 
 ## Ideas
 
-- Pinning GitHub Actions to SHAs: the annotated-tag trap (pinned the tag
-  object instead of the commit; the deploy failed with "dist/index.mjs not found")
 - Cloudflare in front of GitHub Pages: what the edge rewrites (Rocket Loader,
   email obfuscation, analytics beacon) and how it interacts with a CSP
