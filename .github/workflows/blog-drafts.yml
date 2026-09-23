@@ -1,0 +1,87 @@
+# Weekly AI draft outlines for the blog. Runs scripts/blog-drafts.mjs and
+# opens a PR with 1-5 posts marked draft: true. Nothing publishes on its own:
+# edit a draft, remove draft: true, set its date, and merge.
+#
+# One-time setup:
+#   - Repo secret ANTHROPIC_API_KEY (console.anthropic.com > API keys)
+#   - Settings > Actions > General > "Allow GitHub Actions to create and
+#     approve pull requests" (otherwise the branch is pushed but no PR opens)
+name: Blog drafts
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # Mondays 13:00 UTC, 9:00 in Ottawa
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "Number of drafts (1-5)"
+        required: false
+        default: "3"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blog-drafts
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the drafts branch
+      pull-requests: write # open the PR
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 50 # recent commit subjects feed the prompt
+      - name: Check credentials
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"
+          else echo "::warning::ANTHROPIC_API_KEY is not set. Skipped drafting."; fi
+      - name: Setup Node
+        if: steps.key.outputs.ready == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        if: steps.key.outputs.ready == 'true'
+        run: npm ci --ignore-scripts
+      - name: Generate drafts
+        if: steps.key.outputs.ready == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DRAFT_COUNT: ${{ inputs.count || '3' }}
+        run: node scripts/blog-drafts.mjs > "$RUNNER_TEMP/created.txt"
+      # Drafts must not break the blog build (they are excluded from output).
+      - name: Build blog
+        if: steps.key.outputs.ready == 'true'
+        run: npm run build:blog
+      - name: Open PR
+        if: steps.key.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -s "$RUNNER_TEMP/created.txt" ] || { echo "No drafts created."; exit 0; }
+          branch="drafts/$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add $(cat "$RUNNER_TEMP/created.txt")
+          git commit -m "Blog drafts for the week of $(date -u +%F)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$branch"
+          {
+            echo "AI-drafted outlines from \`scripts/blog-drafts.mjs\`, grounded in \`blog/ideas.md\` and the site data. All are \`draft: true\` and will not publish."
+            echo
+            echo "To publish one: rewrite it in your own words, fill every \`TODO(you)\`, set \`date\`, remove \`draft: true\`, merge. Close the PR or delete files you don't want."
+            echo
+            for f in $(cat "$RUNNER_TEMP/created.txt"); do echo "- \`$f\`: $(grep -m1 '^title:' "$f" | sed 's/^title: //')"; done
+          } > "$RUNNER_TEMP/body.md"
+          gh pr create --base main --head "$branch" --title "Blog drafts for the week of $(date -u +%F)" --body-file "$RUNNER_TEMP/body.md" \
+            || echo "::warning::Branch $branch pushed, but the PR could not be opened. Enable 'Allow GitHub Actions to create and approve pull requests' in Settings > Actions > General, or open it from the branch."
