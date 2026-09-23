@@ -22,8 +22,5 @@
   },
   "overrides": {
     "esbuild": "^0.28.1"
-  },
-  "devDependencies": {
-    "@anthropic-ai/sdk": "^0.128.0"
   }
 }
