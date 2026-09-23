@@ -87,7 +87,7 @@ npm run dev:blog      # http://localhost:4321
 npm run build:blog    # static output in blog/dist/
 ```
 
-**Scheduling:** give a post a future `date` and it stays hidden (index, page, RSS, sitemap) until that day. The blog workflow runs daily at 11:00 UTC (7:00 in Ottawa) and deploys only when a post is dated today, so you can queue a week of posts at once. Use a full timestamp such as `2026-10-01T13:00:00Z` for a specific time; it goes live on the first build after it. `npm run dev:blog` shows drafts and scheduled posts with a label. GitHub pauses scheduled workflows after 60 days with no repo activity; re-enable it under Actions if that happens.
+**Scheduling:** give a post a future `date` and it stays hidden (index, page, RSS, sitemap) until that day. The blog workflow runs daily at 11:00 UTC (7:00 in Ottawa), builds, and deploys only when the built RSS feed lists different posts than the live one, so you can queue a week of posts at once and a failed run catches up the next day. Use a full timestamp such as `2026-10-01T13:00:00Z` for a specific time; it goes live at the first daily run after it. `npm run dev:blog` shows drafts and scheduled posts with a label. GitHub pauses scheduled workflows after 60 days with no repo activity; re-enable it under Actions if that happens.
 
 It generates an RSS feed (`/rss.xml`), a sitemap, tag pages, and a table of contents per post. Response headers such as `X-Frame-Options` live in [`blog/public/_headers`](blog/public/_headers).
 
@@ -97,7 +97,7 @@ Every push to `main` runs [`.github/workflows/static.yml`](.github/workflows/sta
 
 A few values are set at build time and refresh on each deploy: the commit hash in the footer, the status page's "updated" date and quarter cells, and the terminal's `AGE` column.
 
-The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
+The blog deploys from [`.github/workflows/blog.yml`](.github/workflows/blog.yml) to Cloudflare Pages when `blog/` or the shared `src/` files change. A daily routine at claude.ai/code/routines writes one post, dated the next day, and merges it; delete the file before its date to cancel it. It needs two repo secrets, `CLOUDFLARE_API_TOKEN` (scoped to Pages edit) and `CLOUDFLARE_ACCOUNT_ID`. Without them it builds and skips the deploy.
 
 To roll back, revert the commit on `main`. The next deploy publishes the previous version.
 
