@@ -1,7 +1,7 @@
 ---
 title: "Pinning a GitHub Action to a tag object instead of its commit"
 description: "The first blog deploy failed on a SHA-pinned action. The pin was a tag object, and the release had no dist/. How to resolve a tag to its commit and check every pin."
-date: 2026-09-26
+date: 2026-09-23T01:10:00Z
 tags: [github-actions, security, ci, git]
 ---
 
