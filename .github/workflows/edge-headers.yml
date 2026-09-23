@@ -1,9 +1,10 @@
-# Apply the main site's security headers as a Cloudflare Response Header
-# Transform Rule (GitHub Pages can't set headers). Source of truth:
-# infra/cloudflare/security-headers.mjs.
+# Apply the main site's edge security config (GitHub Pages can't set headers):
+# a Response Header Transform Rule (infra/cloudflare/security-headers.mjs) and
+# preload-eligible HSTS for the zone (infra/cloudflare/hsts.mjs).
 #
 # Token: CLOUDFLARE_ZONE_TOKEN if set, else CLOUDFLARE_API_TOKEN. Either needs
-# Zone > Zone > Read and Zone > Transform Rules > Edit on sanjayhona.com.np.
+# Zone > Zone > Read, Zone > Transform Rules > Edit, and Zone > Zone Settings >
+# Edit on sanjayhona.com.np.
 name: Edge headers
 
 on:
@@ -49,6 +50,12 @@ jobs:
           CLOUDFLARE_ZONE_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CF_ZONE_NAME: sanjayhona.com.np
         run: node infra/cloudflare/security-headers.mjs
+      - name: Apply HSTS
+        if: steps.cf.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_ZONE_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_NAME: sanjayhona.com.np
+        run: node infra/cloudflare/hsts.mjs
       - name: Verify live headers
         if: steps.cf.outputs.ready == 'true'
         run: |
@@ -62,4 +69,19 @@ jobs:
           done
           echo "::error::Headers not visible on https://sanjayhona.com.np after 2 minutes"
           echo "$h"
+          exit 1
+      - name: Verify HSTS preload eligibility
+        if: steps.cf.outputs.ready == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            hsts=$(curl -sSI "https://sanjayhona.com.np/?hsts=$RANDOM" | tr -d '\r' | grep -i '^strict-transport-security:' || true)
+            if echo "$hsts" | grep -q 'max-age=31536000'; then
+              echo "$hsts"
+              errors=$(curl -fsS "https://hstspreload.org/api/v2/preloadable?domain=sanjayhona.com.np" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['errors']))")
+              echo "hstspreload.org errors: $errors"
+              [ "$errors" = 0 ] && exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::HSTS not preload-eligible after 2 minutes: ${hsts:-no header}"
           exit 1
