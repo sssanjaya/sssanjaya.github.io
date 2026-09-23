@@ -77,7 +77,8 @@ jobs:
             hsts=$(curl -sSI "https://sanjayhona.com.np/?hsts=$RANDOM" | tr -d '\r' | grep -i '^strict-transport-security:' || true)
             if echo "$hsts" | grep -q 'max-age=31536000'; then
               echo "$hsts"
-              errors=$(curl -fsS "https://hstspreload.org/api/v2/preloadable?domain=sanjayhona.com.np" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['errors']))")
+              # A failed API call counts as "not yet" and retries, not a hard fail.
+              errors=$(curl -fsS "https://hstspreload.org/api/v2/preloadable?domain=sanjayhona.com.np" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['errors']))") || errors="unknown (API call failed)"
               echo "hstspreload.org errors: $errors"
               [ "$errors" = 0 ] && exit 0
             fi
