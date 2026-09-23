@@ -1,6 +1,6 @@
 ---
 // Posts as a log stream: timestamp, entry, tags, read time.
-import { isoDate, readingTime, tagSlug, type Post } from "../lib/posts.ts";
+import { isScheduled, isoDate, readingTime, tagSlug, type Post } from "../lib/posts.ts";
 
 interface Props {
   posts: Post[];
@@ -23,6 +23,7 @@ const { posts } = Astro.props;
             <p class="desc">{p.data.description}</p>
             <p class="meta">
               {p.data.draft ? <span class="pill warn">draft</span> : null}
+              {isScheduled(p) ? <span class="pill idle">scheduled</span> : null}
               {p.data.tags.map((t) => (
                 <a class="tag" href={`/tags/${tagSlug(t)}/`}>#{t}</a>
               ))}

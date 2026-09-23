@@ -9,6 +9,9 @@ const posts = defineCollection({
     title: z.string(),
     // Search snippet and social card text.
     description: z.string().max(170),
+    // Publish date. A future date schedules the post: it goes live on the
+    // first build on or after it (daily at 11:00 UTC). Use 2026-10-01 or a
+    // full timestamp like 2026-10-01T13:00:00Z.
     date: z.coerce.date(),
     updated: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
