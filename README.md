@@ -89,6 +89,8 @@ npm run build:blog    # static output in blog/dist/
 
 **Scheduling:** give a post a future `date` and it stays hidden (index, page, RSS, sitemap) until that day. The blog workflow runs daily at 11:00 UTC (7:00 in Ottawa) and deploys only when a post is dated today, so you can queue a week of posts at once. Use a full timestamp such as `2026-10-01T13:00:00Z` for a specific time; it goes live on the first build after it. `npm run dev:blog` shows drafts and scheduled posts with a label. GitHub pauses scheduled workflows after 60 days with no repo activity; re-enable it under Actions if that happens.
 
+**AI drafts:** every Monday, [`.github/workflows/blog-drafts.yml`](.github/workflows/blog-drafts.yml) runs [`scripts/blog-drafts.mjs`](scripts/blog-drafts.mjs), which asks Claude (`claude-opus-5`) for 3 post outlines and opens a PR with them as `draft: true`. It builds from [`blog/ideas.md`](blog/ideas.md) first, so jot real incidents and lessons there; it will not invent incidents or numbers and leaves `TODO(you)` placeholders instead. Nothing publishes until you rewrite a draft, remove `draft: true`, and merge. Needs the `ANTHROPIC_API_KEY` secret and "Allow GitHub Actions to create and approve pull requests". Run it by hand from Actions with a custom count.
+
 It generates an RSS feed (`/rss.xml`), a sitemap, tag pages, and a table of contents per post. Response headers such as `X-Frame-Options` live in [`blog/public/_headers`](blog/public/_headers).
 
 ## Deploy
