@@ -7,11 +7,11 @@ takeaways:
   - "Cloudflare can rewrite HTML on its way to the browser, so audit the page a browser receives, not the files the build writes."
   - "Rocket Loader changes each script's type attribute and runs the scripts itself later; data-cfasync=\"false\" keeps one script out of it."
   - "Email Address Obfuscation swaps mailto links and visible addresses for /cdn-cgi/ URLs plus a same-origin decoder, which a script-src of 'self' already allows."
-  - "Allowing static.cloudflareinsights.com in script-src loads the Web Analytics beacon, but its report to cloudflareinsights.com also needs connect-src."
-  - "Check a CSP in a real browser and listen for securitypolicyviolation events, because a policy can load a script and still block what that script sends."
+  - "A Web Analytics beacon whose config has a version reports to the site's own /cdn-cgi/rum; one without a version reports to cloudflareinsights.com and needs connect-src."
+  - "Cloudflare serves different HTML to browser-like requests, so check a CSP in a real browser with its own request headers, not only against curl output."
 ---
 
-When Cloudflare proxies a site, the HTML a browser gets is not the HTML your build wrote. Rocket Loader, Email Address Obfuscation, and Web Analytics each rewrite the page, and a Content-Security-Policy (CSP) has to allow what they add. On this site, `'self'` covers the first two, but the analytics beacon also needs `connect-src`, and a live check showed the blog's policy blocking it.
+When Cloudflare proxies a site, the HTML a browser gets is not the HTML your build wrote. Rocket Loader, Email Address Obfuscation, and Web Analytics each rewrite the page, and a Content-Security-Policy (CSP) has to allow what they add. On this site, `'self'` covers the first two and the beacon's report, plus one extra `script-src` host for the beacon script. A beacon without a version in its config would also need `connect-src`.
 
 The [hardening post](/hardening-a-static-site/) listed these rewrites in passing. This post shows each one in the live HTML of [sanjayhona.com.np](https://sanjayhona.com.np) and [blog.sanjayhona.com.np](https://blog.sanjayhona.com.np), what the policy needs, and how to check it.
 
@@ -34,7 +34,7 @@ The build has three script tags: the JSON-LD block, the inline theme bootstrap, 
 <script type="module" src="/_astro/Base.astro_astro_type_script_index_0_lang.cznKQpn3.js">
 ```
 
-The live page, fetched on 2026-09-23, has five:
+The live page, fetched with plain `curl` on 2026-09-23, has five:
 
 ```html
 <script type="application/ld+json">
@@ -44,7 +44,7 @@ The live page, fetched on 2026-09-23, has five:
 <script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="536d89c04fb43d426f5288f4-|49" defer>
 ```
 
-Two of those are new, and one of the originals changed its `type`. The sections below take them one at a time.
+Two of those are new, and one of the originals changed its `type`. A browser gets one more, the analytics beacon, because the edge varies what it injects by request headers. The sections below take them one at a time.
 
 ## Rocket Loader and `data-cfasync="false"`
 
@@ -85,15 +85,19 @@ The rewrite only touched the `href` values and the visible text. The `data-copy`
 
 For the CSP, the decoder is another same-origin `/cdn-cgi/` script, so `'self'` covers it.
 
-## Web Analytics beacon: `script-src` and `connect-src`
+## Web Analytics beacon: `script-src` and where it reports
 
-[Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/) can inject its beacon at the edge. On 2026-09-23 the blog's HTML included it, already re-typed by Rocket Loader. The apex page fetched the same day did not.
+[Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/) can inject its beacon at the edge, and what it injects depends on the request. On 2026-09-23 a plain `curl` of the blog got one beacon tag and a plain `curl` of the apex got none. The same requests with a Chrome `User-Agent` and `Accept: text/html` got two tags on the blog and one on the apex:
 
 ```html
-<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{...}' type="b224b227ef876ba5ee22e364-text/javascript">
+<!-- blog, both kinds of request (re-typed by Rocket Loader) -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "..."}' type="4aa788f9f111e766605398b6-text/javascript">
+
+<!-- blog and apex, browser-like requests only -->
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-..." data-cf-beacon='{"version":"2024.11.0","token":"...","r":1,"spa":2}' crossorigin="anonymous">
 ```
 
-The site and the blog share one policy, `src/lib/csp.mjs`, and its comment explains the script allowance:
+The two tags carry different tokens, and only the second has a `version`. Both scripts load from `static.cloudflareinsights.com`, which the shared policy in `src/lib/csp.mjs` allows:
 
 ```js
 // Cloudflare injects same-origin /cdn-cgi/ scripts and its Web Analytics
@@ -108,19 +112,28 @@ export const csp = {
   },
 ```
 
-That allowance works: `beacon.min.js` loaded with a 200. Loading a script is only half of what the beacon does, though. It then sends its data to a different host, and Chromium refused that request:
+Loading the script is half of it. The beacon then sends its data, and the version decides where. This is the endpoint choice in `beacon.min.js`, reformatted from the minified source, where `v` is the parsed `data-cf-beacon`:
+
+```js
+const b = v.send && v.send.to ? v.send.to
+  : void 0 === v.version ? "https://cloudflareinsights.com/cdn-cgi/rum" : null;
+```
+
+When that is `null`, the send function falls back to the relative path `/cdn-cgi/rum` plus a query string. So a beacon with a `version` reports to the page's own host, and [`default-src 'self'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/default-src) covers it, since the policy sets no [`connect-src`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/connect-src). A beacon without a `version` reports to `cloudflareinsights.com`, which this policy blocks.
+
+In Chromium, both hosts sent their reports as `POST /cdn-cgi/rum` to their own origin, each answered with a 204, and neither logged a CSP violation.
+
+My first browser check got this wrong. It fetched pages through a proxy that dropped the browser's request headers, so the edge served only the unversioned tag, and Chromium refused its report:
 
 ```text
 Refused to connect to 'https://cloudflareinsights.com/cdn-cgi/rum' because it violates the following Content Security Policy directive: "default-src 'self'". Note that 'connect-src' was not explicitly set, so 'default-src' is used as a fallback.
 ```
 
-The policy sets no [`connect-src`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/connect-src), so fetch and beacon requests fall back to [`default-src`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/default-src), which is `'self'`. The beacon script runs, and the request that carries its data is blocked. In a browser that enforces CSP, that page view never reaches Web Analytics.
-
-There are two consistent fixes. Keep the analytics and add `connect-src 'self' https://cloudflareinsights.com` to the policy. Or turn Web Analytics off for the host and drop `static.cloudflareinsights.com` from `script-src`, so the policy stops allowing a script whose output it blocks.
+That is the error to expect if a page only ever gets a beacon without a `version`. The fix then is `connect-src 'self' https://cloudflareinsights.com`. Here real browsers get the versioned beacon, so the policy stays as it is.
 
 ## Checking a CSP against the live page in Chromium
 
-The hardening post reported zero violations when the policy was tested against a local copy with the rewrites applied. The live blog showed two, both for the beacon's report. Static checks of the HTML confirm what gets loaded. They do not see what a script requests after it runs.
+Static checks of the HTML show what gets loaded. They do not show what a script requests after it runs, and a `curl` of the page may not even get the same HTML as a browser.
 
 A browser session does. With [Playwright](https://playwright.dev/docs/network), register a `securitypolicyviolation` listener before any page script runs, log requests, and wait a few seconds after `load`:
 
@@ -141,7 +154,7 @@ await page.waitForTimeout(5000);
 await browser.close();
 ```
 
-For the blog this printed `CSP connect-src https://cloudflareinsights.com/cdn-cgi/rum`. For the apex it printed no violations, and the request log showed both `/cdn-cgi/` scripts loading from the same origin.
+For the apex and the blog it printed no violations. The request logs showed the `/cdn-cgi/` scripts loading from the same origin and, the beacon's `POST` to `/cdn-cgi/rum`.
 
 ## What each rewrite needs from the policy
 
@@ -149,6 +162,6 @@ For the blog this printed `CSP connect-src https://cloudflareinsights.com/cdn-cg
 |---|---|---|---|
 | Rocket Loader | Script `type` gets a random prefix; adds `/cdn-cgi/scripts/.../rocket-loader.min.js` | `script-src 'self'` | `data-cfasync="false"` per script, or turn it off |
 | Email Address Obfuscation | `mailto:` becomes `/cdn-cgi/l/email-protection#<hex>`; visible addresses become `.__cf_email__`; adds `email-decode.min.js` | `script-src 'self'` | `<!--email_off-->` blocks, or turn it off |
-| Web Analytics (injected) | Adds `beacon.min.js` from `static.cloudflareinsights.com` | `script-src https://static.cloudflareinsights.com` and `connect-src https://cloudflareinsights.com` | Turn it off for the host |
+| Web Analytics (injected) | Adds `beacon.min.js` from `static.cloudflareinsights.com` | `script-src https://static.cloudflareinsights.com`; `connect-src https://cloudflareinsights.com` only for a beacon without a `version` | Turn it off for the host |
 
 Edge headers such as `frame-ancestors` are a separate layer, covered in [security headers and HSTS preload as code](/security-headers-and-hsts-preload-as-code/). The rewrites in this post happen inside the body, and the only way to know them is to read the page the browser gets and run it.
