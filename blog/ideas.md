@@ -15,11 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- A CSS selector that deleted the page: the clock updated every element
-  matching `[data-tz]`, and `<html>` carried `data-tz` too, so the first
-  tick replaced the whole document with a time string. Renamed the hook to
-  `data-tzlabel`. Lesson: data attributes used as JS hooks need names that
-  nothing else in the page uses
 - Horizontal scroll on phones: a blog post page rendered 632px wide on a
   phone viewport. A grid column sized `1fr` can't shrink below its content's
   min-content width, so a wide code block widened the page.
