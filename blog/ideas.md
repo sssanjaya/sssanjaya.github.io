@@ -15,11 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Horizontal scroll on phones: a blog post page rendered 632px wide on a
-  phone viewport. A grid column sized `1fr` can't shrink below its content's
-  min-content width, so a wide code block widened the page.
-  `grid-template-columns: minmax(0, 1fr)` plus `min-width: 0` fixed it. A
-  local Playwright check (not in CI) caught it before the post shipped
 - Least-privilege Cloudflare tokens by error message: the edge-headers job
   first got 403 "Authentication error" on the rulesets API (token lacked
   Zone > Transform Rules > Edit), then error 9109 on the HSTS setting
