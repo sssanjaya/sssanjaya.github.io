@@ -15,12 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Least-privilege Cloudflare tokens by error message: the edge-headers job
-  first got 403 "Authentication error" on the rulesets API (token lacked
-  Zone > Transform Rules > Edit), then error 9109 on the HSTS setting
-  (needed Zone > Zone Settings > Edit). Grant scopes one at a time and let
-  each failure name the next one, instead of starting from an all-zones
-  admin token
 - Testing an API script against a local mock: the Cloudflare scripts read
   their API base from `CF_API`, so tests point them at a tiny Node HTTP
   server. First attempt deadlocked: `spawnSync` blocked the event loop that
