@@ -15,10 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Testing an API script against a local mock: the Cloudflare scripts read
-  their API base from `CF_API`, so tests point them at a tiny Node HTTP
-  server. First attempt deadlocked: `spawnSync` blocked the event loop that
-  the mock server needed to answer. Switching to async `spawn` fixed it
 - Dependabot without the noise: security updates open PRs right away,
   version updates run monthly and grouped (one npm minor/patch PR, one
   GitHub Actions PR), and SHA pins keep their `# vX.Y.Z` comment so
