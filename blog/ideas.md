@@ -15,10 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Dependabot without the noise: security updates open PRs right away,
-  version updates run monthly and grouped (one npm minor/patch PR, one
-  GitHub Actions PR), and SHA pins keep their `# vX.Y.Z` comment so
-  Dependabot can bump them
 - Making a blog readable by AI agents: `/llms.txt`, `/llms-full.txt`, a
   Markdown copy of every post at `/<slug>.md` (noindex, so it doesn't compete
   with the HTML), key takeaways in frontmatter that become the JSON-LD
