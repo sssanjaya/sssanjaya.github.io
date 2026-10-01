@@ -15,11 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Making a blog readable by AI agents: `/llms.txt`, `/llms-full.txt`, a
-  Markdown copy of every post at `/<slug>.md` (noindex, so it doesn't compete
-  with the HTML), key takeaways in frontmatter that become the JSON-LD
-  `abstract`, and one author entity linked by `@id` across the portfolio and
-  the blog. All of it is in blog/src/pages and blog/src/lib/posts.ts
 - A command palette for a static site in about 4 KB of JavaScript:
   src/scripts/console.ts and src/components/CommandPalette.astro. `/` and
   Cmd/Ctrl+K open it; it jumps to sections, copies the email, switches theme
