@@ -15,9 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- A command palette for a static site in about 4 KB of JavaScript:
-  src/scripts/console.ts and src/components/CommandPalette.astro. `/` and
-  Cmd/Ctrl+K open it; it jumps to sections, copies the email, switches theme
 - Dark mode with no flash under a strict CSP: the inline bootstrap in
   src/lib/theme.ts runs before first paint, its sha256 is computed at build
   time and passed to Astro's CSP, and `data-cfasync="false"` stops
