@@ -15,10 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Dark mode with no flash under a strict CSP: the inline bootstrap in
-  src/lib/theme.ts runs before first paint, its sha256 is computed at build
-  time and passed to Astro's CSP, and `data-cfasync="false"` stops
-  Cloudflare Rocket Loader from deferring it
 - Runbook: rotating the Cloudflare tokens this site uses. Which workflow
   reads which secret (blog.yml: CLOUDFLARE_API_TOKEN and
   CLOUDFLARE_ACCOUNT_ID; edge-headers.yml: CLOUDFLARE_ZONE_TOKEN, falling
