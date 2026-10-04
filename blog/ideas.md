@@ -15,12 +15,6 @@ credentials, and anything under NDA do not belong here.
 
 ## Ready
 
-- Runbook: rotating the Cloudflare tokens this site uses. Which workflow
-  reads which secret (blog.yml: CLOUDFLARE_API_TOKEN and
-  CLOUDFLARE_ACCOUNT_ID; edge-headers.yml: CLOUDFLARE_ZONE_TOKEN, falling
-  back to CLOUDFLARE_API_TOKEN), the permissions each needs, and how to
-  verify with a manual workflow run. Write it as numbered steps
-
 
 ## Needs your facts
 
