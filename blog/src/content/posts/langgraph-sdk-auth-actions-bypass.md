@@ -7,7 +7,7 @@ takeaways:
   - "CVE-2026-104873 affects langgraph-sdk 0.1.45 through 0.4.3 and is fixed in 0.4.4."
   - "In affected versions, @auth.on.threads(actions=[\"create\"]) registers the handler for every action on threads, not just create."
   - "Because LangGraph calls only the most specific matching handler, the misregistered handler can replace a stricter global or per-action check for reads, updates, and deletes."
-  - "Only Python deployments that pass actions= to @auth.on.threads, @auth.on.assistants, or @auth.on.crons are affected, and no workaround exists besides upgrading."
+  - "Only Python deployments that pass actions= to @auth.on.threads, @auth.on.assistants, or @auth.on.crons are affected; the attribute form such as @auth.on.threads.create registers correctly."
   - "langgraph-sdk 0.4.4 raises ValueError on empty, duplicate, or invalid action lists, so an upgrade can stop a misconfigured auth module from loading."
 ---
 
@@ -15,7 +15,7 @@ CVE-2026-104873 is an authorization bypass in `langgraph-sdk`, the Python packag
 
 ## What the LangGraph advisory says
 
-The [CVE record](https://cveawg.mitre.org/api/cve/CVE-2026-104873) was published on October 2, 2026. The [GitHub security advisory GHSA-fvww-7h3r-vfhp](https://github.com/langchain-ai/langgraph/security/advisories/GHSA-fvww-7h3r-vfhp) and the fixed [sdk==0.4.4 release](https://github.com/langchain-ai/langgraph/releases/tag/sdk==0.4.4) are dated late August. The CVE publication puts it in vulnerability scanners and CVE feeds this week.
+The [CVE record](https://cveawg.mitre.org/api/cve/CVE-2026-104873) was published on October 2, 2026. It references the [GitHub security advisory GHSA-fvww-7h3r-vfhp](https://github.com/langchain-ai/langgraph/security/advisories/GHSA-fvww-7h3r-vfhp) and the fixed [sdk==0.4.4 release](https://github.com/langchain-ai/langgraph/releases/tag/sdk==0.4.4), which reached [PyPI](https://pypi.org/project/langgraph-sdk/0.4.4/) on August 27, 2026. The CVE publication puts it in vulnerability scanners and CVE feeds this week.
 
 The CVE description states the flaw directly: "From 0.1.45 until 0.4.4, the langgraph-sdk resource-scoped authorization decorators @auth.on.threads, @auth.on.assistants, and @auth.on.crons ignore the actions argument and register the selected handler for every action on the resource."
 
@@ -28,7 +28,7 @@ The CVE description states the flaw directly: "From 0.1.45 until 0.4.4, the lang
 | Score | CVSS 4.0 7.6 (High) |
 | Vector | `CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N` |
 | Weakness | CWE-863, Incorrect Authorization |
-| Workaround | None. The advisory says to upgrade. |
+| Fix | Upgrade to 0.4.4. The attribute form (`@auth.on.threads.create`) was never affected. |
 
 The attacker needs a valid login (`PR:L`). This is not an unauthenticated remote code execution bug. It is a tenant isolation bug: one user of your agent reaching another user's conversation history, assistant configs, or scheduled runs.
 
@@ -51,7 +51,7 @@ async def stamp_owner(ctx: Auth.types.AuthContext, value):
 
 The author meant it to run only on thread creation, with an owner filter on reads coming from a global `@auth.on` handler. In 0.4.3 the handler is registered under `("threads", "*")` instead of `("threads", "create")`. That wildcard handler is more specific than the global one, so it wins for `read`, `search`, `update`, and `delete` on threads too. It returns `None`, and per the docs, "None and True mean 'authorize access to all underling resources'". The owner filter never runs.
 
-The advisory is clear that impact depends on the handler body: "deployments remain protected if handlers independently enforce necessary permission checks." A handler that always returns `{"owner": ctx.user.identity}` stays safe even when it runs for the wrong action. A handler that returns `None` or `True`, or that only does write-side work, is the dangerous case.
+The CVE record is clear that impact depends on the handler body: "a deployment remains protected when the selected handler independently enforces all required checks for every action it receives." A handler that always returns `{"owner": ctx.user.identity}` stays safe even when it runs for the wrong action. A handler that returns `None` or `True`, or that only does write-side work, is the dangerous case.
 
 ## Reproducing the registration bug
 
@@ -134,7 +134,7 @@ LangGraph was not the only agent framework in this week's CVE feeds. These were 
 
 | CVE | Project | Published | Issue |
 |---|---|---|---|
-| [CVE-2026-51857](https://cveawg.mitre.org/api/cve/CVE-2026-51857) | camel-ai camel 0.2.91a1 to 0.2.91a3 | Sep 30 | `CodeExecutionToolkit` "can run model-produced Python code through SubprocessInterpreter without an approval boundary" (CVSS 3.1 9.8) |
+| [CVE-2026-51857](https://cveawg.mitre.org/api/cve/CVE-2026-51857) | camel-ai camel 0.2.91a1 to 0.2.91a3 | Sep 30 | `CodeExecutionToolkit` "can run model-produced Python code through SubprocessInterpreter without an approval boundary" (CVSS 3.1 9.8, scored by CISA) |
 | [CVE-2026-105135](https://cveawg.mitre.org/api/cve/CVE-2026-105135) | InternLM MindSearch 0.1.0 | Oct 4 | Code injection in `ExecutionAction.run` of the Planner Agent (CVSS 3.1 10.0) |
 | CVE-2026-104873 | langgraph-sdk 0.1.45 to 0.4.3 | Oct 2 | `actions=` ignored on resource-scoped auth decorators (CVSS 4.0 7.6) |
 
