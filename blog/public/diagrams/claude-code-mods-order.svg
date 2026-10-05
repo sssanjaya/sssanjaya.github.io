@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 602" width="760" height="602" role="img" aria-labelledby="t d">
+<title id="t">Order of checks on a Claude Code tool call with mods</title>
+<desc id="d">Managed PreToolUse hooks run first, then prepend-tier mods (your policy mod and sec-default), then user mods, then append mods, then other PreToolUse hooks, then the tool.check permission decision, then the tool runs.</desc>
+<rect width="760" height="602" rx="12" fill="#0d1218"/>
+<text x="28" y="38" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">What runs before a tool call (Claude Code v2.1.287+)</text>
+<defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6778"/></marker></defs>
+<rect x="28" y="64" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="64" width="6" height="48" rx="3" fill="#62b6ff"/>
+<text x="50" y="94" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Claude asks to run a tool</text>
+<text x="716" y="94" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">tool.call event starts</text>
+<line x1="70" y1="114" x2="70" y2="127" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="130" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="130" width="6" height="48" rx="3" fill="#39e58c"/>
+<text x="50" y="160" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Managed PreToolUse hooks</text>
+<text x="716" y="160" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">Run first. A block here is final.</text>
+<line x1="70" y1="180" x2="70" y2="193" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="196" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="196" width="6" height="48" rx="3" fill="#39e58c"/>
+<text x="50" y="226" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">prepend tier</text>
+<text x="716" y="226" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">Your policy mod, then sec-default</text>
+<line x1="70" y1="246" x2="70" y2="259" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="262" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="262" width="6" height="48" rx="3" fill="#ffb02e"/>
+<text x="50" y="292" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">user tier</text>
+<text x="716" y="292" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">Mods people install. Can rewrite, deny, or answer.</text>
+<line x1="70" y1="312" x2="70" y2="325" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="328" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="328" width="6" height="48" rx="3" fill="#a3adbd"/>
+<text x="50" y="358" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">append tier</text>
+<text x="716" y="358" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">Your mods listed in appendPlugins</text>
+<line x1="70" y1="378" x2="70" y2="391" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="394" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="394" width="6" height="48" rx="3" fill="#a3adbd"/>
+<text x="50" y="424" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Other PreToolUse hooks</text>
+<text x="716" y="424" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">Skipped if a mod answers the call</text>
+<line x1="70" y1="444" x2="70" y2="457" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="460" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="460" width="6" height="48" rx="3" fill="#ff5f56"/>
+<text x="50" y="490" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">tool.check: allow, ask, deny</text>
+<text x="716" y="490" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="end">deny rules win where sec-default loads</text>
+<line x1="70" y1="510" x2="70" y2="523" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="526" width="704" height="48" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="526" width="6" height="48" rx="3" fill="#62b6ff"/>
+<text x="50" y="556" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Tool runs</text>
+</svg>
