@@ -6,7 +6,7 @@ export type Post = CollectionEntry<"posts">;
 export const blog = {
   title: "Sanjay Hona — Blog",
   description:
-    "Field notes from production: incident write-ups, runbooks, and what I learn running cloud and edge infrastructure.",
+    "DevOps, SRE, AIOps, and cybersecurity: what changed this week and what it means for the people running production.",
 };
 
 // Nav for the top bar and command palette.
