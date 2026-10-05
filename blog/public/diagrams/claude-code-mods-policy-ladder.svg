@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 478" width="760" height="478" role="img" aria-labelledby="t2 d2">
+<title id="t2">Claude Code mod policies from open to locked down</title>
+<desc id="d2">Five managed-settings policies ordered from least to most restrictive: default, marketplace allowlist with disableSideloadFlags, allowManagedModsOnly with your own mods, allowManagedModsOnly with no mods, and disableAllHooks.</desc>
+<rect width="760" height="478" rx="12" fill="#0d1218"/>
+<text x="28" y="38" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">Mod policy options, least to most restrictive</text>
+<text x="28" y="60" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Bar length shows order only, not a measured score</text>
+<text x="28" y="94" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#e6ebf2">Default (no mod settings)</text>
+<rect x="28" y="104" width="704" height="14" rx="7" fill="#1a222d"/>
+<rect x="28" y="104" width="141" height="14" rx="7" fill="#ff5f56"/>
+<text x="28" y="138" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Any marketplace, --plugin-dir, mods Claude writes</text>
+<text x="28" y="166" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#e6ebf2">Marketplace allowlist + disableSideloadFlags</text>
+<rect x="28" y="176" width="704" height="14" rx="7" fill="#1a222d"/>
+<rect x="28" y="176" width="282" height="14" rx="7" fill="#ffb02e"/>
+<text x="28" y="210" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Mods from marketplaces you approve</text>
+<text x="28" y="238" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#e6ebf2">allowManagedModsOnly + your own mods</text>
+<rect x="28" y="248" width="704" height="14" rx="7" fill="#1a222d"/>
+<rect x="28" y="248" width="422" height="14" rx="7" fill="#62b6ff"/>
+<text x="28" y="282" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Only your organization's mods</text>
+<text x="28" y="310" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#e6ebf2">allowManagedModsOnly, no mods of your own</text>
+<rect x="28" y="320" width="704" height="14" rx="7" fill="#1a222d"/>
+<rect x="28" y="320" width="563" height="14" rx="7" fill="#39e58c"/>
+<text x="28" y="354" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">No installed mods; settings hooks keep working</text>
+<text x="28" y="382" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#e6ebf2">disableAllHooks in managed settings</text>
+<rect x="28" y="392" width="704" height="14" rx="7" fill="#1a222d"/>
+<rect x="28" y="392" width="704" height="14" rx="7" fill="#a3adbd"/>
+<text x="28" y="426" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">No mods and no hooks, your managed hooks included</text>
+<text x="28" y="462" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">open</text>
+<text x="732" y="462" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" text-anchor="end">locked down →</text>
+</svg>
