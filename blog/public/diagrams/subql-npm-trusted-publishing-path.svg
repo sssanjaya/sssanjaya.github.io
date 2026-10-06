@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 576" width="960" height="576" role="img" aria-labelledby="t d">
+<title id="t">How @subql/common 5.8.3 reached npm, and the control that stops each step</title>
+<desc id="d">Left column: the publish path on October 5, 2026. A side branch rewrote publish.yml, a workflow_dispatch run on that branch got an OIDC token, npm matched the repository and workflow file name, 5.8.3 was published with provenance, and tilde ranges in other SubQuery packages resolved to it. Right column: the control that blocks each step: an environment limited to main, required reviewers, the environment name on the npm trusted publisher, stage-only publishing with 2FA approval, and lockfiles with a provenance ref check.</desc>
+<rect width="960" height="576" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">The 5.8.3 publish path, and what blocks each step</text>
+<text x="28" y="76" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">WHAT HAPPENED (OCT 5, 2026, UTC)</text>
+<text x="560" y="76" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">CONTROL THAT STOPS IT</text>
+<defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6778"/></marker></defs>
+<rect x="28" y="96" width="500" height="72" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="96" width="6" height="72" rx="3" fill="#ffb02e"/>
+<text x="50" y="126" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Branch chore/ci-audit-55 pushed</text>
+<text x="50" y="150" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">publish.yml rewritten, never merged to main</text>
+<line x1="530" y1="132.0" x2="552" y2="132.0" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="556" y="108" width="376" height="48" rx="8" fill="#0f1a14" stroke="#39e58c"/>
+<text x="572" y="137.0" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" fill="#e6ebf2">Environment rule: Selected branches = main</text>
+<line x1="70" y1="170" x2="70" y2="186" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="190" width="500" height="72" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="190" width="6" height="72" rx="3" fill="#ffb02e"/>
+<text x="50" y="220" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">workflow_dispatch run on that branch</text>
+<text x="50" y="244" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Same file name: .github/workflows/publish.yml</text>
+<line x1="530" y1="226.0" x2="552" y2="226.0" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="556" y="202" width="376" height="48" rx="8" fill="#0f1a14" stroke="#39e58c"/>
+<text x="572" y="231.0" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" fill="#e6ebf2">Environment needs a reviewer, no self-review</text>
+<line x1="70" y1="264" x2="70" y2="280" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="284" width="500" height="72" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="284" width="6" height="72" rx="3" fill="#62b6ff"/>
+<text x="50" y="314" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">OIDC token sent to npm</text>
+<text x="50" y="338" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">npm checks repo + workflow file name</text>
+<line x1="530" y1="320.0" x2="552" y2="320.0" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="556" y="296" width="376" height="48" rx="8" fill="#0f1a14" stroke="#39e58c"/>
+<text x="572" y="325.0" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" fill="#e6ebf2">Set Environment name on the npm trusted publisher</text>
+<line x1="70" y1="358" x2="70" y2="374" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="378" width="500" height="72" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="378" width="6" height="72" rx="3" fill="#ff5f56"/>
+<text x="50" y="408" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">@subql/common 5.8.3 goes live</text>
+<text x="50" y="432" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Published with an npm provenance record</text>
+<line x1="530" y1="414.0" x2="552" y2="414.0" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="556" y="390" width="376" height="48" rx="8" fill="#0f1a14" stroke="#39e58c"/>
+<text x="572" y="419.0" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" fill="#e6ebf2">Stage-only publisher: maintainer approves with 2FA</text>
+<line x1="70" y1="452" x2="70" y2="468" stroke="#5b6778" stroke-width="2" marker-end="url(#a)"/>
+<rect x="28" y="472" width="500" height="72" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="472" width="6" height="72" rx="3" fill="#ff5f56"/>
+<text x="50" y="502" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">~5.8.2 ranges resolve to 5.8.3</text>
+<text x="50" y="526" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">@subql/cli 6.6.3, node-core 19.3.1</text>
+<line x1="530" y1="508.0" x2="552" y2="508.0" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="556" y="484" width="376" height="48" rx="8" fill="#0f1a14" stroke="#39e58c"/>
+<text x="572" y="513.0" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" fill="#e6ebf2">Lockfile + npm ci, check the provenance ref</text>
+</svg>
