@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="t d">
+<title id="t">GitHub App installation token formats and which patterns match them</title>
+<desc id="d">Top: the legacy installation token is ghs_ followed by 36 alphanumeric characters, 40 characters total. The stateless token is ghs_, the app ID, an underscore, and a JWT with a header, payload, and signature separated by two dots, about 520 characters. Bottom table: results of a test on October 7, 2026 with a synthetic token in the new shape. The legacy pattern ghs_[A-Za-z0-9]{36} and the gitleaks v8.30.1 default github-app-token rule match the legacy token but not the stateless one. The TruffleHog v2 GitHub detector regex matches only up to the first dot. GitHub's recommended pattern ghs_[A-Za-z0-9.-_]{36,} matches both in full.</desc>
+<rect width="960" height="560" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">Two ghs_ token shapes, and which patterns see them</text>
+<text x="28" y="78" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">LEGACY (STATEFUL), 40 CHARACTERS</text>
+<rect x="28" y="90" width="70" height="40" rx="6" fill="#111821" stroke="#62b6ff"/>
+<text x="63" y="115" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#e6ebf2" text-anchor="middle">ghs_</text>
+<rect x="102" y="90" width="300" height="40" rx="6" fill="#111821" stroke="#263140"/>
+<text x="252" y="115" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd" text-anchor="middle">36 letters and digits, no dots</text>
+<text x="28" y="168" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">STATELESS ghs_APPID_JWT, ABOUT 520 CHARACTERS</text>
+<rect x="28" y="180" width="70" height="40" rx="6" fill="#111821" stroke="#62b6ff"/>
+<text x="63.0" y="205" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#e6ebf2" text-anchor="middle">ghs_</text>
+<rect x="102" y="180" width="90" height="40" rx="6" fill="#111821" stroke="#ffb02e"/>
+<text x="147.0" y="205" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#e6ebf2" text-anchor="middle">APPID</text>
+<rect x="196" y="180" width="30" height="40" rx="6" fill="#111821" stroke="#ffb02e"/>
+<text x="211.0" y="205" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#e6ebf2" text-anchor="middle">_</text>
+<rect x="230" y="180" width="170" height="40" rx="6" fill="#111821" stroke="#39e58c"/>
+<text x="315.0" y="205" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2" text-anchor="middle">JWT header</text>
+<rect x="404" y="180" width="24" height="40" rx="6" fill="#111821" stroke="#e6ebf2"/>
+<text x="416.0" y="205" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#e6ebf2" text-anchor="middle">.</text>
+<rect x="432" y="180" width="240" height="40" rx="6" fill="#111821" stroke="#39e58c"/>
+<text x="552.0" y="205" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2" text-anchor="middle">JWT payload</text>
+<rect x="676" y="180" width="24" height="40" rx="6" fill="#111821" stroke="#e6ebf2"/>
+<text x="688.0" y="205" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#e6ebf2" text-anchor="middle">.</text>
+<rect x="704" y="180" width="220" height="40" rx="6" fill="#111821" stroke="#39e58c"/>
+<text x="814.0" y="205" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2" text-anchor="middle">JWT signature</text>
+<text x="28" y="246" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">Underscores and two dots break patterns written for the 36-character form.</text>
+<text x="28" y="292" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">PATTERN TEST, OCT 7, 2026 (SYNTHETIC TOKENS)</text>
+<text x="28" y="322" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6ebf2">Pattern</text>
+<text x="600" y="322" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6ebf2">Legacy</text>
+<text x="740" y="322" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6ebf2">Stateless</text>
+<rect x="28" y="340" width="904" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="368" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#e6ebf2">ghs_[A-Za-z0-9]{36}</text>
+<circle cx="608" cy="363" r="6" fill="#39e58c"/><text x="622" y="368" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Full match</text>
+<circle cx="748" cy="363" r="6" fill="#ff6b6b"/><text x="762" y="368" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">No match</text>
+<rect x="28" y="392" width="904" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="420" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#e6ebf2">gitleaks v8.30.1 github-app-token</text>
+<circle cx="608" cy="415" r="6" fill="#39e58c"/><text x="622" y="420" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Full match</text>
+<circle cx="748" cy="415" r="6" fill="#ff6b6b"/><text x="762" y="420" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">No match</text>
+<rect x="28" y="444" width="904" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="472" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#e6ebf2">TruffleHog v2 GitHub detector regex</text>
+<circle cx="608" cy="467" r="6" fill="#39e58c"/><text x="622" y="472" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Full match</text>
+<circle cx="748" cy="467" r="6" fill="#ffb02e"/><text x="762" y="472" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Up to first dot</text>
+<rect x="28" y="496" width="904" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="524" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#e6ebf2">ghs_[A-Za-z0-9\.\-_]{36,} (GitHub)</text>
+<circle cx="608" cy="519" r="6" fill="#39e58c"/><text x="622" y="524" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Full match</text>
+<circle cx="748" cy="519" r="6" fill="#39e58c"/><text x="762" y="524" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Full match</text>
+</svg>
