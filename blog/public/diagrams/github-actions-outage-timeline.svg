@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="t d">
+<title id="t">GitHub Actions hosted runner incident, October 5, 2026: timeline and impact</title>
+<desc id="d">Top: timeline in UTC from GitHub's status page. Impact started at 18:48, GitHub posted the first status update at 19:11, mitigations were applied at 21:32, Actions was operating normally at 21:54, and all services recovered at 22:49. Bottom: impact figures from GitHub's incident summary. Over the full incident, 14.3 percent of workflow runs on GitHub-hosted runners and 26.5 percent of GitHub-hosted jobs did not start within five minutes. During the roughly 90-minute peak, 47.0 percent of workflow runs on GitHub-hosted runners failed and 71.9 percent of GitHub-hosted jobs did not start within five minutes. Self-hosted runners were not affected.</desc>
+<rect width="960" height="600" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">GitHub Actions hosted runners, October 5, 2026</text>
+<text x="28" y="78" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">TIMELINE (UTC), FROM GITHUBSTATUS.COM</text>
+<rect x="116.0" y="120" width="749.8" height="16" rx="4" fill="#ffb02e" opacity="0.35"/>
+<rect x="116.0" y="120" width="578.7" height="16" rx="4" fill="#ff5d5d" opacity="0.55"/>
+<line x1="60" y1="150" x2="900" y2="150" stroke="#263140" stroke-width="2"/>
+<line x1="153.3" y1="146" x2="153.3" y2="154" stroke="#a3adbd"/>
+<text x="153.3" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a3adbd" text-anchor="middle">19:00</text>
+<line x1="340.0" y1="146" x2="340.0" y2="154" stroke="#a3adbd"/>
+<text x="340.0" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a3adbd" text-anchor="middle">20:00</text>
+<line x1="526.7" y1="146" x2="526.7" y2="154" stroke="#a3adbd"/>
+<text x="526.7" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a3adbd" text-anchor="middle">21:00</text>
+<line x1="713.3" y1="146" x2="713.3" y2="154" stroke="#a3adbd"/>
+<text x="713.3" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a3adbd" text-anchor="middle">22:00</text>
+<line x1="900.0" y1="146" x2="900.0" y2="154" stroke="#a3adbd"/>
+<text x="900.0" y="172" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a3adbd" text-anchor="middle">23:00</text>
+<line x1="116.0" y1="118" x2="116.0" y2="190" stroke="#e6ebf2" stroke-dasharray="3 3" opacity="0.6"/>
+<text x="120.0" y="204" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#62b6ff" text-anchor="start">18:48</text>
+<text x="120.0" y="222" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2" text-anchor="start">Impact starts</text>
+<line x1="187.6" y1="118" x2="187.6" y2="232" stroke="#e6ebf2" stroke-dasharray="3 3" opacity="0.6"/>
+<text x="191.6" y="246" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#62b6ff" text-anchor="start">19:11</text>
+<text x="191.6" y="264" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2" text-anchor="start">First status post</text>
+<line x1="626.2" y1="118" x2="626.2" y2="190" stroke="#e6ebf2" stroke-dasharray="3 3" opacity="0.6"/>
+<text x="622.2" y="204" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#62b6ff" text-anchor="end">21:32</text>
+<text x="622.2" y="222" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2" text-anchor="end">Mitigations applied</text>
+<line x1="694.7" y1="118" x2="694.7" y2="232" stroke="#e6ebf2" stroke-dasharray="3 3" opacity="0.6"/>
+<text x="698.7" y="246" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#62b6ff" text-anchor="start">21:54</text>
+<text x="698.7" y="264" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2" text-anchor="start">Actions normal</text>
+<line x1="865.8" y1="118" x2="865.8" y2="190" stroke="#e6ebf2" stroke-dasharray="3 3" opacity="0.6"/>
+<text x="861.8" y="204" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#62b6ff" text-anchor="end">22:49</text>
+<text x="861.8" y="222" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2" text-anchor="end">All services recovered</text>
+<rect x="60" y="290" width="14" height="10" fill="#ff5d5d" opacity="0.55"/><text x="80" y="300" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#a3adbd">Actions and hosted runners degraded</text>
+<rect x="330" y="290" width="14" height="10" fill="#ffb02e" opacity="0.35"/><text x="350" y="300" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#a3adbd">Other services still recovering</text>
+<text x="28" y="346" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">IMPACT ON GITHUB-HOSTED RUNNERS, FROM GITHUB'S INCIDENT SUMMARY</text>
+<text x="28" y="389" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2">Runs not started in 5 min, full incident</text>
+<rect x="330" y="374" width="560" height="22" rx="4" fill="#111821" stroke="#263140"/>
+<rect x="330" y="374" width="80.1" height="22" rx="4" fill="#62b6ff" opacity="0.8"/>
+<text x="418.1" y="390" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#e6ebf2">14.3%</text>
+<text x="28" y="433" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2">Jobs not started in 5 min, full incident</text>
+<rect x="330" y="418" width="560" height="22" rx="4" fill="#111821" stroke="#263140"/>
+<rect x="330" y="418" width="148.4" height="22" rx="4" fill="#62b6ff" opacity="0.8"/>
+<text x="486.4" y="434" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#e6ebf2">26.5%</text>
+<text x="28" y="477" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2">Runs failed, ~90 min peak</text>
+<rect x="330" y="462" width="560" height="22" rx="4" fill="#111821" stroke="#263140"/>
+<rect x="330" y="462" width="263.2" height="22" rx="4" fill="#ff5d5d" opacity="0.8"/>
+<text x="601.2" y="478" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#e6ebf2">47.0%</text>
+<text x="28" y="521" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#e6ebf2">Jobs not started in 5 min, ~90 min peak</text>
+<rect x="330" y="506" width="560" height="22" rx="4" fill="#111821" stroke="#263140"/>
+<rect x="330" y="506" width="402.6" height="22" rx="4" fill="#ff5d5d" opacity="0.8"/>
+<text x="740.6" y="522" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#e6ebf2">71.9%</text>
+<text x="28" y="570" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">Self-hosted runners were not affected. Cause: partial network failure between an on-premises region and cloud database and storage services.</text>
+</svg>
