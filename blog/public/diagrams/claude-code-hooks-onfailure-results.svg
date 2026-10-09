@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 434" width="860" height="434" role="img" aria-labelledby="t d">
+<title id="t">What a failed PreToolUse command hook does in Claude Code 2.1.295, with and without onFailure block</title>
+<desc id="d">Results of a test on October 9, 2026 with Claude Code 2.1.295 and a PreToolUse command hook on Bash. Without onFailure, the touch command ran when the hook script did not exist, when the hook exited 1, and when the hook passed its 3 second timeout. With onFailure set to block, the command was blocked in all three cases. When the hook exited 0, the command ran in both setups.</desc>
+<rect width="860" height="434" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">Did the Bash call run after the PreToolUse hook?</text>
+<text x="28" y="66" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">TEST, OCT 9, 2026, CLAUDE CODE 2.1.295, COMMAND HOOK</text>
+<text x="44" y="112" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6ebf2">Hook result</text>
+<text x="440" y="112" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6ebf2">No onFailure (default)</text>
+<text x="660" y="112" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="600" fill="#e6ebf2">"onFailure": "block"</text>
+<rect x="28" y="128" width="804" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="156" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Hook script does not exist</text>
+<circle cx="448" cy="151" r="6" fill="#ff6b6b"/><text x="462" y="156" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool ran</text>
+<circle cx="668" cy="151" r="6" fill="#39e58c"/><text x="682" y="156" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool blocked</text>
+<rect x="28" y="184" width="804" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="212" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Hook exits 1</text>
+<circle cx="448" cy="207" r="6" fill="#ff6b6b"/><text x="462" y="212" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool ran</text>
+<circle cx="668" cy="207" r="6" fill="#39e58c"/><text x="682" y="212" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool blocked</text>
+<rect x="28" y="240" width="804" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="268" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Hook passes its 3 s timeout</text>
+<circle cx="448" cy="263" r="6" fill="#ff6b6b"/><text x="462" y="268" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool ran</text>
+<circle cx="668" cy="263" r="6" fill="#39e58c"/><text x="682" y="268" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool blocked</text>
+<rect x="28" y="296" width="804" height="44" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="324" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Hook exits 0 (healthy)</text>
+<circle cx="448" cy="319" r="6" fill="#39e58c"/><text x="462" y="324" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool ran</text>
+<circle cx="668" cy="319" r="6" fill="#39e58c"/><text x="682" y="324" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Tool ran</text>
+<text x="28" y="372" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">Red: a broken policy hook let the call through. Green: the outcome a policy gate should give.</text>
+</svg>
