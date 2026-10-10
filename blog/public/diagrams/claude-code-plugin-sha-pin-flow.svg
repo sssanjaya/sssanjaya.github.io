@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 470" width="860" height="470" role="img" aria-labelledby="t d">
+<title id="t">How a branch named after the pinned SHA bypassed Claude Code plugin pinning before 2.1.179</title>
+<desc id="d">Flow from a sandbox test on October 10, 2026 with git 2.43.0. The marketplace pins a plugin to commit SHA c5f6e6c1. The attacker's upstream repository has a default branch whose name is that same 40-character SHA. A plain git clone creates a local branch with that name. git checkout of the SHA then switches to the branch, and HEAD is the attacker commit 5fceafab. Before 2.1.179 Claude Code installed that code. Claude Code 2.1.296 compares HEAD with the pin and refuses the install.</desc>
+<rect width="860" height="470" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">One branch name defeats a commit pin</text>
+<text x="28" y="66" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">SANDBOX TEST, OCT 10, 2026, GIT 2.43.0</text>
+<g font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">
+<rect x="28" y="88" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="111" font-weight="600">1. Marketplace pins the reviewed commit</text>
+<text x="44" y="130" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="13" fill="#a3adbd">"sha": "c5f6e6c155fcdb00309865b3a4a1daace5066ce1"</text>
+<rect x="28" y="152" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="175" font-weight="600">2. Upstream default branch is named after that SHA</text>
+<text x="44" y="194" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="13" fill="#a3adbd">refs/heads/c5f6e6c1...  points at attacker commit 5fceafab</text>
+<rect x="28" y="216" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="239" font-weight="600">3. git clone creates a local branch with the 40-hex name</text>
+<text x="44" y="258" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="13" fill="#a3adbd">git clone &lt;plugin repo&gt;</text>
+<rect x="28" y="280" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<text x="44" y="303" font-weight="600">4. git checkout &lt;sha&gt; picks the branch, not the commit</text>
+<text x="44" y="322" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="13" fill="#a3adbd">warning: refname '...' is ambiguous.   HEAD = 5fceafab</text>
+<rect x="28" y="352" width="392" height="80" rx="6" fill="#111821" stroke="#ff6b6b"/>
+<circle cx="50" cy="378" r="6" fill="#ff6b6b"/>
+<text x="64" y="383" font-weight="600">Before 2.1.179</text>
+<text x="44" y="410" fill="#a3adbd">Attacker code installed as the pinned plugin</text>
+<rect x="440" y="352" width="392" height="80" rx="6" fill="#111821" stroke="#39e58c"/>
+<circle cx="462" cy="378" r="6" fill="#39e58c"/>
+<text x="476" y="383" font-weight="600">2.1.179 and later (tested 2.1.296)</text>
+<text x="456" y="410" fill="#a3adbd">HEAD checked against the pin, install refused</text>
+</g>
+</svg>
