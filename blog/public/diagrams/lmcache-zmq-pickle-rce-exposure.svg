@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 470" width="860" height="470" role="img" aria-labelledby="t d">
+<title id="t">Exposure check for LMCache CVE-2026-105192</title>
+<desc id="d">Four checks in order. One: is LMCache 0.3.9 or later running in multiprocess mode, started as lmcache server or python -m lmcache.v1.multiprocess.server. Two: is --host set to a routable address; the LMCache Kubernetes operator always passes --host 0.0.0.0, and the example DaemonSet does too. Three: who can reach the port; with hostNetwork true, anything that can reach the node IP; on the pod network, any pod unless a NetworkPolicy blocks it. Four: restrict the port to the vLLM clients that need it now, and upgrade once a release contains commit 160b6de. If the answer to check one or two is no, the network attack path in the advisory does not apply.</desc>
+<rect width="860" height="470" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">CVE-2026-105192: is this LMCache server exposed</text>
+<text x="28" y="66" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">FROM THE CVE RECORD, JFROG ADVISORY AND LMCACHE v0.5.5 SOURCE</text>
+<g font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">
+<rect x="28" y="88" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<circle cx="56" cy="114" r="14" fill="#263140"/><text x="51" y="119" font-weight="600">1</text>
+<text x="84" y="110" font-weight="600">LMCache 0.3.9 or later in multiprocess mode</text>
+<text x="84" y="129" fill="#a3adbd" font-size="13">lmcache server, or python -m lmcache.v1.multiprocess.server</text>
+<rect x="28" y="152" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<circle cx="56" cy="178" r="14" fill="#263140"/><text x="51" y="183" font-weight="600">2</text>
+<text x="84" y="174" font-weight="600">--host set to a routable address</text>
+<text x="84" y="193" fill="#a3adbd" font-size="13">Default is localhost. The Kubernetes operator always passes --host 0.0.0.0</text>
+<rect x="28" y="216" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<circle cx="56" cy="242" r="14" fill="#263140"/><text x="51" y="247" font-weight="600">3</text>
+<text x="84" y="238" font-weight="600">Who can open a TCP connection to the port</text>
+<text x="84" y="257" fill="#a3adbd" font-size="13">hostNetwork: anything that reaches the node IP. Pod network: any pod, unless a NetworkPolicy blocks it</text>
+<rect x="28" y="280" width="804" height="52" rx="6" fill="#111821" stroke="#ff6b6b"/>
+<circle cx="56" cy="306" r="14" fill="#ff6b6b"/><text x="51" y="311" font-weight="600" fill="#0d1218">4</text>
+<text x="84" y="302" font-weight="600">Restrict the port now, upgrade later</text>
+<text x="84" y="321" fill="#a3adbd" font-size="13">Allow only the vLLM pods that use it. Upgrade once a release contains commit 160b6de</text>
+<rect x="28" y="344" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<text x="48" y="366" font-weight="600">No at check 1 or 2</text>
+<text x="48" y="385" fill="#a3adbd" font-size="13">The network path in the advisory does not apply. Re-check after every deploy change</text>
+</g>
+<circle cx="36" cy="428" r="6" fill="#ff6b6b"/>
+<text x="50" y="433" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">As of October 12, 2026, no PyPI release contains the fix. One message to the port runs code as the LMCache user.</text>
+</svg>
