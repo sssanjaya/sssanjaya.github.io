@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 440" width="860" height="440" role="img" aria-labelledby="t d">
+<title id="t">Exploit chain behind Ivanti Connect Secure CVE-2026-104935</title>
+<desc id="d">Three steps from Volexity's October 13, 2026 report. Step one: a request to the public login script /dana-na/auth/url_default/welcome.cgi carries an X-DSCGI-PATH header naming a protected script; the URL decides access, the header decides the destination. Step two: the upload handler wu.cgi writes the file to disk before it checks that it is a valid ZIP, so the attacker runs the file in the window before it is deleted. Both steps are covered by CVE-2026-104935 and fixed in 25.1.1.2, 25.1.3.0, 25.1.3.1 and 22.8R2.5. Step three: the privileged dsinvoked service trusts DSCache data, which leads to a Perl script running as root. As of October 14, 2026 this step has no fix; Ivanti says one is due in the coming weeks.</desc>
+<rect width="860" height="440" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">CVE-2026-104935: the chain UTA0576 used</text>
+<text x="28" y="66" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">FROM VOLEXITY'S OCTOBER 13, 2026 REPORT AND IVANTI'S OCTOBER 13 BLOG</text>
+<g font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">
+<rect x="28" y="88" width="804" height="70" rx="6" fill="#111821" stroke="#263140"/>
+<circle cx="56" cy="123" r="14" fill="#263140"/><text x="51" y="128" font-weight="600">1</text>
+<text x="84" y="112" font-weight="600">Auth bypass: welcome.cgi + X-DSCGI-PATH header</text>
+<text x="84" y="131" fill="#a3adbd" font-size="13">URL decides access, header decides destination. Unauthenticated.</text>
+<text x="84" y="149" fill="#7ee2a8" font-size="13">CVE-2026-104935. Fixed in 25.1.1.2, 25.1.3.0, 25.1.3.1, 22.8R2.5</text>
+<rect x="28" y="170" width="804" height="70" rx="6" fill="#111821" stroke="#263140"/>
+<circle cx="56" cy="205" r="14" fill="#263140"/><text x="51" y="210" font-weight="600">2</text>
+<text x="84" y="194" font-weight="600">Code execution: wu.cgi writes the upload before checking it is a ZIP</text>
+<text x="84" y="213" fill="#a3adbd" font-size="13">Attacker runs the file in the race window before it is deleted</text>
+<text x="84" y="231" fill="#7ee2a8" font-size="13">CVE-2026-104935. Same fixed versions</text>
+<rect x="28" y="252" width="804" height="70" rx="6" fill="#111821" stroke="#ff6b6b"/>
+<circle cx="56" cy="287" r="14" fill="#ff6b6b"/><text x="51" y="292" font-weight="600" fill="#0d1218">3</text>
+<text x="84" y="276" font-weight="600">Root: dsinvoked trusts DSCache data</text>
+<text x="84" y="295" fill="#a3adbd" font-size="13">A maintenance task is changed to run an attacker Perl script as root</text>
+<text x="84" y="313" fill="#ff6b6b" font-size="13">No fix yet. Ivanti: "due in the coming weeks"</text>
+<rect x="28" y="334" width="804" height="52" rx="6" fill="#111821" stroke="#263140"/>
+<text x="48" y="356" font-weight="600">After root</text>
+<text x="48" y="375" fill="#a3adbd" font-size="13">LDAP credential theft, LAPS and BitLocker key queries, renamed tcpdump, debug and audit logs edited</text>
+</g>
+<circle cx="36" cy="414" r="6" fill="#7ee2a8"/>
+<text x="50" y="419" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">Patching steps 1 and 2 breaks the unauthenticated entry point. Step 3 still needs a foothold.</text>
+</svg>
