@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" width="960" height="580" role="img" aria-labelledby="t d">
+<title id="t">What GitHub Actions checks before running an onboarded workflow</title>
+<desc id="d">For a workflow onboarded to .github/workflows/actions.lock, five checks must pass: every uses dependency has a lockfile entry, the owner_id and repo_id still match, the locked commit still exists on a branch of the source repository, full-version tags still point at the locked commit, and allowed-actions policies are checked against the locked SHA. If any check fails, the run is blocked. If all pass, the runner executes the locked commit even if the tag or branch has moved.</desc>
+<rect width="960" height="580" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">Onboarded workflow: what must pass before a job runs</text>
+<text x="28" y="72" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">CHECK (FROM GITHUB DOCS AND GH-ACTIONS-LOCK README)</text>
+<text x="700" y="72" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd" letter-spacing="1">IF IT FAILS</text>
+<rect x="28" y="90" width="640" height="70" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="90" width="6" height="70" rx="3" fill="#62b6ff"/>
+<text x="50" y="119" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Every uses: dependency has a lockfile entry</text>
+<text x="50" y="143" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Includes transitive actions; reusable workflows use their own repo's lockfile</text>
+<line x1="670" y1="125" x2="696" y2="125" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="700" y="103" width="232" height="44" rx="8" fill="#1d1013" stroke="#ff5f56"/>
+<text x="716" y="130" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Run is blocked</text>
+<rect x="28" y="176" width="640" height="70" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="176" width="6" height="70" rx="3" fill="#62b6ff"/>
+<text x="50" y="205" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">owner_id and repo_id still match</text>
+<text x="50" y="229" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Blocks a renamed, transferred, or replaced repository</text>
+<line x1="670" y1="211" x2="696" y2="211" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="700" y="189" width="232" height="44" rx="8" fill="#1d1013" stroke="#ff5f56"/>
+<text x="716" y="216" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Run is blocked</text>
+<rect x="28" y="262" width="640" height="70" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="262" width="6" height="70" rx="3" fill="#62b6ff"/>
+<text x="50" y="291" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">The locked commit still exists</text>
+<text x="50" y="315" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Must sit on a branch of the source repository</text>
+<line x1="670" y1="297" x2="696" y2="297" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="700" y="275" width="232" height="44" rx="8" fill="#1d1013" stroke="#ff5f56"/>
+<text x="716" y="302" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Run is blocked</text>
+<rect x="28" y="348" width="640" height="70" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="348" width="6" height="70" rx="3" fill="#62b6ff"/>
+<text x="50" y="377" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Full-version tags still point at it</text>
+<text x="50" y="401" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Example: v4.2.1 moved upstream means a failed check</text>
+<line x1="670" y1="383" x2="696" y2="383" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="700" y="361" width="232" height="44" rx="8" fill="#1d1013" stroke="#ff5f56"/>
+<text x="716" y="388" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Run is blocked</text>
+<rect x="28" y="434" width="640" height="70" rx="8" fill="#111821" stroke="#263140"/>
+<rect x="28" y="434" width="6" height="70" rx="3" fill="#62b6ff"/>
+<text x="50" y="463" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#e6ebf2">Allowed-actions policy checks the locked SHA</text>
+<text x="50" y="487" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#a3adbd">Tag entries like actions/checkout@v6 stop matching</text>
+<line x1="670" y1="469" x2="696" y2="469" stroke="#5b6778" stroke-width="2" stroke-dasharray="4 3"/>
+<rect x="700" y="447" width="232" height="44" rx="8" fill="#1d1013" stroke="#ff5f56"/>
+<text x="716" y="474" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#e6ebf2">Run is blocked</text>
+<rect x="28" y="520" width="904" height="50" rx="8" fill="#0f1a14" stroke="#39e58c"/>
+<text x="48" y="551" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="15" fill="#e6ebf2">All pass: the runner executes the locked commit, even if the tag or branch has moved since</text>
+</svg>
