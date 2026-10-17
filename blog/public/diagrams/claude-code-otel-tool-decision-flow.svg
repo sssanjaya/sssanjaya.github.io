@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" role="img" aria-labelledby="t d">
+  <title id="t">Where a Claude Code tool call is decided, and what tool_decision records</title>
+  <desc id="d">A tool call first meets permission rules and hooks. Deny and ask rules run before the auto mode classifier. Calls that reach the classifier get a verdict. Every path ends in a claude_code.tool_decision event. From Claude Code 2.1.301 the event adds classifier_verdict and permission_mode, and classifier_category when OTEL_LOG_TOOL_DETAILS is 1. Version 2.1.302 fixes classifier_category missing on most blocks.</desc>
+  <rect width="760" height="420" fill="#0d1218"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8fa3b8"/></marker>
+  </defs>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" fill="#e6ebf2">
+    <text x="380" y="34" font-size="18" font-weight="600" text-anchor="middle">One tool call, one tool_decision event</text>
+
+    <rect x="30" y="70" width="150" height="56" rx="8" fill="#16202b" stroke="#3b4c5e"/>
+    <text x="105" y="96" font-size="14" text-anchor="middle">Claude asks to</text>
+    <text x="105" y="114" font-size="14" text-anchor="middle">run a tool</text>
+
+    <rect x="220" y="70" width="170" height="56" rx="8" fill="#16202b" stroke="#3b4c5e"/>
+    <text x="305" y="96" font-size="14" text-anchor="middle">Permission rules</text>
+    <text x="305" y="114" font-size="12" text-anchor="middle" fill="#a9b6c4">deny, ask, allow, hooks</text>
+
+    <rect x="430" y="70" width="170" height="56" rx="8" fill="#16202b" stroke="#3b4c5e"/>
+    <text x="515" y="96" font-size="14" text-anchor="middle">Auto mode classifier</text>
+    <text x="515" y="114" font-size="12" text-anchor="middle" fill="#a9b6c4">only if still undecided</text>
+
+    <line x1="180" y1="98" x2="216" y2="98" stroke="#8fa3b8" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="390" y1="98" x2="426" y2="98" stroke="#8fa3b8" stroke-width="2" marker-end="url(#a)"/>
+
+    <line x1="305" y1="126" x2="305" y2="196" stroke="#8fa3b8" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="515" y1="126" x2="515" y2="196" stroke="#8fa3b8" stroke-width="2" marker-end="url(#a)"/>
+    <text x="315" y="166" font-size="12" fill="#a9b6c4">decided by rule</text>
+    <text x="525" y="166" font-size="12" fill="#a9b6c4">verdict</text>
+
+    <rect x="200" y="200" width="420" height="190" rx="8" fill="#13263a" stroke="#4f86c6"/>
+    <text x="410" y="226" font-size="15" font-weight="600" text-anchor="middle">claude_code.tool_decision</text>
+    <text x="222" y="256" font-size="13" font-family="ui-monospace, monospace">decision, source, tool_name,</text>
+    <text x="222" y="274" font-size="13" font-family="ui-monospace, monospace">tool_use_id, tool_source</text>
+    <text x="222" y="300" font-size="12" fill="#a9b6c4">Added in 2.1.301:</text>
+    <text x="222" y="320" font-size="13" font-family="ui-monospace, monospace" fill="#7fd1a8">classifier_verdict, permission_mode</text>
+    <text x="222" y="340" font-size="13" font-family="ui-monospace, monospace" fill="#7fd1a8">classifier_category</text>
+    <text x="378" y="340" font-size="12" fill="#a9b6c4">(OTEL_LOG_TOOL_DETAILS=1)</text>
+    <text x="222" y="370" font-size="12" fill="#f0c674">2.1.302 fixes classifier_category missing on most blocks</text>
+  </g>
+</svg>
