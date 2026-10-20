@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="t d">
+<title id="t">Which OpenTelemetry JS setups read OTEL_TRACES_SAMPLER</title>
+<desc id="d">Sandbox test on Node.js 22 with OTEL_TRACES_SAMPLER=traceidratio and OTEL_TRACES_SAMPLER_ARG=0.1, starting 10,000 spans. BasicTracerProvider from sdk-trace-base 2.12.0 recorded 976 spans. NodeTracerProvider from sdk-trace-node 2.12.0 recorded 909. NodeSDK from sdk-node 0.300.0-rc.0 recorded 989. TracerProvider from sdk-trace 3.0.0-rc.0 recorded all 10,000, and so did TracerProvider from sdk-trace 2.12.0, because sdk-trace does not read the variables.</desc>
+<rect width="960" height="470" rx="12" fill="#0d1218"/>
+<text x="28" y="40" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e6ebf2">Spans recorded out of 10,000 with a 10% ratio sampler set by env var</text>
+<text x="28" y="68" font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#a3adbd">OTEL_TRACES_SAMPLER=traceidratio  OTEL_TRACES_SAMPLER_ARG=0.1  (Node.js 22, one run each)</text>
+<g font-family="IBM Plex Sans, system-ui, -apple-system, Segoe UI, sans-serif">
+<text x="28" y="118" font-size="15" font-weight="600" fill="#e6ebf2">BasicTracerProvider</text>
+<text x="28" y="138" font-size="13" fill="#a3adbd">sdk-trace-base 2.12.0</text>
+<rect x="300" y="106" width="52" height="30" rx="4" fill="#62b6ff"/>
+<text x="362" y="127" font-size="15" fill="#e6ebf2">976 (env var read)</text>
+<text x="28" y="188" font-size="15" font-weight="600" fill="#e6ebf2">NodeTracerProvider</text>
+<text x="28" y="208" font-size="13" fill="#a3adbd">sdk-trace-node 2.12.0</text>
+<rect x="300" y="176" width="48" height="30" rx="4" fill="#62b6ff"/>
+<text x="358" y="197" font-size="15" fill="#e6ebf2">909 (env var read)</text>
+<text x="28" y="258" font-size="15" font-weight="600" fill="#e6ebf2">NodeSDK</text>
+<text x="28" y="278" font-size="13" fill="#a3adbd">sdk-node 0.300.0-rc.0</text>
+<rect x="300" y="246" width="53" height="30" rx="4" fill="#62b6ff"/>
+<text x="363" y="267" font-size="15" fill="#e6ebf2">989 (env var read)</text>
+<text x="28" y="328" font-size="15" font-weight="600" fill="#e6ebf2">TracerProvider</text>
+<text x="28" y="348" font-size="13" fill="#a3adbd">sdk-trace 3.0.0-rc.0</text>
+<rect x="300" y="316" width="540" height="30" rx="4" fill="#ff5f56"/>
+<text x="850" y="337" font-size="15" fill="#e6ebf2">10,000</text>
+<text x="28" y="398" font-size="15" font-weight="600" fill="#e6ebf2">TracerProvider</text>
+<text x="28" y="418" font-size="13" fill="#a3adbd">sdk-trace 2.12.0</text>
+<rect x="300" y="386" width="540" height="30" rx="4" fill="#ff5f56"/>
+<text x="850" y="407" font-size="15" fill="#e6ebf2">10,000</text>
+<text x="300" y="452" font-size="13" fill="#a3adbd">Red: env var ignored, the default sampler kept every span in this test</text>
+</g>
+</svg>
