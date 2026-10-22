@@ -72,6 +72,23 @@
   border-radius: var(--radius);
   border: 1px solid var(--line);
 }
+.prose figure {
+  margin: 2em 0;
+}
+.prose figcaption {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--mut);
+}
+.prose .video {
+  aspect-ratio: 16 / 9;
+}
+.prose .video iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
 
 /* Callouts: > **Note:** ... renders as a quoted panel. */
 .prose blockquote {

@@ -1,30 +1,30 @@
 # Blog topic queue
 
-The daily blog routine (claude.ai/code/routines) writes one post a day about
-what changed in the past week, rotating through four areas: DevOps, SRE,
-AIOps, and cybersecurity. It finds topics itself by searching the news and
-primary sources.
+The blog routine (claude.ai/code/routines) publishes three posts a week, on
+Monday, Wednesday, and Friday. Each post explains one thing from the past week
+in DevOps, SRE, AIOps, or security through pictures first and words second.
 
 To steer it, add a bullet under **Queue**: a topic, a link (release notes,
-advisory, postmortem), or both. The routine takes the top queued item first,
-writes the post, and removes the bullet in the same commit. With an empty
-queue it picks the most useful news of the week in that day's area.
+advisory, postmortem, talk), or both. The routine takes the top queued item
+first, writes the post, and removes the bullet in the same commit. With an
+empty queue it picks the most interesting news of the week.
 
 ## Focus
 
-These rules override the routine's default area rotation and style.
+These rules override the routine's defaults.
 
 - Topics: Claude and Claude Code in operations, AIOps for SRE (AI agents in
   incident response, observability, and on-call), AI security (agents, MCP,
-  prompt injection, model supply chain), and DevSecOps. Prefer a Claude or
-  Anthropic angle when one exists in the past 7 days.
-- Every post has at least one diagram or chart. Draw it as an SVG file in
-  `blog/public/diagrams/<slug>-<name>.svg` on the dark panel palette
-  (background `#0d1218`, text `#e6ebf2`) with a `<title>` and `<desc>`, and
-  embed it with `![alt text](/diagrams/<file>.svg)`. Only draw real data or
-  real structure (flows, order of checks, option ladders). Never invent numbers.
-- Keep it simple and easy to read: short sections, short sentences, tables
-  over long paragraphs, one idea per section.
+  prompt injection, model supply chain), cloud platform engineering, and
+  DevSecOps. Prefer stories with a mechanism worth drawing: an attack chain,
+  an outage cascade, a design change, a benchmark.
+- Formats rotate by weekday: Monday is a weekly roundup, Wednesday a visual
+  deep-dive or data/chart story, Friday a hands-on lab.
+- Visuals carry the post. Every post has a hero visual right after the opening
+  paragraph and 2 to 4 visuals in total (a roundup has one per item). A reader
+  who only looks at the pictures and their captions should get the story.
+- Visuals are only real data or real structure. Never invent numbers. Every
+  chart cites its data source in the caption.
 
 This file is public in the repo. Customer names, internal hostnames,
 credentials, and anything under NDA do not belong here.
