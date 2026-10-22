@@ -8,6 +8,8 @@ export const csp = {
   directives: [
     "default-src 'self'",
     "img-src 'self' data:",
+    // Blog posts may embed a YouTube video in privacy-enhanced mode.
+    "frame-src https://www.youtube-nocookie.com",
     "font-src 'self' data:",
     "object-src 'none'",
     "base-uri 'self'",
