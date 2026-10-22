@@ -12,10 +12,16 @@ updates:
         patterns: ["*"]
 
   # One grouped PR a month for minor/patch npm updates; majors come alone.
+  # Security fixes arrive together in one PR. .github/workflows/pr.yml
+  # merges non-major Dependabot PRs once the site and blog build.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: monthly
     groups:
       npm-minor-patch:
+        applies-to: version-updates
         update-types: ["minor", "patch"]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
