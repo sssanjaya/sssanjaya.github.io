@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title id="t">The four rule tiers inside the classifier, with three lab runs</title>
+  <desc id="d">Four stacked tiers. Tier 1 hard_deny, one rule, Data Exfiltration, blocks unconditionally. Tier 2 soft_deny, 72 rules such as Git Destructive and Create Unsafe Agents, blocks next. Tier 3 allow, 17 exceptions, overrides matching soft_deny rules. Tier 4 explicit user intent clears the remaining soft blocks. Three lab runs on 2.1.309: a nested dangerously-skip-permissions launch stopped at tier 2 with Create Unsafe Agents; a user-named git push --force cleared at tier 4; a general make-remote-match request led Claude to force-with-lease, the sanctioned form, which passed.</desc>
+  <rect width="900" height="600" fill="#0d1218"/>
+  <text x="30" y="40" fill="#e6ebf2" font-size="22" font-weight="700">Inside step 3: four tiers, checked top to bottom</text>
+  <text x="30" y="64" fill="#8b98a8" font-size="14" font-family="ui-monospace, monospace">counts from: claude auto-mode config   (Claude Code 2.1.309, no custom entries)</text>
+
+  <!-- tier 1 -->
+  <rect x="30" y="86" width="520" height="78" rx="8" fill="#241416" stroke="#ff6b6b"/>
+  <text x="50" y="112" fill="#ff6b6b" font-size="14" font-weight="700" font-family="ui-monospace, monospace">1  hard_deny   1 rule</text>
+  <text x="50" y="134" fill="#e6ebf2" font-size="14">Data Exfiltration. Blocks unconditionally.</text>
+  <text x="50" y="153" fill="#8b98a8" font-size="13">User intent and allow exceptions do not apply.</text>
+
+  <!-- tier 2 -->
+  <rect x="30" y="178" width="520" height="92" rx="8" fill="#1f1a12" stroke="#f5b14c"/>
+  <text x="50" y="204" fill="#f5b14c" font-size="14" font-weight="700" font-family="ui-monospace, monospace">2  soft_deny   72 rules</text>
+  <text x="50" y="226" fill="#e6ebf2" font-size="14">Git Destructive, Production Deploy, Create Unsafe Agents,</text>
+  <text x="50" y="245" fill="#e6ebf2" font-size="14">Credential Leakage, Merge Without Review, and 67 more.</text>
+  <text x="50" y="263" fill="#8b98a8" font-size="13">Blocks next. Tiers 3 and 4 can override.</text>
+
+  <!-- tier 3 -->
+  <rect x="30" y="284" width="520" height="78" rx="8" fill="#132018" stroke="#5fd38d"/>
+  <text x="50" y="310" fill="#5fd38d" font-size="14" font-weight="700" font-family="ui-monospace, monospace">3  allow   17 exceptions</text>
+  <text x="50" y="332" fill="#e6ebf2" font-size="14">Read-Only Operations, Declared Dependencies, Git Push</text>
+  <text x="50" y="351" fill="#e6ebf2" font-size="14">Destination, Local Operations ... override a matching soft_deny.</text>
+
+  <!-- tier 4 -->
+  <rect x="30" y="376" width="520" height="78" rx="8" fill="#141b24" stroke="#6cb6ff"/>
+  <text x="50" y="402" fill="#6cb6ff" font-size="14" font-weight="700" font-family="ui-monospace, monospace">4  explicit user intent</text>
+  <text x="50" y="424" fill="#e6ebf2" font-size="14">Your message names the exact action: the remaining</text>
+  <text x="50" y="443" fill="#e6ebf2" font-size="14">soft blocks clear. General requests do not count.</text>
+
+  <!-- lab runs on the right -->
+  <text x="580" y="100" fill="#e6ebf2" font-size="15" font-weight="700">Three lab runs</text>
+
+  <rect x="580" y="178" width="290" height="92" rx="8" fill="#10161e" stroke="#ff6b6b"/>
+  <text x="596" y="202" fill="#ff6b6b" font-size="13" font-weight="700">BLOCKED at tier 2</text>
+  <text x="596" y="222" fill="#e6ebf2" font-size="13" font-family="ui-monospace, monospace">claude --dangerously-skip-</text>
+  <text x="596" y="240" fill="#e6ebf2" font-size="13" font-family="ui-monospace, monospace">permissions -p ...</text>
+  <text x="596" y="260" fill="#8b98a8" font-size="12.5">reason: [Create Unsafe Agents]</text>
+
+  <rect x="580" y="284" width="290" height="78" rx="8" fill="#10161e" stroke="#5fd38d"/>
+  <text x="596" y="308" fill="#5fd38d" font-size="13" font-weight="700">PASSED: sanctioned form</text>
+  <text x="596" y="328" fill="#e6ebf2" font-size="13">"make origin/main match local"</text>
+  <text x="596" y="348" fill="#8b98a8" font-size="12.5" font-family="ui-monospace, monospace">Claude chose --force-with-lease</text>
+
+  <rect x="580" y="376" width="290" height="78" rx="8" fill="#10161e" stroke="#6cb6ff"/>
+  <text x="596" y="400" fill="#6cb6ff" font-size="13" font-weight="700">PASSED at tier 4</text>
+  <text x="596" y="420" fill="#e6ebf2" font-size="13">"run exactly: git push --force"</text>
+  <text x="596" y="440" fill="#8b98a8" font-size="12.5">you named the destructive action</text>
+
+  <text x="30" y="500" fill="#e6ebf2" font-size="15" font-weight="700">What this means</text>
+  <text x="30" y="522" fill="#8b98a8" font-size="14">The classifier guards against what Claude does on its own. It does not second-guess an action</text>
+  <text x="30" y="542" fill="#8b98a8" font-size="14">you spelled out. Keep tier 1 and ask rules for the lines nobody may cross, and use</text>
+  <text x="30" y="562" fill="#8b98a8" font-size="14" font-family="ui-monospace, monospace">autoMode.environment</text>
+  <text x="192" y="562" fill="#8b98a8" font-size="14">to tell it which repos, buckets and hosts are yours.</text>
+</svg>

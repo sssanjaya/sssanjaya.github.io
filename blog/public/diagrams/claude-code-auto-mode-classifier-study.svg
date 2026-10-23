@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Dangerous commands caught, humans vs auto mode</title><desc id="d">Bar chart. In a controlled study of 1,053 paid testers, human review caught 13.6 percent of dangerous commands (143 of 1,053) while auto mode blocked 89 percent (937 of 1,053).</desc>
+<rect width="900" height="330" fill="#0d1218"/>
+<text x="30" y="44" fill="#e6ebf2" font-size="22" font-weight="700">Dangerous commands caught, humans vs auto mode</text>
+<text x="30" y="70" fill="#8b98a8" font-size="14">Share of planted dangerous commands stopped before they ran, same 1,053 sessions</text>
+<line x1="250.0" y1="110" x2="250.0" y2="244" stroke="#2a3441" stroke-width="1"/>
+<text x="250.0" y="102" fill="#8b98a8" font-size="13" text-anchor="middle">0%</text>
+<line x1="362.5" y1="110" x2="362.5" y2="244" stroke="#2a3441" stroke-width="1"/>
+<text x="362.5" y="102" fill="#8b98a8" font-size="13" text-anchor="middle">25%</text>
+<line x1="475.0" y1="110" x2="475.0" y2="244" stroke="#2a3441" stroke-width="1"/>
+<text x="475.0" y="102" fill="#8b98a8" font-size="13" text-anchor="middle">50%</text>
+<line x1="587.5" y1="110" x2="587.5" y2="244" stroke="#2a3441" stroke-width="1"/>
+<text x="587.5" y="102" fill="#8b98a8" font-size="13" text-anchor="middle">75%</text>
+<line x1="700.0" y1="110" x2="700.0" y2="244" stroke="#2a3441" stroke-width="1"/>
+<text x="700.0" y="102" fill="#8b98a8" font-size="13" text-anchor="middle">100%</text>
+<text x="236" y="138.0" fill="#e6ebf2" font-size="15" text-anchor="end">Human review</text>
+<text x="236" y="156.0" fill="#e6ebf2" font-size="15" text-anchor="end">(manual prompts)</text>
+<rect x="250" y="120" width="61.2" height="44" rx="4" fill="#ff6b6b"/>
+<text x="321.2" y="148.0" fill="#e6ebf2" font-size="16" font-weight="700">13.6%  (143 of 1,053)</text>
+<text x="236" y="208.0" fill="#e6ebf2" font-size="15" text-anchor="end">Auto mode</text>
+<text x="236" y="226.0" fill="#e6ebf2" font-size="15" text-anchor="end">classifier</text>
+<rect x="250" y="190" width="400.5" height="44" rx="4" fill="#5fd38d"/>
+<text x="660.5" y="218.0" fill="#e6ebf2" font-size="16" font-weight="700">89%  (937 of 1,053)</text>
+<text x="250" y="308" fill="#8b98a8" font-size="13">Source: Anthropic, "Auto mode is now the default in Claude Code", controlled study, 1,053 paid testers.</text>
+</svg>

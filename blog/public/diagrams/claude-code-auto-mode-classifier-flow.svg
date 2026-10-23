@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title id="t">How auto mode decides on each tool call</title>
+  <desc id="d">Flowchart. A tool call first meets your allow, ask and deny rules, which resolve it at once. Otherwise, read-only actions and edits inside the working directory are auto-approved. Everything else goes to the classifier, a separate model that allows or blocks. On a block, Claude gets the rule name and tries a safer route or asks you. Three blocks in a row, or twenty in a session, drop the session back to manual approvals.</desc>
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .pkt { animation: run 7s linear infinite; }
+      @keyframes run {
+        0%   { transform: translate(0px, 0px); opacity: 0; }
+        4%   { opacity: 1; }
+        22%  { transform: translate(0px, 86px); }
+        44%  { transform: translate(0px, 172px); }
+        66%  { transform: translate(0px, 258px); }
+        82%  { transform: translate(0px, 344px); opacity: 1; }
+        100% { transform: translate(0px, 344px); opacity: 0; }
+      }
+    }
+  </style>
+  <rect width="900" height="620" fill="#0d1218"/>
+  <text x="30" y="40" fill="#e6ebf2" font-size="22" font-weight="700">Auto mode: the fixed decision order for one tool call</text>
+  <text x="30" y="64" fill="#8b98a8" font-size="14">The first matching step wins. Only step 3 costs a classifier request.</text>
+
+  <!-- step 1 -->
+  <rect x="60" y="92" width="400" height="60" rx="8" fill="#141b24" stroke="#6cb6ff"/>
+  <text x="80" y="117" fill="#6cb6ff" font-size="13" font-weight="700">1  PERMISSION RULES</text>
+  <text x="80" y="138" fill="#e6ebf2" font-size="14">allow / ask / deny rules resolve it at once</text>
+  <rect x="520" y="104" width="320" height="36" rx="6" fill="#10161e" stroke="#2a3441"/>
+  <text x="680" y="127" fill="#8b98a8" font-size="13" text-anchor="middle">broad Bash(*) and python* allows are dropped</text>
+
+  <line x1="260" y1="152" x2="260" y2="176" stroke="#2a3441" stroke-width="2"/>
+  <polygon points="260,178 254,168 266,168" fill="#2a3441"/>
+
+  <!-- step 2 -->
+  <rect x="60" y="178" width="400" height="60" rx="8" fill="#141b24" stroke="#5fd38d"/>
+  <text x="80" y="203" fill="#5fd38d" font-size="13" font-weight="700">2  AUTO-APPROVED</text>
+  <text x="80" y="224" fill="#e6ebf2" font-size="14">read-only actions, edits inside the working dir</text>
+  <rect x="520" y="190" width="320" height="36" rx="6" fill="#10161e" stroke="#2a3441"/>
+  <text x="680" y="213" fill="#8b98a8" font-size="13" text-anchor="middle">lab: git log ran with no prompt</text>
+
+  <line x1="260" y1="238" x2="260" y2="262" stroke="#2a3441" stroke-width="2"/>
+  <polygon points="260,264 254,254 266,254" fill="#2a3441"/>
+
+  <!-- step 3 -->
+  <rect x="60" y="264" width="400" height="60" rx="8" fill="#141b24" stroke="#f5b14c"/>
+  <text x="80" y="289" fill="#f5b14c" font-size="13" font-weight="700">3  CLASSIFIER</text>
+  <text x="80" y="310" fill="#e6ebf2" font-size="14">everything else: a second model allows or blocks</text>
+  <rect x="520" y="276" width="320" height="36" rx="6" fill="#10161e" stroke="#2a3441"/>
+  <text x="680" y="299" fill="#8b98a8" font-size="13" text-anchor="middle">Sonnet 5 by default; sees prompts, not tool output</text>
+
+  <line x1="260" y1="324" x2="260" y2="348" stroke="#2a3441" stroke-width="2"/>
+  <polygon points="260,350 254,340 266,340" fill="#2a3441"/>
+
+  <!-- step 4 -->
+  <rect x="60" y="350" width="400" height="60" rx="8" fill="#241416" stroke="#ff6b6b"/>
+  <text x="80" y="375" fill="#ff6b6b" font-size="13" font-weight="700">4  ON A BLOCK</text>
+  <text x="80" y="396" fill="#e6ebf2" font-size="14">Claude gets the rule name, e.g. [Create Unsafe Agents]</text>
+  <rect x="520" y="362" width="320" height="36" rx="6" fill="#10161e" stroke="#2a3441"/>
+  <text x="680" y="385" fill="#8b98a8" font-size="13" text-anchor="middle">finds a safer route, or asks you</text>
+
+  <line x1="260" y1="410" x2="260" y2="434" stroke="#2a3441" stroke-width="2"/>
+  <polygon points="260,436 254,426 266,426" fill="#2a3441"/>
+
+  <!-- fallback -->
+  <rect x="60" y="436" width="400" height="60" rx="8" fill="#141b24" stroke="#2a3441"/>
+  <text x="80" y="461" fill="#8b98a8" font-size="13" font-weight="700">FALLBACK</text>
+  <text x="80" y="482" fill="#e6ebf2" font-size="14">3 blocks in a row, or 20 in a session: back to manual</text>
+
+  <!-- moving packet along the left spine -->
+  <circle class="pkt" cx="40" cy="122" r="6" fill="#6cb6ff"/>
+
+  <text x="30" y="540" fill="#e6ebf2" font-size="15" font-weight="700">Still prompts you in auto mode:</text>
+  <text x="30" y="562" fill="#8b98a8" font-size="14">ask rules that match command text such as Bash(git push *), the first read outside the working</text>
+  <text x="30" y="582" fill="#8b98a8" font-size="14">directories, writes to protected paths, and MCP tools marked requiresUserInteraction.</text>
+</svg>
