@@ -13,11 +13,20 @@ empty queue it picks the most interesting news of the week.
 
 These rules override the routine's defaults.
 
-- Topics: Claude and Claude Code in operations, AIOps for SRE (AI agents in
-  incident response, observability, and on-call), AI security (agents, MCP,
-  prompt injection, model supply chain), cloud platform engineering, and
-  DevSecOps. Prefer stories with a mechanism worth drawing: an attack chain,
-  an outage cascade, a design change, a benchmark.
+- Topic: Claude Code and Claude updates that make developers and operators
+  more productive. Every post is about something from the past week: Claude
+  Code releases (changelog entries: new commands, hooks, mods, settings,
+  auto mode, agent teams, the SDK), terminal workflow tips, tips and demos
+  that Claude Code's own developers post on X, Claude models and the API,
+  and Claude apps (Duet, Cowork, Chrome, desktop). Show it in the terminal:
+  install the real version, run it, show real output.
+- Primary sources first: code.claude.com/docs/en/changelog, the
+  code.claude.com docs, support.claude.com release notes, claude.com
+  announcements, the npm registry, and the original X posts (quote them
+  verbatim and link them). Never generic DevOps news, never security
+  advisories for unrelated tools.
+- Prefer stories with a mechanism worth drawing: a hook chain, an approval
+  flow, a retry loop, a before/after workflow, a benchmark.
 - Formats rotate by weekday: Monday is a weekly roundup, Wednesday a visual
   deep-dive or data/chart story, Friday a hands-on lab.
 - Visuals carry the post. Every post has a hero visual right after the opening
