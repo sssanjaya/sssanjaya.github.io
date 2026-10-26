@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" width="900" height="450" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Claude Duet: what runs alone, what waits for approval, what is blocked</title>
+<desc id="d">Claude Duet checks connected accounts every few hours and runs tasks on its own virtual machine with a browser. Reading, drafting and preparing work run on its own. Sending a message, making a payment, signing a document or deleting anything waits for your approval. Trading securities and moving money between accounts are off-limits even with approval. A classifier rejects sharing card numbers and government ID.</desc>
+<style>.t{fill:#e6ebf2;font-size:17px}.m{fill:#8b98a8;font-size:15px}.h{font-size:19px;font-weight:700;fill:#e6ebf2}
+@media (prefers-reduced-motion: no-preference){.k{animation:pk 6s linear infinite}@keyframes pk{0%{transform:translateY(0)}30%,100%{transform:translateY(95px)}}}</style>
+<rect fill="#0d1218" width="900" height="450"/>
+<text x="30" y="40" class="h">Claude Duet: one agent, three lanes</text>
+<rect x="250" y="62" width="400" height="66" rx="8" fill="#121a23" stroke="#6cb6ff" stroke-width="2"/>
+<text x="268" y="90" class="t">Check connected apps every few hours</text>
+<text x="268" y="114" class="m">runs on its own VM and browser</text>
+<circle class="k" cx="450" cy="135" r="6" fill="#6cb6ff"/>
+<path d="M450 128 V 175 M150 175 H 750 M150 175 V 210 M450 175 V 210 M750 175 V 210" stroke="#6cb6ff" stroke-width="2.5" fill="none"/>
+<rect x="30" y="210" width="250" height="150" rx="8" fill="#0f2a1c" stroke="#5fd38d" stroke-width="2"/>
+<text x="48" y="240" class="t" style="font-weight:700">Runs on its own</text>
+<text x="48" y="270" class="t">Read</text><text x="48" y="296" class="t">Draft</text><text x="48" y="322" class="t">Prepare work</text>
+<rect x="325" y="210" width="250" height="150" rx="8" fill="#2a2111" stroke="#f5b14c" stroke-width="2"/>
+<text x="343" y="240" class="t" style="font-weight:700">Shows you, then waits</text>
+<text x="343" y="270" class="t">Send a message</text><text x="343" y="296" class="t">Make a payment</text><text x="343" y="322" class="t">Sign a document</text><text x="343" y="348" class="t">Delete anything</text>
+<rect x="620" y="210" width="250" height="150" rx="8" fill="#2c1416" stroke="#ff6b6b" stroke-width="2"/>
+<text x="638" y="240" class="t" style="font-weight:700">Off-limits, even approved</text>
+<text x="638" y="270" class="t">Trade securities</text><text x="638" y="296" class="t">Move money between</text><text x="638" y="320" class="t">accounts</text>
+<text x="30" y="400" class="m">Plus a dedicated classifier that rejects sharing card numbers and government ID.</text>
+<text x="30" y="424" class="m">Research preview, waitlist, US Pro and Max, iOS, Android and claude.ai.</text>
+</svg>
