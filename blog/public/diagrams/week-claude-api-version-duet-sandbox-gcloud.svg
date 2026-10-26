@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" width="900" height="430" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Two ways to run Claude on Google Cloud</title>
+<desc id="d">Both offerings use Google Cloud IAM and billing. Anthropic managed: Anthropic operates the service and is the data processor, full Claude Platform features with betas the same day, Claude Console included, US and Global endpoints, a new Anthropic organization per setup, services claude.googleapis.com and a Marketplace service. Google managed: Google is the data processor, the choice for strict regional data residency and native integrations such as Model Armor or Agent Engine.</desc>
+<style>.t{fill:#e6ebf2;font-size:17px}.m{fill:#8b98a8;font-size:15px}.c{font-family:ui-monospace, monospace;font-size:15px;fill:#e6ebf2}.h{font-size:19px;font-weight:700;fill:#e6ebf2}</style>
+<rect fill="#0d1218" width="900" height="430"/>
+<rect x="250" y="25" width="400" height="60" rx="8" fill="#121a23" stroke="#6cb6ff" stroke-width="2"/>
+<text x="268" y="52" class="t">Your Google Cloud project</text>
+<text x="268" y="74" class="m">IAM for access, Google Cloud invoice</text>
+<path d="M350 85 V 120 M550 85 V 120" stroke="#6cb6ff" stroke-width="2.5"/>
+<rect x="30" y="120" width="410" height="280" rx="8" fill="#121a23" stroke="#5fd38d" stroke-width="2"/>
+<text x="48" y="150" class="h" style="fill:#5fd38d">Anthropic managed (new, GA)</text>
+<text x="48" y="182" class="t">Anthropic is the data processor</text>
+<text x="48" y="210" class="t">Full Claude Platform, betas day one</text>
+<text x="48" y="238" class="t">Claude Console included</text>
+<text x="48" y="266" class="t">US and Global endpoints</text>
+<text x="48" y="294" class="t">Fast mode on Opus 5.5: $8 / $40</text>
+<text x="48" y="316" class="m">per million input / output tokens</text>
+<text x="48" y="350" class="c">claude.googleapis.com</text>
+<text x="48" y="376" class="m">roles/claude.user, roles/claude.admin</text>
+<rect x="460" y="120" width="410" height="280" rx="8" fill="#121a23" stroke="#2a3441" stroke-width="2"/>
+<text x="478" y="150" class="h">Google managed (existing)</text>
+<text x="478" y="182" class="t">Google is the data processor</text>
+<text x="478" y="210" class="t">For strict regional data residency</text>
+<text x="478" y="238" class="t">Native integrations such as</text>
+<text x="478" y="262" class="t">Model Armor and Agent Engine</text>
+</svg>

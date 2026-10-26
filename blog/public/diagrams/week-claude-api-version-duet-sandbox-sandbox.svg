@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" width="900" height="430" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Claude Code sandbox: shell startup files before and after 2.1.309</title>
+<desc id="d">Before 2.1.309, a sandboxed Bash command on macOS and Linux ran the shell's startup files outside the sandbox, then ran the command inside it. From 2.1.309 the startup files no longer run outside. The same release fixed sandboxed commands being able to modify the MCP config file passed with --mcp-config.</desc>
+<style>
+.p{fill:#0d1218}.t{fill:#e6ebf2;font-size:17px}.m{fill:#8b98a8;font-size:15px}.c{font-family:ui-monospace, monospace;font-size:15px;fill:#e6ebf2}.h{font-size:19px;font-weight:700;fill:#e6ebf2}
+</style>
+<rect class="p" width="900" height="430"/>
+<text x="30" y="40" class="h" style="fill:#ff6b6b">Before 2.1.309</text>
+<text x="470" y="40" class="h" style="fill:#5fd38d">2.1.309 and later</text>
+<line x1="450" y1="20" x2="450" y2="360" stroke="#2a3441" stroke-width="2"/>
+<!-- before -->
+<rect x="30" y="70" width="390" height="60" rx="8" fill="#121a23" stroke="#2a3441" stroke-width="2"/>
+<text x="48" y="98" class="t">Claude runs a Bash command</text>
+<text x="48" y="120" class="c" style="fill:#8b98a8">npm test</text>
+<path d="M225 130 V 160" stroke="#6cb6ff" stroke-width="2.5"/>
+<rect x="30" y="160" width="390" height="60" rx="8" fill="#2c1416" stroke="#ff6b6b" stroke-width="2"/>
+<text x="48" y="188" class="t">Shell startup files run</text>
+<text x="48" y="210" class="m">outside the sandbox, every command</text>
+<path d="M225 220 V 250" stroke="#6cb6ff" stroke-width="2.5"/>
+<rect x="30" y="250" width="390" height="100" rx="8" fill="none" stroke="#5fd38d" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="48" y="275" class="m" style="fill:#5fd38d">sandbox</text>
+<rect x="48" y="285" width="354" height="55" rx="8" fill="#121a23" stroke="#2a3441" stroke-width="2"/>
+<text x="64" y="308" class="t">The command itself</text>
+<text x="64" y="330" class="m" style="fill:#ff6b6b">could edit the --mcp-config file</text>
+<!-- after -->
+<rect x="470" y="70" width="400" height="60" rx="8" fill="#121a23" stroke="#2a3441" stroke-width="2"/>
+<text x="488" y="98" class="t">Claude runs a Bash command</text>
+<text x="488" y="120" class="c" style="fill:#8b98a8">npm test</text>
+<path d="M670 130 V 160" stroke="#6cb6ff" stroke-width="2.5"/>
+<rect x="470" y="160" width="400" height="60" rx="8" fill="#0f2a1c" stroke="#5fd38d" stroke-width="2"/>
+<text x="488" y="188" class="t">Startup files no longer run</text>
+<text x="488" y="210" class="m">outside the sandbox first</text>
+<path d="M670 220 V 250" stroke="#6cb6ff" stroke-width="2.5"/>
+<rect x="470" y="250" width="400" height="100" rx="8" fill="none" stroke="#5fd38d" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="488" y="275" class="m" style="fill:#5fd38d">sandbox</text>
+<rect x="488" y="285" width="364" height="55" rx="8" fill="#121a23" stroke="#2a3441" stroke-width="2"/>
+<text x="504" y="308" class="t">The command itself</text>
+<text x="504" y="330" class="m">can no longer edit the --mcp-config file</text>
+<text x="30" y="395" class="m">Changelog wording: "running the shell's startup files outside the sandbox before each command"</text>
+</svg>
