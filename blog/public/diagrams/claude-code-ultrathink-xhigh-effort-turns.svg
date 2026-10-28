@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" width="900" height="480" role="img" aria-labelledby="t d">
+  <title id="t">ultrathink before and after Claude Code 2.1.311</title>
+  <desc id="d">Three prompts in one Opus 5.5 terminal session. Before 2.1.311 every turn ran at medium effort and ultrathink only added an instruction. From 2.1.311 the ultrathink turn runs at xhigh, and the next turn returns to medium. A PreToolUse hook logged medium, xhigh, medium on 2.1.312.</desc>
+  <style>
+    .t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}
+    .m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}
+    .c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:14px}
+    .h{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:18px;font-weight:600}
+    @media (prefers-reduced-motion: no-preference){
+      .pulse{animation:p 6s ease-in-out infinite}
+      @keyframes p{0%,30%{opacity:.35}45%,75%{opacity:1}100%{opacity:.35}}
+    }
+  </style>
+  <rect width="900" height="480" fill="#0d1218"/>
+  <text x="30" y="40" class="h">One Opus 5.5 session, three prompts</text>
+  <text x="250" y="80" class="m">Turn 1</text>
+  <text x="470" y="80" class="m">Turn 2</text>
+  <text x="690" y="80" class="m">Turn 3</text>
+  <text x="250" y="102" class="c">echo turn1</text>
+  <text x="470" y="102" class="c">ultrathink. echo turn2</text>
+  <text x="690" y="102" class="c">echo turn3</text>
+
+  <text x="30" y="160" class="t">Before 2.1.311</text>
+  <text x="30" y="182" class="m">word = instruction only</text>
+  <rect x="245" y="135" width="190" height="60" rx="8" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text x="340" y="171" class="c" text-anchor="middle">medium</text>
+  <rect x="465" y="135" width="190" height="60" rx="8" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text x="560" y="163" class="c" text-anchor="middle">medium</text>
+  <text x="560" y="184" class="m" text-anchor="middle">+ in-context instruction</text>
+  <rect x="685" y="135" width="190" height="60" rx="8" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text x="780" y="171" class="c" text-anchor="middle">medium</text>
+
+  <line x1="30" y1="225" x2="875" y2="225" stroke="#2a3441" stroke-width="1"/>
+
+  <text x="30" y="270" class="t">2.1.311 and later</text>
+  <text x="30" y="292" class="m">word also sets effort</text>
+  <rect x="245" y="245" width="190" height="60" rx="8" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text x="340" y="281" class="c" text-anchor="middle">medium</text>
+  <rect class="pulse" x="465" y="245" width="190" height="60" rx="8" fill="#f5b14c" fill-opacity="0.15" stroke="#f5b14c" stroke-width="3"/>
+  <text x="560" y="273" class="c" text-anchor="middle" fill="#f5b14c" style="fill:#f5b14c">xhigh</text>
+  <text x="560" y="294" class="m" text-anchor="middle">this turn only</text>
+  <rect x="685" y="245" width="190" height="60" rx="8" fill="none" stroke="#5fd38d" stroke-width="2"/>
+  <text x="780" y="273" class="c" text-anchor="middle">medium</text>
+  <text x="780" y="294" class="m" text-anchor="middle">back to session level</text>
+
+  <rect x="30" y="335" width="845" height="115" rx="8" fill="#121a23" stroke="#2a3441"/>
+  <text x="50" y="362" class="m">effort.log from a PreToolUse hook, Claude Code 2.1.312</text>
+  <text x="50" y="388" class="c">{"tool":"Bash","effort":"medium"}</text>
+  <text x="50" y="410" class="c" style="fill:#f5b14c">{"tool":"Bash","effort":"xhigh"}</text>
+  <text x="50" y="432" class="c">{"tool":"Bash","effort":"medium"}</text>
+</svg>
