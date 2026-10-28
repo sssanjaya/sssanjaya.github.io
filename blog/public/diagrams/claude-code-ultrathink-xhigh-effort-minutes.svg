@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 490" width="900" height="490" role="img" aria-labelledby="t d">
+<title id="t">Minutes to build the same fitness app at each effort level</title>
+<desc id="d">From the Spending your effort post on the Claude Code blog. Underspecified prompt: low 1.5, medium 4, high 11, max 67 minutes. Highly specified interview spec: low 16, medium 22, high 33, max 79 minutes. xhigh was not measured in this example.</desc>
+<style>.t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}.m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}.c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:15px}</style>
+<rect width="900" height="490" fill="#0d1218"/>
+<text x="30" y="38" class="t" style="font-weight:600;font-size:18px">Same app, four effort levels: wall-clock minutes</text>
+<rect x="150" y="58" width="16" height="16" fill="#6cb6ff"/><text x="174" y="71" class="m">Underspecified prompt</text>
+<rect x="410" y="58" width="16" height="16" fill="#f5b14c"/><text x="434" y="71" class="m">Highly specified (interview spec)</text>
+<line x1="150.0" y1="102" x2="150.0" y2="422" stroke="#2a3441"/>
+<text x="150.0" y="444" class="m" text-anchor="middle">0</text>
+<line x1="236.2" y1="102" x2="236.2" y2="422" stroke="#2a3441"/>
+<text x="236.2" y="444" class="m" text-anchor="middle">10</text>
+<line x1="322.5" y1="102" x2="322.5" y2="422" stroke="#2a3441"/>
+<text x="322.5" y="444" class="m" text-anchor="middle">20</text>
+<line x1="408.8" y1="102" x2="408.8" y2="422" stroke="#2a3441"/>
+<text x="408.8" y="444" class="m" text-anchor="middle">30</text>
+<line x1="495.0" y1="102" x2="495.0" y2="422" stroke="#2a3441"/>
+<text x="495.0" y="444" class="m" text-anchor="middle">40</text>
+<line x1="581.2" y1="102" x2="581.2" y2="422" stroke="#2a3441"/>
+<text x="581.2" y="444" class="m" text-anchor="middle">50</text>
+<line x1="667.5" y1="102" x2="667.5" y2="422" stroke="#2a3441"/>
+<text x="667.5" y="444" class="m" text-anchor="middle">60</text>
+<line x1="753.8" y1="102" x2="753.8" y2="422" stroke="#2a3441"/>
+<text x="753.8" y="444" class="m" text-anchor="middle">70</text>
+<line x1="840.0" y1="102" x2="840.0" y2="422" stroke="#2a3441"/>
+<text x="840.0" y="444" class="m" text-anchor="middle">80</text>
+<text x="495.0" y="470" class="m" text-anchor="middle">Minutes per build (axis starts at 0)</text>
+<text x="136" y="144" class="c" text-anchor="end">low</text>
+<rect x="150" y="110" width="12.9" height="26" fill="#6cb6ff"/>
+<text x="170.9" y="129" class="t">1.5 min</text>
+<rect x="150" y="140" width="138.0" height="26" fill="#f5b14c"/>
+<text x="296.0" y="159" class="t">16 min</text>
+<text x="136" y="222" class="c" text-anchor="end">medium</text>
+<rect x="150" y="188" width="34.5" height="26" fill="#6cb6ff"/>
+<text x="192.5" y="207" class="t">4 min</text>
+<rect x="150" y="218" width="189.8" height="26" fill="#f5b14c"/>
+<text x="347.8" y="237" class="t">22 min</text>
+<text x="136" y="300" class="c" text-anchor="end">high</text>
+<rect x="150" y="266" width="94.9" height="26" fill="#6cb6ff"/>
+<text x="252.9" y="285" class="t">11 min</text>
+<rect x="150" y="296" width="284.6" height="26" fill="#f5b14c"/>
+<text x="442.6" y="315" class="t">33 min</text>
+<text x="136" y="378" class="c" text-anchor="end">max</text>
+<rect x="150" y="344" width="577.9" height="26" fill="#6cb6ff"/>
+<text x="735.9" y="363" class="t">67 min</text>
+<rect x="150" y="374" width="681.4" height="26" fill="#f5b14c"/>
+<text x="839.4" y="393" class="t">79 min</text>
+</svg>
