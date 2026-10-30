@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="t d">
+  <title id="t">Two write paths in Claude Code 2.1.314</title>
+  <desc id="d">Write, Edit and NotebookEdit resolve symlinks, then check whether the target is inside a working directory. If it is not and permissions.blockWritesOutsideWorkingDirectories is true, the call is refused before any allow rule or permission mode is consulted. A Bash redirect takes a different path: the redirect check and then the sandbox, neither of which reads the new setting.</desc>
+  <style>
+    .t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}
+    .m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}
+    .c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:14px}
+    .h{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:18px;font-weight:700}
+    .box{fill:#141b24;stroke:#2a3441;stroke-width:2}
+    .ln{stroke:#6cb6ff;stroke-width:2;fill:none}
+    .dot{fill:#6cb6ff}
+    @media (prefers-reduced-motion: no-preference){
+      .dot{animation:mv 6s linear infinite}
+      @keyframes mv{0%{transform:translate(0,0)}25%{transform:translate(210px,0)}45%{transform:translate(330px,0)}70%{transform:translate(330px,105px)}90%{transform:translate(470px,130px)}100%{transform:translate(470px,130px);opacity:0}}
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6cb6ff"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff6b6b"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5fd38d"/></marker>
+  </defs>
+  <rect width="960" height="600" fill="#0d1218"/>
+
+  <text class="h" x="30" y="38">File tools: Write, Edit, NotebookEdit</text>
+
+  <rect class="box" x="30" y="60" width="170" height="70" rx="8"/>
+  <text class="t" x="115" y="90" text-anchor="middle">Tool call</text>
+  <text class="c" x="115" y="112" text-anchor="middle">file_path</text>
+
+  <rect class="box" x="240" y="60" width="170" height="70" rx="8"/>
+  <text class="t" x="325" y="90" text-anchor="middle">Resolve</text>
+  <text class="t" x="325" y="112" text-anchor="middle">symlinks</text>
+
+  <rect class="box" x="450" y="60" width="200" height="70" rx="8" style="stroke:#6cb6ff"/>
+  <text class="t" x="550" y="90" text-anchor="middle">Inside a working</text>
+  <text class="t" x="550" y="112" text-anchor="middle">directory?</text>
+
+  <rect class="box" x="700" y="60" width="230" height="70" rx="8" style="stroke:#5fd38d"/>
+  <text class="t" x="815" y="90" text-anchor="middle">Mode and rules</text>
+  <text class="t" x="815" y="112" text-anchor="middle">decide as before</text>
+
+  <path class="ln" d="M200 95 H236" marker-end="url(#a)"/>
+  <path class="ln" d="M410 95 H446" marker-end="url(#a)"/>
+  <path d="M650 95 H696" stroke="#5fd38d" stroke-width="2" marker-end="url(#ag)"/>
+  <text class="m" x="673" y="85" text-anchor="middle">yes</text>
+  <path class="ln" d="M550 130 V186" marker-end="url(#a)"/>
+  <text class="m" x="562" y="165">no</text>
+  <circle class="dot" cx="220" cy="95" r="6"/>
+
+  <rect class="box" x="430" y="190" width="240" height="70" rx="8" style="stroke:#f5b14c"/>
+  <text class="c" x="550" y="220" text-anchor="middle">blockWrites...</text>
+  <text class="t" x="550" y="243" text-anchor="middle">set to true?</text>
+
+  <path d="M670 225 H696" stroke="#ff6b6b" stroke-width="2" marker-end="url(#ar)"/>
+  <text class="m" x="683" y="215" text-anchor="middle">yes</text>
+  <rect class="box" x="700" y="180" width="230" height="90" rx="8" style="stroke:#ff6b6b"/>
+  <text class="t" x="815" y="210" text-anchor="middle">Refused. Allow rules</text>
+  <text class="t" x="815" y="232" text-anchor="middle">and mode never asked</text>
+  <text class="m" x="815" y="256" text-anchor="middle">symlinks included</text>
+
+  <path class="ln" d="M430 225 H384" marker-end="url(#a)"/>
+  <text class="m" x="407" y="215" text-anchor="middle">no</text>
+  <rect class="box" x="130" y="190" width="250" height="70" rx="8"/>
+  <text class="t" x="255" y="220" text-anchor="middle">Mode and allow rules</text>
+  <text class="t" x="255" y="243" text-anchor="middle">decide (old behavior)</text>
+
+  <line x1="30" y1="310" x2="930" y2="310" stroke="#2a3441" stroke-width="2"/>
+
+  <text class="h" x="30" y="350">Bash: a different path</text>
+  <text class="m" x="250" y="350">the new setting is not consulted here</text>
+
+  <rect class="box" x="30" y="375" width="200" height="80" rx="8"/>
+  <text class="c" x="130" y="410" text-anchor="middle">printf hi &gt;</text>
+  <text class="c" x="130" y="432" text-anchor="middle">/outside/f.txt</text>
+
+  <rect class="box" x="270" y="375" width="200" height="80" rx="8" style="stroke:#f5b14c"/>
+  <text class="t" x="370" y="405" text-anchor="middle">Redirect check</text>
+  <text class="m" x="370" y="428" text-anchor="middle">working dirs +</text>
+  <text class="m" x="370" y="446" text-anchor="middle">Edit allow rules</text>
+
+  <rect class="box" x="510" y="375" width="200" height="80" rx="8" style="stroke:#f5b14c"/>
+  <text class="t" x="610" y="405" text-anchor="middle">Sandbox, if on</text>
+  <text class="m" x="610" y="428" text-anchor="middle">allowWrite +</text>
+  <text class="m" x="610" y="446" text-anchor="middle">Edit allow paths</text>
+
+  <rect class="box" x="750" y="375" width="180" height="80" rx="8"/>
+  <text class="t" x="840" y="410" text-anchor="middle">Write lands</text>
+  <text class="m" x="840" y="432" text-anchor="middle">or EROFS</text>
+
+  <path class="ln" d="M230 415 H266" marker-end="url(#a)"/>
+  <path class="ln" d="M470 415 H506" marker-end="url(#a)"/>
+  <path class="ln" d="M710 415 H746" marker-end="url(#a)"/>
+
+  <text class="m" x="30" y="510">An Edit allow rule for the outside path lets the redirect through and is merged into the</text>
+  <text class="m" x="30" y="532">sandbox's writable paths, so Bash can still write there with the block on.</text>
+  <text class="m" x="30" y="570">Claude Code 2.1.314. Structure from the changelog, docs, and lab runs below.</text>
+</svg>
