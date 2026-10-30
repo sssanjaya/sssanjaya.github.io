@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" width="960" height="430" role="img" aria-labelledby="t d">
+  <title id="t">What one Edit allow rule opens, before and after the block</title>
+  <desc id="d">An allow rule Edit(//tmp/lab/outside/**) opens three ways to write outside the working directory: Write and Edit tools, Bash output redirects, and the sandbox's writable paths. With blockWritesOutsideWorkingDirectories set, only the file tools close. Bash redirects and sandboxed Bash still write there.</desc>
+  <style>
+    .t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}
+    .m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}
+    .c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:14px}
+    .h{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:18px;font-weight:700}
+    .box{fill:#141b24;stroke:#2a3441;stroke-width:2}
+  </style>
+  <defs>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6cb6ff"/></marker>
+  </defs>
+  <rect width="960" height="430" fill="#0d1218"/>
+  <line x1="480" y1="30" x2="480" y2="410" stroke="#2a3441" stroke-width="2"/>
+
+  <text class="h" x="30" y="44">Block off (default)</text>
+  <text class="h" x="510" y="44">Block on (2.1.314)</text>
+
+  <rect class="box" x="30" y="70" width="420" height="60" rx="8" style="stroke:#6cb6ff"/>
+  <text class="m" x="240" y="94" text-anchor="middle">permissions.allow</text>
+  <text class="c" x="240" y="116" text-anchor="middle">Edit(//tmp/lab/outside/**)</text>
+
+  <rect class="box" x="510" y="70" width="420" height="60" rx="8" style="stroke:#6cb6ff"/>
+  <text class="m" x="720" y="94" text-anchor="middle">same rule, plus blockWrites... true</text>
+  <text class="c" x="720" y="116" text-anchor="middle">Edit(//tmp/lab/outside/**)</text>
+
+  <path d="M95 130 V196" stroke="#6cb6ff" stroke-width="2" marker-end="url(#g)"/>
+  <path d="M240 130 V196" stroke="#6cb6ff" stroke-width="2" marker-end="url(#g)"/>
+  <path d="M385 130 V196" stroke="#6cb6ff" stroke-width="2" marker-end="url(#g)"/>
+  <path d="M575 130 V196" stroke="#6cb6ff" stroke-width="2" marker-end="url(#g)"/>
+  <path d="M720 130 V196" stroke="#6cb6ff" stroke-width="2" marker-end="url(#g)"/>
+  <path d="M865 130 V196" stroke="#6cb6ff" stroke-width="2" marker-end="url(#g)"/>
+
+  <rect class="box" x="30" y="200" width="130" height="110" rx="8" style="stroke:#6cb6ff"/>
+  <text class="t" x="95" y="235" text-anchor="middle">Write, Edit</text>
+  <text class="m" x="95" y="258" text-anchor="middle">file tools</text>
+  <text class="t" x="95" y="290" text-anchor="middle" style="fill:#6cb6ff">writes</text>
+
+  <rect class="box" x="175" y="200" width="130" height="110" rx="8" style="stroke:#6cb6ff"/>
+  <text class="t" x="240" y="235" text-anchor="middle">Bash &gt; file</text>
+  <text class="m" x="240" y="258" text-anchor="middle">redirect check</text>
+  <text class="t" x="240" y="290" text-anchor="middle" style="fill:#6cb6ff">writes</text>
+
+  <rect class="box" x="320" y="200" width="130" height="110" rx="8" style="stroke:#6cb6ff"/>
+  <text class="t" x="385" y="235" text-anchor="middle">Sandbox</text>
+  <text class="m" x="385" y="258" text-anchor="middle">allowWrite</text>
+  <text class="t" x="385" y="290" text-anchor="middle" style="fill:#6cb6ff">writes</text>
+
+  <rect class="box" x="510" y="200" width="130" height="110" rx="8" style="stroke:#5fd38d"/>
+  <text class="t" x="575" y="235" text-anchor="middle">Write, Edit</text>
+  <text class="m" x="575" y="258" text-anchor="middle">file tools</text>
+  <text class="t" x="575" y="290" text-anchor="middle" style="fill:#5fd38d">refused</text>
+
+  <rect class="box" x="655" y="200" width="130" height="110" rx="8" style="stroke:#ff6b6b"/>
+  <text class="t" x="720" y="235" text-anchor="middle">Bash &gt; file</text>
+  <text class="m" x="720" y="258" text-anchor="middle">redirect check</text>
+  <text class="t" x="720" y="290" text-anchor="middle" style="fill:#ff6b6b">still writes</text>
+
+  <rect class="box" x="800" y="200" width="130" height="110" rx="8" style="stroke:#ff6b6b"/>
+  <text class="t" x="865" y="235" text-anchor="middle">Sandbox</text>
+  <text class="m" x="865" y="258" text-anchor="middle">allowWrite</text>
+  <text class="t" x="865" y="290" text-anchor="middle" style="fill:#ff6b6b">still writes</text>
+
+  <text class="m" x="30" y="356">The redirect check and the sandbox both read</text>
+  <text class="m" x="30" y="378">Edit allow rules, per the permissions docs and</text>
+  <text class="m" x="30" y="400">the settings reference.</text>
+
+  <text class="m" x="510" y="356">The block fences the file tools only. To close</text>
+  <text class="m" x="510" y="378">the Bash paths, drop the outside Edit allow rule</text>
+  <text class="m" x="510" y="400">and keep the sandbox on.</text>
+</svg>
