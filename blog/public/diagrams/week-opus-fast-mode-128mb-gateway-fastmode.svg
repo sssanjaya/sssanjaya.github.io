@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 428" width="900" height="428" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Fast mode prices: Claude Opus 4.8 versus Claude Opus 5.5</title><desc id="d">Fast mode on Claude Opus 4.8 costs 10 dollars per million input tokens and 50 dollars per million output tokens. Fast mode on Claude Opus 5.5 costs 8 and 40. Fast mode on Opus 4.8 is deprecated as of October 30, 2026 and removed on November 30, 2026.</desc>
+<rect width="900" height="428" fill="#0d1218"/>
+<text x="30" y="42" fill="#e6ebf2" font-size="21" font-weight="700">Fast mode price per million tokens (USD)</text>
+<text x="30" y="70" fill="#8b98a8" font-size="15">Opus 4.8 fast mode: deprecated Oct 30, removed Nov 30, 2026</text>
+<line x1="260.0" y1="102" x2="260.0" y2="318" stroke="#2a3441" stroke-width="1"/>
+<text x="260.0" y="340" fill="#8b98a8" font-size="14" text-anchor="middle">0</text>
+<line x1="374.0" y1="102" x2="374.0" y2="318" stroke="#2a3441" stroke-width="1"/>
+<text x="374.0" y="340" fill="#8b98a8" font-size="14" text-anchor="middle">10</text>
+<line x1="488.0" y1="102" x2="488.0" y2="318" stroke="#2a3441" stroke-width="1"/>
+<text x="488.0" y="340" fill="#8b98a8" font-size="14" text-anchor="middle">20</text>
+<line x1="602.0" y1="102" x2="602.0" y2="318" stroke="#2a3441" stroke-width="1"/>
+<text x="602.0" y="340" fill="#8b98a8" font-size="14" text-anchor="middle">30</text>
+<line x1="716.0" y1="102" x2="716.0" y2="318" stroke="#2a3441" stroke-width="1"/>
+<text x="716.0" y="340" fill="#8b98a8" font-size="14" text-anchor="middle">40</text>
+<line x1="830.0" y1="102" x2="830.0" y2="318" stroke="#2a3441" stroke-width="1"/>
+<text x="830.0" y="340" fill="#8b98a8" font-size="14" text-anchor="middle">50</text>
+<text x="545.0" y="366" fill="#8b98a8" font-size="14" text-anchor="middle">USD per million tokens (MTok)</text>
+<text x="248" y="141.0" fill="#e6ebf2" font-size="15" text-anchor="end">Opus 4.8 fast, input</text>
+<rect x="260" y="119" width="114.0" height="34" rx="3" fill="#ff6b6b"/>
+<text x="382.0" y="141.0" fill="#e6ebf2" font-size="15" font-weight="700">$10</text>
+<text x="248" y="193.0" fill="#e6ebf2" font-size="15" text-anchor="end">Opus 5.5 fast, input</text>
+<rect x="260" y="171" width="91.2" height="34" rx="3" fill="#5fd38d"/>
+<text x="359.2" y="193.0" fill="#e6ebf2" font-size="15" font-weight="700">$8</text>
+<text x="248" y="245.0" fill="#e6ebf2" font-size="15" text-anchor="end">Opus 4.8 fast, output</text>
+<rect x="260" y="223" width="570.0" height="34" rx="3" fill="#ff6b6b"/>
+<text x="838.0" y="245.0" fill="#e6ebf2" font-size="15" font-weight="700">$50</text>
+<text x="248" y="297.0" fill="#e6ebf2" font-size="15" text-anchor="end">Opus 5.5 fast, output</text>
+<rect x="260" y="275" width="456.0" height="34" rx="3" fill="#5fd38d"/>
+<text x="724.0" y="297.0" fill="#e6ebf2" font-size="15" font-weight="700">$40</text>
+<line x1="260" y1="102" x2="260" y2="318" stroke="#8b98a8" stroke-width="1.5"/>
+<text x="30" y="410" fill="#8b98a8" font-size="14">Red: removed Nov 30, then speed "fast" on claude-opus-4-8 returns an error. Green: the migration target.</text>
+</svg>
