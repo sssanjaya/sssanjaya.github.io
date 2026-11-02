@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="t d">
+<title id="t">Opening a repo versus auditing it from Git objects</title>
+<desc id="d">Side by side. Left, red: git clone checks out the hook files, then claude -p starts and the SessionStart hook runs, creating hook-ran.txt in the sandbox run. Right, green: git clone --no-checkout --filter=blob:none leaves only .git on disk; git log and cat-file list the two hook files, the 13631528 byte init.js and the skip-checks:true commit; claude -p with disableAllHooks true did not run the hook.</desc>
+<style>
+  .h { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 18px; font-weight: 700; fill: #e6ebf2; }
+  .t { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; fill: #8b98a8; }
+  .c { font-family: ui-monospace, monospace; font-size: 14px; fill: #e6ebf2; }
+  .step { fill: #121a23; stroke: #2a3441; stroke-width: 1.5; }
+</style>
+<rect width="960" height="520" fill="#0d1218"/>
+<text x="30" y="40" class="h" font-size="22">Same repo, two ways in (sandbox run, harmless stand-in files)</text>
+
+<rect x="30" y="64" width="430" height="430" rx="10" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+<text x="50" y="96" class="h" fill="#ff6b6b">Open it: the hook runs</text>
+<rect x="50" y="116" width="390" height="70" rx="6" class="step"/>
+<text x="66" y="144" class="c">git clone ... &amp;&amp; cd repo</text>
+<text x="66" y="170" class="t">Hook files land in the working tree</text>
+<rect x="50" y="200" width="390" height="70" rx="6" class="step"/>
+<text x="66" y="228" class="c">claude -p "reply with the word ok"</text>
+<text x="66" y="254" class="t">No trust dialog in -p mode</text>
+<rect x="50" y="284" width="390" height="70" rx="6" class="step"/>
+<text x="66" y="312" class="c">SessionStart: command</text>
+<text x="66" y="338" class="t">Repo code runs on the machine</text>
+<rect x="50" y="368" width="390" height="106" rx="6" class="step" stroke="#ff6b6b"/>
+<text x="66" y="396" class="c">$ ls hook-ran.txt</text>
+<text x="66" y="420" class="c" fill="#ff6b6b">hook-ran.txt</text>
+<text x="66" y="452" class="t">The marker file exists: the hook ran</text>
+
+<rect x="500" y="64" width="430" height="430" rx="10" fill="none" stroke="#5fd38d" stroke-width="2"/>
+<text x="520" y="96" class="h" fill="#5fd38d">Audit it: nothing runs</text>
+<rect x="520" y="116" width="390" height="70" rx="6" class="step"/>
+<text x="536" y="144" class="c">clone --no-checkout --filter=blob:none</text>
+<text x="536" y="170" class="t">Only .git on disk (140K)</text>
+<rect x="520" y="200" width="390" height="70" rx="6" class="step"/>
+<text x="536" y="228" class="c">git log --all -- .claude .vscode ...</text>
+<text x="536" y="254" class="t">Lists both hook files, commit 55ce0a7</text>
+<rect x="520" y="284" width="390" height="70" rx="6" class="step"/>
+<text x="536" y="312" class="c">cat-file --batch-check | awk size</text>
+<text x="536" y="338" class="t">13631528 .github/init.js</text>
+<rect x="520" y="368" width="390" height="106" rx="6" class="step" stroke="#5fd38d"/>
+<text x="536" y="396" class="c">claude -p --settings</text>
+<text x="536" y="420" class="c">'{"disableAllHooks": true}'</text>
+<text x="536" y="452" class="t">No marker file: the hook did not run</text>
+</svg>

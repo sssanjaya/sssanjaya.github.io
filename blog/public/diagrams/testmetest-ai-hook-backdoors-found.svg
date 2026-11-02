@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 346" width="900" height="346" role="img" aria-labelledby="t d">
+<title id="t">Armed repositories found by each search method</title><desc id="d">Two horizontal bars. GitHub code search found the execution harness in 26 repositories. Walking default-branch Git trees for each owner found 42 armed repositories across 11 owners, 16 more.</desc>
+<rect width="900" height="346" fill="#0d1218"/>
+<text x="32" y="48" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#e6ebf2">Code search found 26 armed repos. Tree walks found 42</text>
+<line x1="300.0" y1="86" x2="300.0" y2="222" stroke="#2a3441" stroke-width="1"/>
+<text x="300.0" y="246" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">0</text>
+<line x1="398.0" y1="86" x2="398.0" y2="222" stroke="#2a3441" stroke-width="1"/>
+<text x="398.0" y="246" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">10</text>
+<line x1="496.0" y1="86" x2="496.0" y2="222" stroke="#2a3441" stroke-width="1"/>
+<text x="496.0" y="246" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">20</text>
+<line x1="594.0" y1="86" x2="594.0" y2="222" stroke="#2a3441" stroke-width="1"/>
+<text x="594.0" y="246" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">30</text>
+<line x1="692.0" y1="86" x2="692.0" y2="222" stroke="#2a3441" stroke-width="1"/>
+<text x="692.0" y="246" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">40</text>
+<line x1="790.0" y1="86" x2="790.0" y2="222" stroke="#2a3441" stroke-width="1"/>
+<text x="790.0" y="246" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">50</text>
+<text x="545.0" y="274" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" fill="#8b98a8" text-anchor="middle">Armed repositories found</text>
+<text x="284" y="116" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#e6ebf2" text-anchor="end">GitHub code search</text>
+<text x="284" y="135" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="end">first sweep</text>
+<rect x="300" y="96" width="254.8" height="44" rx="3" fill="#f5b14c"/>
+<text x="564.8" y="124" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#e6ebf2">26</text>
+<text x="284" y="186" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#e6ebf2" text-anchor="end">Git tree walk per owner</text>
+<text x="284" y="205" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="end">default-branch .github subtree</text>
+<rect x="300" y="166" width="411.6" height="44" rx="3" fill="#5fd38d"/>
+<text x="721.6" y="194" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#e6ebf2">42</text>
+<text x="32" y="328" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8">Source: JFrog Security Research, Beyond testmetest, 26 Oct 2026. 42 repos across 11 owners.</text>
+</svg>
