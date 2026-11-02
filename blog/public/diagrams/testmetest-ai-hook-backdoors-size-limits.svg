@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 486" width="900" height="486" role="img" aria-labelledby="t d">
+<title id="t">Payload size versus GitHub search and API limits</title><desc id="d">Horizontal bars in megabytes. GitHub code search skips files over 350 KiB (about 0.36 MB). The contents API supports all features only up to 1 MB. The testmetest init.js wrappers measured 12.9 MB to 13.7 MB, about 36 to 38 times the code search limit.</desc>
+<rect width="900" height="486" fill="#0d1218"/>
+<text x="32" y="48" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#e6ebf2">The payload is about 37x what code search will index</text>
+<line x1="300.0" y1="86" x2="300.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="300.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">0</text>
+<line x1="370.0" y1="86" x2="370.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="370.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">2</text>
+<line x1="440.0" y1="86" x2="440.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="440.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">4</text>
+<line x1="510.0" y1="86" x2="510.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="510.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">6</text>
+<line x1="580.0" y1="86" x2="580.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="580.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">8</text>
+<line x1="650.0" y1="86" x2="650.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="650.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">10</text>
+<line x1="720.0" y1="86" x2="720.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="720.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">12</text>
+<line x1="790.0" y1="86" x2="790.0" y2="362" stroke="#2a3441" stroke-width="1"/>
+<text x="790.0" y="386" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="middle">14</text>
+<text x="545.0" y="414" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" fill="#8b98a8" text-anchor="middle">File size (MB)</text>
+<text x="284" y="116" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#e6ebf2" text-anchor="end">Code search index limit</text>
+<text x="284" y="135" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="end">files over this are skipped</text>
+<rect x="300" y="96" width="12.5" height="44" rx="3" fill="#6cb6ff"/>
+<text x="322.5" y="124" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#e6ebf2">350 KiB</text>
+<text x="284" y="186" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#e6ebf2" text-anchor="end">Contents API, all features</text>
+<text x="284" y="205" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="end">1 to 100 MB: raw media only</text>
+<rect x="300" y="166" width="35.0" height="44" rx="3" fill="#6cb6ff"/>
+<text x="345.0" y="194" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#e6ebf2">1 MB</text>
+<text x="284" y="256" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#e6ebf2" text-anchor="end">init.js wrapper, smallest</text>
+<text x="284" y="275" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="end">per JFrog</text>
+<rect x="300" y="236" width="451.5" height="44" rx="3" fill="#ff6b6b"/>
+<text x="761.5" y="264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#e6ebf2">12.9 MB</text>
+<text x="284" y="326" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#e6ebf2" text-anchor="end">init.js wrapper, largest</text>
+<text x="284" y="345" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8" text-anchor="end">per JFrog</text>
+<rect x="300" y="306" width="479.5" height="44" rx="3" fill="#ff6b6b"/>
+<text x="789.5" y="334" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#e6ebf2">13.7 MB</text>
+<text x="32" y="468" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#8b98a8">Limits: GitHub Docs (code search, REST contents API). Payload sizes: JFrog Security Research, 26 Oct 2026.</text>
+</svg>
