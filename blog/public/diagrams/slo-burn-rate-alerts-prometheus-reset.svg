@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" width="960" height="430" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Alert firing windows for a 10-minute burst of 15% errors</title>
+<desc id="d">promtool 3.15.1 run with one-minute evaluation. Errors run from minute 60 to 70. The 1h-only burn-rate alert fires at minute 66 and clears at minute 124, 58 minutes of firing. The 1h AND 5m alert fires at minute 66 and clears at minute 74, 8 minutes of firing.</desc>
+<rect width="960" height="430" fill="#0d1218"/>
+<text x="40" y="38" fill="#e6ebf2" font-size="19" font-weight="600">Same detection, 50 fewer minutes of paging after recovery</text>
+<text x="40" y="64" fill="#8b98a8" font-size="15">99.9% SLO, burn-rate threshold 14.4 × 0.001, promtool test rules, 1-minute evaluation</text>
+<line x1="230.0" y1="90" x2="230.0" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="230.0" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">50</text>
+<line x1="316.2" y1="90" x2="316.2" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="316.2" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">60</text>
+<line x1="402.5" y1="90" x2="402.5" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="402.5" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">70</text>
+<line x1="488.8" y1="90" x2="488.8" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="488.8" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">80</text>
+<line x1="575.0" y1="90" x2="575.0" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="575.0" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">90</text>
+<line x1="661.2" y1="90" x2="661.2" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="661.2" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">100</text>
+<line x1="747.5" y1="90" x2="747.5" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="747.5" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">110</text>
+<line x1="833.8" y1="90" x2="833.8" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="833.8" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">120</text>
+<line x1="920.0" y1="90" x2="920.0" y2="340" stroke="#2a3441" stroke-width="1"/>
+<text x="920.0" y="364" fill="#8b98a8" font-size="15" text-anchor="middle">130</text>
+<text x="575" y="392" fill="#8b98a8" font-size="15" text-anchor="middle">Minutes since test start</text>
+<text x="40" y="128" fill="#e6ebf2" font-size="17">15% errors</text>
+<rect x="316.2" y="108" width="86.2" height="30" rx="4" fill="#ff6b6b"/>
+<text x="412.5" y="129" fill="#e6ebf2" font-size="15" text-anchor="start">errors 60 to 70</text>
+<text x="40" y="208" fill="#e6ebf2" font-size="17">1h only</text>
+<rect x="368.0" y="188" width="500.2" height="30" rx="4" fill="#f5b14c"/>
+<text x="368.0" y="240" fill="#e6ebf2" font-size="15" text-anchor="start">fires at 66, clears at 124: 58 min</text>
+<text x="40" y="288" fill="#e6ebf2" font-size="17">1h AND 5m</text>
+<rect x="368.0" y="268" width="69.0" height="30" rx="4" fill="#5fd38d"/>
+<text x="447.0" y="289" fill="#e6ebf2" font-size="15" text-anchor="start">fires at 66, clears at 74: 8 min</text>
+</svg>

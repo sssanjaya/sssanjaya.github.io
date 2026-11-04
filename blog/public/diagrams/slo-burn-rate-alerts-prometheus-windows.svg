@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title id="t">Multiwindow, multi-burn-rate alert logic for a 99.9% SLO</title>
+  <desc id="d">Four window pairs. Each pair fires only when both the long window and the short window exceed the same burn-rate threshold. 1h and 5m above 14.4 times 0.001, or 6h and 30m above 6 times 0.001, send a page. 24h and 2h above 3 times 0.001, or 3d and 6h above 0.001, open a ticket.</desc>
+  <style>
+    .box{fill:#121a23;stroke:#2a3441;stroke-width:2}
+    .h{fill:#e6ebf2;font-size:17px;font-weight:600}
+    .m{fill:#8b98a8;font-size:15px}
+    .c{fill:#e6ebf2;font-size:15px;font-family:ui-monospace, monospace}
+    .and{fill:#6cb6ff;font-size:15px;font-weight:700}
+    .ln{stroke:#2a3441;stroke-width:2;fill:none}
+    .pulse{stroke:#6cb6ff;stroke-width:3;fill:none;opacity:0}
+    @media (prefers-reduced-motion: no-preference){
+      .pulse{animation:p 6s infinite}
+      .p2{animation-delay:1.5s}
+      @keyframes p{0%{opacity:0}10%{opacity:1}30%{opacity:1}40%{opacity:0}100%{opacity:0}}
+    }
+  </style>
+  <rect width="960" height="560" fill="#0d1218"/>
+  <text x="40" y="38" class="h" font-size="19">Both windows must burn. Short window = 1/12 of the long one.</text>
+  <text x="40" y="64" class="m">Long window: enough budget is gone. Short window: the budget is still burning right now.</text>
+  <text x="150" y="104" class="m" text-anchor="middle">long window</text>
+  <text x="430" y="104" class="m" text-anchor="middle">short window</text>
+  <text x="624" y="104" class="m" text-anchor="middle">budget spent</text>
+
+  <!-- row 1 -->
+  <rect x="40" y="116" width="220" height="64" rx="8" class="box"/>
+  <rect x="40" y="116" width="220" height="64" rx="8" class="pulse"/>
+  <text x="150" y="142" class="h" text-anchor="middle">1h error ratio</text>
+  <text x="150" y="166" class="c" text-anchor="middle">&gt; 14.4 × 0.001</text>
+  <text x="290" y="154" class="and" text-anchor="middle">AND</text>
+  <rect x="320" y="116" width="220" height="64" rx="8" class="box"/>
+  <rect x="320" y="116" width="220" height="64" rx="8" class="pulse p2"/>
+  <text x="430" y="142" class="h" text-anchor="middle">5m error ratio</text>
+  <text x="430" y="166" class="c" text-anchor="middle">&gt; 14.4 × 0.001</text>
+  <text x="624" y="154" class="h" text-anchor="middle">2%</text>
+  <!-- row 2 -->
+  <rect x="40" y="196" width="220" height="64" rx="8" class="box"/>
+  <text x="150" y="222" class="h" text-anchor="middle">6h error ratio</text>
+  <text x="150" y="246" class="c" text-anchor="middle">&gt; 6 × 0.001</text>
+  <text x="290" y="234" class="and" text-anchor="middle">AND</text>
+  <rect x="320" y="196" width="220" height="64" rx="8" class="box"/>
+  <text x="430" y="222" class="h" text-anchor="middle">30m error ratio</text>
+  <text x="430" y="246" class="c" text-anchor="middle">&gt; 6 × 0.001</text>
+  <text x="624" y="234" class="h" text-anchor="middle">5%</text>
+  <!-- page output -->
+  <path d="M664 148 H700 V228 H664 M700 188 H740" class="ln"/>
+  <text x="712" y="180" class="m">OR</text>
+  <rect x="740" y="156" width="180" height="64" rx="8" fill="#2a1416" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="830" y="186" class="h" text-anchor="middle" fill="#ff6b6b">Page</text>
+  <text x="830" y="208" class="m" text-anchor="middle">wake someone</text>
+
+  <!-- row 3 -->
+  <rect x="40" y="326" width="220" height="64" rx="8" class="box"/>
+  <text x="150" y="352" class="h" text-anchor="middle">24h error ratio</text>
+  <text x="150" y="376" class="c" text-anchor="middle">&gt; 3 × 0.001</text>
+  <text x="290" y="364" class="and" text-anchor="middle">AND</text>
+  <rect x="320" y="326" width="220" height="64" rx="8" class="box"/>
+  <text x="430" y="352" class="h" text-anchor="middle">2h error ratio</text>
+  <text x="430" y="376" class="c" text-anchor="middle">&gt; 3 × 0.001</text>
+  <text x="624" y="364" class="h" text-anchor="middle">10%</text>
+  <!-- row 4 -->
+  <rect x="40" y="406" width="220" height="64" rx="8" class="box"/>
+  <text x="150" y="432" class="h" text-anchor="middle">3d error ratio</text>
+  <text x="150" y="456" class="c" text-anchor="middle">&gt; 1 × 0.001</text>
+  <text x="290" y="444" class="and" text-anchor="middle">AND</text>
+  <rect x="320" y="406" width="220" height="64" rx="8" class="box"/>
+  <text x="430" y="432" class="h" text-anchor="middle">6h error ratio</text>
+  <text x="430" y="456" class="c" text-anchor="middle">&gt; 1 × 0.001</text>
+  <text x="624" y="444" class="h" text-anchor="middle">10%</text>
+  <!-- ticket output -->
+  <path d="M664 358 H700 V438 H664 M700 398 H740" class="ln"/>
+  <text x="712" y="390" class="m">OR</text>
+  <rect x="740" y="366" width="180" height="64" rx="8" fill="#2a2214" stroke="#f5b14c" stroke-width="2"/>
+  <text x="830" y="396" class="h" text-anchor="middle" fill="#f5b14c">Ticket</text>
+  <text x="830" y="418" class="m" text-anchor="middle">next working day</text>
+
+  <text x="40" y="520" class="m">Budget spent = burn rate × long window ÷ 30-day period. Threshold 0.001 = the error budget of a 99.9% SLO.</text>
+  <text x="40" y="544" class="m">Windows and burn rates from the Google SRE Workbook, chapter 5.</text>
+</svg>
