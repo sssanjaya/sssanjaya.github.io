@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">Time to page by sustained error rate for the 1h AND 5m pair</title>
+<desc id="d">promtool 3.15.1 run with 15-second evaluation on a 99.9% SLO. Minutes from error start to page: 100% errors 1.0, 50% 1.75, 20% 4.5, 10% 8.75, 5% 18, 2% 43.25, 1.5% 54. At 1% errors the 1h and 5m pair never pages; the 6h and 30m pair pages after 216 minutes.</desc>
+<rect width="960" height="560" fill="#0d1218"/>
+<text x="40" y="38" fill="#e6ebf2" font-size="19" font-weight="600">The worse the outage, the faster the 1h/5m pair pages</text>
+<text x="40" y="64" fill="#8b98a8" font-size="15">Minutes from error start to page, sustained error rate (burn rate), promtool 15-second evaluation</text>
+<line x1="200.0" y1="90" x2="200.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="200.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">0</text>
+<line x1="310.0" y1="90" x2="310.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="310.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">10</text>
+<line x1="420.0" y1="90" x2="420.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="420.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">20</text>
+<line x1="530.0" y1="90" x2="530.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="530.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">30</text>
+<line x1="640.0" y1="90" x2="640.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="640.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">40</text>
+<line x1="750.0" y1="90" x2="750.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="750.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">50</text>
+<line x1="860.0" y1="90" x2="860.0" y2="480" stroke="#2a3441" stroke-width="1"/>
+<text x="860.0" y="502" fill="#8b98a8" font-size="15" text-anchor="middle">60</text>
+<text x="530" y="528" fill="#8b98a8" font-size="15" text-anchor="middle">Minutes to page</text>
+<text x="40" y="123" fill="#e6ebf2" font-size="17">100%</text><text x="110" y="123" fill="#8b98a8" font-size="15">1000×</text>
+<rect x="200" y="104" width="11.0" height="28" rx="3" fill="#6cb6ff"/>
+<text x="219.0" y="123" fill="#e6ebf2" font-size="15">1 min</text>
+<text x="40" y="171" fill="#e6ebf2" font-size="17">50%</text><text x="110" y="171" fill="#8b98a8" font-size="15">500×</text>
+<rect x="200" y="152" width="19.2" height="28" rx="3" fill="#6cb6ff"/>
+<text x="227.2" y="171" fill="#e6ebf2" font-size="15">1.75 min</text>
+<text x="40" y="219" fill="#e6ebf2" font-size="17">20%</text><text x="110" y="219" fill="#8b98a8" font-size="15">200×</text>
+<rect x="200" y="200" width="49.5" height="28" rx="3" fill="#6cb6ff"/>
+<text x="257.5" y="219" fill="#e6ebf2" font-size="15">4.5 min</text>
+<text x="40" y="267" fill="#e6ebf2" font-size="17">10%</text><text x="110" y="267" fill="#8b98a8" font-size="15">100×</text>
+<rect x="200" y="248" width="96.2" height="28" rx="3" fill="#6cb6ff"/>
+<text x="304.2" y="267" fill="#e6ebf2" font-size="15">8.75 min</text>
+<text x="40" y="315" fill="#e6ebf2" font-size="17">5%</text><text x="110" y="315" fill="#8b98a8" font-size="15">50×</text>
+<rect x="200" y="296" width="198.0" height="28" rx="3" fill="#6cb6ff"/>
+<text x="406.0" y="315" fill="#e6ebf2" font-size="15">18 min</text>
+<text x="40" y="363" fill="#e6ebf2" font-size="17">2%</text><text x="110" y="363" fill="#8b98a8" font-size="15">20×</text>
+<rect x="200" y="344" width="475.8" height="28" rx="3" fill="#6cb6ff"/>
+<text x="683.8" y="363" fill="#e6ebf2" font-size="15">43.25 min</text>
+<text x="40" y="411" fill="#e6ebf2" font-size="17">1.5%</text><text x="110" y="411" fill="#8b98a8" font-size="15">15×</text>
+<rect x="200" y="392" width="594.0" height="28" rx="3" fill="#6cb6ff"/>
+<text x="802.0" y="411" fill="#e6ebf2" font-size="15">54 min</text>
+<text x="40" y="459" fill="#e6ebf2" font-size="17">1%</text><text x="110" y="459" fill="#8b98a8" font-size="15">10×</text>
+<rect x="202" y="440" width="410" height="28" fill="#0d1218"/>
+<text x="208" y="459" fill="#f5b14c" font-size="15">never pages from 1h/5m; the 6h/30m pair pages at 216 min</text>
+</svg>
