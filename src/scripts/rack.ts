@@ -1,5 +1,6 @@
-// The 3D hero: a server rack at night. Every unit with a light on is a piece
-// of the site (roles, stack, signals, contact). Geometry and textures are all
+// The 3D hero: a desk in the evening, lit by two warm lamps and a monitor.
+// Every object with a soft glow above it opens a piece of the site (about,
+// roles, stack, signals, house rules, contact). Geometry and textures are all
 // generated here, so there are no model or image downloads and the CSP stays
 // 'self'-only. Loaded lazily by Rack.astro, only on devices that can run it.
 import * as THREE from "three";
@@ -8,24 +9,25 @@ import { experience } from "../data/experience.ts";
 
 const C = {
   ok: "#39e58c",
-  warn: "#ffb02e",
-  crit: "#ff5f56",
   info: "#62b6ff",
   fg: "#e6ebf2",
   mut: "#8d99ab",
+  warm: "#ffc98a",
 };
 const DISPLAY = '"Space Grotesk", system-ui, sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
 
-type Led = { mat: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial; mode: "steady" | "blink" | "activity" | "canary"; phase: number; on: number; boot: number };
 type Hot = {
   id: string;
   label: string;
   pos: THREE.Vector3;
   normal: THREE.Vector3;
   dist: number;
-  slide?: THREE.Group;
+  /** Objects that nudge toward the visitor on hover / select. */
+  slide?: THREE.Object3D;
+  slideBase?: number;
   slideNow?: number;
+  beacon?: THREE.SpriteMaterial;
 };
 
 export interface RackController {
@@ -46,6 +48,7 @@ export async function initRack(
     await Promise.race([
       Promise.all([
         document.fonts.load(`700 40px ${DISPLAY}`),
+        document.fonts.load(`500 40px ${DISPLAY}`),
         document.fonts.load(`500 24px ${MONO}`),
         document.fonts.load(`700 24px ${MONO}`),
       ]),
@@ -59,16 +62,16 @@ export async function initRack(
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.1;
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new THREE.Scene();
-  const bgDark = new THREE.Color("#05070b");
-  const bgLight = new THREE.Color("#1d2632");
+  const bgDark = new THREE.Color("#0c0907");
+  const bgLight = new THREE.Color("#8d8377");
   scene.background = bgDark.clone();
-  scene.fog = new THREE.Fog(scene.background as THREE.Color, 5, 13);
+  scene.fog = new THREE.Fog(scene.background as THREE.Color, 6, 14);
 
-  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 40);
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 40);
 
   // ── helpers ────────────────────────────────────────────────────────────
   const disposables: { dispose(): void }[] = [];
@@ -85,10 +88,16 @@ export async function initRack(
     t.anisotropy = maxAniso;
     return t;
   }
-  const std = (color: string, rough = 0.7, metal = 0.3) =>
+  const std = (color: string, rough = 0.7, metal = 0) =>
     track(new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal }));
   function box(w: number, h: number, d: number, mat: THREE.Material | THREE.Material[], x = 0, y = 0, z = 0, parent: THREE.Object3D = scene) {
     const m = new THREE.Mesh(track(new THREE.BoxGeometry(w, h, d)), mat);
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  }
+  function cyl(rt: number, rb: number, h: number, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = scene, seg = 24, open = false) {
+    const m = new THREE.Mesh(track(new THREE.CylinderGeometry(rt, rb, h, seg, 1, open)), mat);
     m.position.set(x, y, z);
     parent.add(m);
     return m;
@@ -109,378 +118,246 @@ export async function initRack(
     g.fillStyle = r;
     g.fillRect(0, 0, 64, 64);
   });
-  const ledGeo = track(new THREE.CircleGeometry(0.006, 12));
-  const leds: Led[] = [];
-  const farLeds: THREE.PointsMaterial[] = [];
-  let bootIndex = 0;
-  function led(parent: THREE.Object3D, x: number, y: number, z: number, color: string, mode: Led["mode"] = "steady", size = 1) {
-    const mat = track(new THREE.MeshBasicMaterial({ color, toneMapped: false }));
-    const m = new THREE.Mesh(ledGeo, mat);
-    m.position.set(x, y, z + 0.001);
-    m.scale.setScalar(size);
-    parent.add(m);
-    const glow = track(
-      new THREE.SpriteMaterial({ map: glowTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8 }),
+  function glow(parent: THREE.Object3D, x: number, y: number, z: number, color: string, size: number, opacity = 0.8) {
+    const mat = track(
+      new THREE.SpriteMaterial({ map: glowTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity }),
     );
-    const s = new THREE.Sprite(glow);
-    s.position.set(x, y, z + 0.004);
-    s.scale.setScalar(0.07 * size);
+    const s = new THREE.Sprite(mat);
+    s.position.set(x, y, z);
+    s.scale.setScalar(size);
     parent.add(s);
-    const l: Led = { mat, glow, mode, phase: Math.random() * 10, on: 1, boot: 0.5 + bootIndex++ * 0.035 };
-    leds.push(l);
-    return l;
+    return mat;
   }
 
-  // ── room ───────────────────────────────────────────────────────────────
-  const floorTex = tex(256, 256, (g, w, h) => {
-    g.fillStyle = "#12161c";
-    g.fillRect(0, 0, w, h);
-    g.strokeStyle = "#05070a";
-    g.lineWidth = 5;
-    g.strokeRect(0, 0, w, h);
-    g.fillStyle = "rgba(255,255,255,0.025)";
-    for (let i = 0; i < 260; i++) g.fillRect(Math.random() * w, Math.random() * h, 2, 2);
-  });
-  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-  floorTex.repeat.set(40, 40);
-  const floor = new THREE.Mesh(
-    track(new THREE.PlaneGeometry(24, 24)),
-    track(new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.32, metalness: 0.5 })),
-  );
-  floor.rotation.x = -Math.PI / 2;
-  scene.add(floor);
-
-  const WALL_Z = -0.62;
-  const wallMat = std("#141a22", 0.95, 0);
-  const wallDark = new THREE.Color("#141a22");
-  const wallLight = new THREE.Color("#3d4856");
-  const wall = new THREE.Mesh(track(new THREE.PlaneGeometry(24, 5)), wallMat);
-  wall.position.set(0, 2.5, WALL_Z);
-  scene.add(wall);
-  // Overhead cable tray with fibre runs.
-  box(12, 0.03, 0.34, std("#1b222c", 0.6, 0.7), 0, 2.38, -0.2);
-  for (const [i, col] of ["#f2c230", "#f2c230", "#3aa0ff", "#f2c230"].entries()) {
-    box(12, 0.018, 0.018, std(col, 0.6, 0), 0, 2.405, -0.32 + i * 0.07);
-  }
-
-  // ── the rack ───────────────────────────────────────────────────────────
-  const RX = 0.78;
-  const RW = 0.62;
-  const RH = 1.96;
-  const RD = 0.9;
-  const FRONT = WALL_Z + 0.05 + RD; // z of the rack's front plane
-  const rack = new THREE.Group();
-  rack.position.set(RX, 0, FRONT - RD / 2);
-  scene.add(rack);
-  const frameMat = std("#161b22", 0.5, 0.8);
-  const shellMat = std("#0c1015", 0.8, 0.5);
-  for (const sx of [-1, 1]) {
-    box(0.035, RH, 0.035, frameMat, (sx * (RW - 0.035)) / 2, RH / 2, RD / 2 - 0.0175, rack);
-    box(0.012, RH, RD - 0.04, shellMat, (sx * (RW - 0.012)) / 2, RH / 2, -0.02, rack);
-  }
-  box(RW, 0.04, RD, frameMat, 0, RH - 0.02, 0, rack);
-  box(RW, 0.06, RD, frameMat, 0, 0.03, 0, rack);
-  box(RW - 0.03, RH - 0.1, 0.01, shellMat, 0, RH / 2, -RD / 2 + 0.02, rack);
-
-  const UW = RW - 0.075; // unit width between the posts
-  const UD = 0.74;
-  const unitSide = std("#1a2029", 0.55, 0.75);
   const hots: Hot[] = [];
   const hitTargets: THREE.Object3D[] = [];
   const markHot = (o: THREE.Object3D, id: string) => {
     o.userData.hot = id;
     hitTargets.push(o);
   };
+  /** An invisible, generous click target around small objects. */
+  const hitMat = track(new THREE.MeshBasicMaterial({ visible: false }));
+  const hitBox = (w: number, h: number, d: number, x: number, y: number, z: number, id: string, parent: THREE.Object3D = scene) =>
+    markHot(box(w, h, d, hitMat, x, y, z, parent), id);
 
-  function faceplate(w: number, h: number, draw: (g: CanvasRenderingContext2D, W: number, H: number) => void) {
-    const W = 1024;
-    const H = Math.round((W * h) / w);
-    return tex(W, H, (g) => {
-      const grad = g.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#262d38");
-      grad.addColorStop(1, "#171c24");
-      g.fillStyle = grad;
-      g.fillRect(0, 0, W, H);
-      g.strokeStyle = "rgba(255,255,255,0.07)";
-      g.lineWidth = 3;
-      g.strokeRect(1.5, 1.5, W - 3, H - 3);
-      // rack ears + screws
-      g.fillStyle = "#11151b";
-      g.fillRect(0, 0, 40, H);
-      g.fillRect(W - 40, 0, 40, H);
-      g.fillStyle = "#3a4350";
-      for (const x of [20, W - 20])
-        for (const y of [H * 0.22, H * 0.78]) {
-          g.beginPath();
-          g.arc(x, y, 7, 0, Math.PI * 2);
-          g.fill();
-        }
-      draw(g, W, H);
-    });
+  // ── room ───────────────────────────────────────────────────────────────
+  const WALL_Z = -0.42;
+  const TOP = 0.74; // desk surface height
+
+  const floorTex = tex(256, 256, (g, w, h) => {
+    g.fillStyle = "#b8b4ad";
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,255,255,0.05)";
+    for (let i = 0; i < 300; i++) g.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+    g.strokeStyle = "#6f6a63";
+    g.lineWidth = 5;
+    g.strokeRect(0, 0, w, h);
+  });
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
+  floorTex.repeat.set(36, 36);
+  const floor = new THREE.Mesh(
+    track(new THREE.PlaneGeometry(16, 16)),
+    track(new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.55, metalness: 0 })),
+  );
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  const wallMat = std("#e6dfd4", 0.96);
+  const wall = new THREE.Mesh(track(new THREE.PlaneGeometry(16, 4.2)), wallMat);
+  wall.position.set(0, 2.1, WALL_Z);
+  scene.add(wall);
+  box(16, 0.09, 0.015, std("#f1ede6", 0.7), 0, 0.045, WALL_Z + 0.008);
+  // Outlet under the desk, with the power lead hanging to it.
+  box(0.07, 0.11, 0.008, std("#f4f1ea", 0.6), 0.08, 0.42, WALL_Z + 0.005);
+  {
+    const lead = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.02, TOP - 0.03, -0.3),
+      new THREE.Vector3(-0.04, 0.5, -0.33),
+      new THREE.Vector3(0.0, 0.3, -0.36),
+      new THREE.Vector3(0.07, 0.36, WALL_Z + 0.02),
+      new THREE.Vector3(0.08, 0.42, WALL_Z + 0.012),
+    ]);
+    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(lead, 40, 0.004, 6)), std("#ecebe6", 0.6)));
   }
 
-  function unit(h: number, y: number, face: THREE.Texture) {
-    const grp = new THREE.Group();
-    grp.position.set(0, y + h / 2, RD / 2 - UD / 2 - 0.004);
-    rack.add(grp);
-    const front = track(new THREE.MeshStandardMaterial({ map: face, roughness: 0.55, metalness: 0.35 }));
-    const body = box(UW, h, UD, [unitSide, unitSide, unitSide, unitSide, front, unitSide], 0, 0, 0, grp);
-    return { grp, body, fz: UD / 2 };
+  // Curtain on the right: a pleated sheet from ceiling to floor.
+  {
+    const geo = track(new THREE.PlaneGeometry(1.5, 3.2, 90, 1));
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 46) * 0.028 + Math.sin(p.getX(i) * 13) * 0.02);
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, track(new THREE.MeshStandardMaterial({ color: "#7c8ba3", roughness: 0.95, side: THREE.DoubleSide })));
+    m.position.set(1.56, 1.6, WALL_Z + 0.2);
+    scene.add(m);
   }
+
+  // Couch on the left: just the arm and seat that show in frame.
+  {
+    const fabric = std("#737982", 0.98);
+    box(1.2, 0.44, 0.95, fabric, -1.72, 0.22, 0.2);
+    box(0.2, 0.66, 0.95, fabric, -1.02, 0.33, 0.2);
+    box(1.2, 0.86, 0.22, fabric, -1.72, 0.43, -0.2);
+    box(0.5, 0.14, 0.5, std("#868c95", 0.98), -1.42, 0.51, 0.1);
+  }
+
+  // ── desk ───────────────────────────────────────────────────────────────
+  const DW = 1.44;
+  const DD = 0.74;
+  const white = std("#f3f1ec", 0.55);
+  box(DW, 0.026, DD, white, 0, TOP - 0.013, 0);
+  for (const sx of [-1, 1]) {
+    cyl(0.03, 0.03, TOP - 0.05, white, sx * 0.58, (TOP - 0.05) / 2 + 0.02, -0.02);
+    box(0.075, 0.024, 0.62, white, sx * 0.58, 0.012, 0);
+    box(0.09, 0.03, 0.5, white, sx * 0.58, TOP - 0.041, -0.02);
+  }
+  box(1.1, 0.03, 0.06, white, 0, TOP - 0.041, -0.02);
+  // Desk mat.
+  box(0.94, 0.004, 0.37, std("#1d2622", 0.85), 0, TOP + 0.002, 0.14);
+
   const worldOf = (o: THREE.Object3D, x = 0, y = 0, z = 0) => o.localToWorld(new THREE.Vector3(x, y, z));
 
-  let y = RH - 0.07;
-  const gap = 0.012;
-
-  // Patch panel + switch → the stack.
-  {
-    y -= 0.05;
-    const pp = unit(
-      0.05,
-      y,
-      faceplate(UW, 0.05, (g, W, H) => {
-        g.fillStyle = "#0a0d11";
-        for (let i = 0; i < 24; i++) g.fillRect(70 + i * 37, H * 0.3, 26, H * 0.4);
-      }),
-    );
-    // Patch cords dropping from the panel into the switch below.
-    const cordCols = [C.info, "#f2c230", C.info, C.ok, "#f2c230", C.info];
-    cordCols.forEach((col, i) => {
-      const x0 = -UW / 2 + 0.05 + i * 0.062 + (i % 2) * 0.02;
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(x0, 0, pp.fz),
-        new THREE.Vector3(x0 + 0.01, -0.02, pp.fz + 0.035),
-        new THREE.Vector3(x0 + 0.03, -0.055, pp.fz + 0.03),
-        new THREE.Vector3(x0 + 0.035, -0.066, pp.fz),
-      ]);
-      const m = new THREE.Mesh(track(new THREE.TubeGeometry(curve, 12, 0.004, 6)), std(col, 0.6, 0));
-      pp.grp.add(m);
-    });
-    y -= gap + 0.055;
-    const sw = unit(
-      0.055,
-      y,
-      faceplate(UW, 0.055, (g, W, H) => {
-        g.fillStyle = "#0a0d11";
-        for (let i = 0; i < 16; i++) g.fillRect(70 + i * 37, H * 0.42, 26, H * 0.4);
-        g.fillStyle = C.mut;
-        g.font = `700 26px ${MONO}`;
-        g.textAlign = "right";
-        g.textBaseline = "middle";
-        g.fillText("CORE-SW · STACK", W - 60, H * 0.5);
-      }),
-    );
-    for (let i = 0; i < 16; i++) {
-      const x = -UW / 2 + (83 + i * 37) / 1024 * UW;
-      led(sw.grp, x, 0.016, sw.fz, i % 5 === 3 ? C.warn : C.ok, "activity", 0.55);
-    }
-    markHot(sw.body, "stack");
-    markHot(pp.body, "stack");
-    hots.push({ id: "stack", label: "core switch · stack", pos: worldOf(sw.grp, 0, 0.03, sw.fz), normal: new THREE.Vector3(0, 0, 1), dist: 1.25 });
-  }
-
-  // One server per role, newest on top.
-  const SH = 0.27;
-  experience.forEach((role, i) => {
-    y -= gap + SH + (i === 0 ? 0.03 : 0);
-    const current = i === 0;
-    const u = unit(
-      SH,
-      y,
-      faceplate(UW, SH, (g, W, H) => {
-        // intake grille
-        g.fillStyle = "#0b0e13";
-        g.fillRect(64, 40, 150, H - 80);
-        g.fillStyle = "#1d232c";
-        for (let r = 0; r < 12; r++) for (let c = 0; c < 6; c++) g.fillRect(74 + c * 23, 52 + r * ((H - 104) / 12), 14, 8);
-        // drive bays
-        for (let b = 0; b < 4; b++) {
-          const bx = W - 64 - 96 * (b % 2 === 0 ? 2 : 1);
-          const by = b < 2 ? 44 : H / 2 + 6;
-          g.fillStyle = "#0b0e13";
-          g.fillRect(bx, by, 84, H / 2 - 50);
-          g.strokeStyle = "#333c49";
-          g.lineWidth = 2;
-          g.strokeRect(bx + 1, by + 1, 82, H / 2 - 52);
-        }
-        const tx = 250;
-        const tw = W - 64 - 200 - tx - 20;
-        g.textBaseline = "alphabetic";
-        g.textAlign = "left";
-        g.fillStyle = C.mut;
-        g.font = `500 30px ${MONO}`;
-        g.fillText(`U${String(experience.length - i).padStart(2, "0")} · ${role.year.replace(/\s/g, " ")}`, tx, 96);
-        g.fillStyle = C.fg;
-        const name = role.company.toUpperCase();
-        fit(g, name, 700, DISPLAY, 92, tw);
-        g.fillText(name, tx, H / 2 + 46);
-        g.fillStyle = current ? C.ok : C.mut;
-        fit(g, role.title, 500, MONO, 32, tw);
-        g.fillText(role.title, tx, H - 70);
-      }),
-    );
-    const lx = -UW / 2 + (250 / 1024) * UW;
-    led(u.grp, lx + 0.008, -SH / 2 + 0.026, u.fz, C.ok, current ? "blink" : "steady");
-    led(u.grp, lx + 0.03, -SH / 2 + 0.026, u.fz, C.info, "activity", 0.8);
-    for (let b = 0; b < 4; b++) {
-      const bx = UW / 2 - ((64 + 96 * (b % 2 === 0 ? 2 : 1) - 70) / 1024) * UW;
-      led(u.grp, bx, b < 2 ? SH / 2 - 0.03 : -0.012, u.fz, C.ok, current ? "activity" : "steady", 0.5);
-    }
-    markHot(u.body, `role-${i}`);
-    hots.push({
-      id: `role-${i}`,
-      label: `${role.company} · ${role.year}`,
-      pos: worldOf(u.grp, 0, 0, u.fz),
-      normal: new THREE.Vector3(0, 0, 1),
-      dist: 1.55,
-      slide: u.grp,
-      slideNow: 0,
-    });
-  });
-
-  // AIOps: the canary unit.
-  {
-    y -= gap + 0.085;
-    const u = unit(
-      0.085,
-      y,
-      faceplate(UW, 0.085, (g, W, H) => {
-        g.textBaseline = "middle";
-        g.fillStyle = C.warn;
-        g.font = `700 44px ${DISPLAY}`;
-        g.fillText(site.learning.toUpperCase(), 120, H / 2 + 2);
-        g.fillStyle = C.mut;
-        g.font = `500 28px ${MONO}`;
-        g.fillText("canary · not in prod yet", 300, H / 2 + 2);
-        g.fillStyle = "#0b0e13";
-        g.fillRect(W - 260, 18, 200, H - 36);
-      }),
-    );
-    led(u.grp, -UW / 2 + 0.047, 0, u.fz, C.warn, "canary", 1.1);
-    markHot(u.body, "aiops");
-    hots.push({ id: "aiops", label: "AIOps · canary", pos: worldOf(u.grp, 0, 0, u.fz), normal: new THREE.Vector3(0, 0, 1), dist: 1.2, slide: u.grp, slideNow: 0 });
-  }
-
-  // UPS at the bottom → the signals.
-  {
-    const h = y - gap - 0.075;
-    y = 0.07;
-    const years = `${new Date().getFullYear() - site.opsStart}`;
-    const u = unit(
-      h,
-      y,
-      faceplate(UW, h, (g, W, H) => {
-        g.fillStyle = "#0b0e13";
-        for (let r = 0; r < 9; r++) g.fillRect(70, 40 + r * ((H - 80) / 9), 360, (H - 80) / 9 - 12);
-        // LCD
-        const lx = 480;
-        const lw = W - lx - 70;
-        g.fillStyle = "#04130b";
-        g.fillRect(lx, 50, lw, H - 100);
-        g.strokeStyle = "#2c3644";
-        g.lineWidth = 4;
-        g.strokeRect(lx, 50, lw, H - 100);
-        g.fillStyle = C.ok;
-        g.textBaseline = "alphabetic";
-        g.font = `500 28px ${MONO}`;
-        g.fillText("TIME IN PRODUCTION", lx + 26, 104);
-        g.font = `700 120px ${DISPLAY}`;
-        g.fillText(`${years}y`, lx + 24, H - 150);
-        g.font = `500 28px ${MONO}`;
-        g.fillText("RESTARTS 0", lx + 26, H - 104);
-        g.fillText("SIGNALS  nominal", lx + 26, H - 70);
-      }),
-    );
-    led(u.grp, -UW / 2 + 0.05, h / 2 - 0.022, u.fz, C.ok, "steady");
-    markHot(u.body, "signals");
-    hots.push({ id: "signals", label: "UPS · signals", pos: worldOf(u.grp, 0, 0, u.fz), normal: new THREE.Vector3(0, 0, 1), dist: 1.45 });
-  }
-
-  // ── neighbouring racks, receding into the dark ─────────────────────────
-  {
-    const xs = [1.46, 2.12, 2.78, 3.44, 4.1, 4.76, -2.5, -3.16, -3.82, -4.48];
-    const doorTex = tex(128, 512, (g, w, h) => {
-      g.fillStyle = "#0b0f14";
-      g.fillRect(0, 0, w, h);
-      g.fillStyle = "#11161d";
-      for (let r = 0; r < 34; r++) g.fillRect(10, 10 + r * 14.6, w - 20, 9);
-      g.strokeStyle = "#1c232d";
-      g.lineWidth = 4;
-      g.strokeRect(2, 2, w - 4, h - 4);
-    });
-    const doorMat = track(new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.6, metalness: 0.6 }));
-    const side = std("#0b0f14", 0.7, 0.5);
-    const groups: number[][] = [[], [], []];
-    const colors: number[][] = [[], [], []];
-    const col = new THREE.Color();
-    for (const x of xs) {
-      box(RW, RH, RD, [side, side, side, side, doorMat, side], x, RH / 2, FRONT - RD / 2);
-      for (let i = 0; i < 26; i++) {
-        const k = Math.floor(Math.random() * 3);
-        groups[k].push(x + (Math.random() - 0.5) * (RW - 0.14), 0.15 + Math.random() * (RH - 0.3), FRONT + 0.004);
-        col.set(Math.random() < 0.12 ? C.warn : Math.random() < 0.3 ? C.info : C.ok);
-        colors[k].push(col.r, col.g, col.b);
-      }
-    }
-    groups.forEach((g, k) => {
-      const geo = track(new THREE.BufferGeometry());
-      geo.setAttribute("position", new THREE.Float32BufferAttribute(g, 3));
-      geo.setAttribute("color", new THREE.Float32BufferAttribute(colors[k], 3));
-      const mat = track(
-        new THREE.PointsMaterial({ size: 0.035, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
-      );
-      const pts = new THREE.Points(geo, mat);
-      pts.userData.k = k;
-      scene.add(pts);
-      farLeds.push(mat);
-    });
-  }
-
-  // ── crash cart: console, keyboard, pager ───────────────────────────────
-  const cart = new THREE.Group();
-  cart.position.set(-0.86, 0, 0.12);
-  cart.rotation.y = 0.2;
-  scene.add(cart);
-  const cartMat = std("#1a2029", 0.5, 0.7);
-  const TOP = 0.92;
-  box(0.95, 0.03, 0.6, std("#222a35", 0.45, 0.6), 0, TOP, 0, cart);
-  box(0.95, 0.025, 0.6, cartMat, 0, 0.32, 0, cart);
-  for (const sx of [-1, 1])
-    for (const sz of [-1, 1]) {
-      box(0.03, TOP, 0.03, cartMat, sx * 0.45, TOP / 2, sz * 0.27, cart);
-      const wheel = new THREE.Mesh(track(new THREE.CylinderGeometry(0.035, 0.035, 0.025, 14)), std("#07090c", 0.9, 0));
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(sx * 0.45, 0.035, sz * 0.27);
-      cart.add(wheel);
-    }
-  // spare gear on the lower shelf
-  box(0.42, 0.09, 0.4, std("#11161d", 0.6, 0.6), -0.2, 0.38, 0, cart);
-  box(0.22, 0.16, 0.3, std("#0d1116", 0.7, 0.4), 0.26, 0.415, 0.02, cart);
-
-  // Console monitor: a chunky KVM display with a live terminal on it.
-  const SW = 0.56;
-  const SHt = 0.4;
+  // ── monitor → about ────────────────────────────────────────────────────
+  const SW = 0.62;
+  const SH = 0.36;
   const mon = new THREE.Group();
-  mon.position.set(-0.08, TOP + 0.015, -0.08);
-  cart.add(mon);
-  const monMat = std("#20262f", 0.5, 0.4);
-  box(0.26, 0.02, 0.2, monMat, 0, 0.01, 0, mon);
-  box(0.06, 0.09, 0.05, monMat, 0, 0.06, -0.02, mon);
-  const monBody = box(SW + 0.06, SHt + 0.07, 0.07, monMat, 0, 0.1 + SHt / 2 + 0.02, 0, mon);
+  mon.position.set(0, TOP, -0.2);
+  scene.add(mon);
+  const dark = std("#17191c", 0.5, 0.3);
+  box(0.34, 0.012, 0.24, dark, 0, 0.006, 0.02, mon);
+  cyl(0.02, 0.02, 0.3, std("#b9bdc2", 0.3, 0.9), 0, 0.16, -0.03, mon);
+  const SCY = 0.15 + SH / 2;
+  const monBody = box(SW + 0.014, SH + 0.022, 0.028, dark, 0, SCY - 0.004, 0, mon);
   const scr = document.createElement("canvas");
   scr.width = 1024;
-  scr.height = Math.round((1024 * SHt) / SW);
+  scr.height = Math.round((1024 * SH) / SW);
   const sg = scr.getContext("2d")!;
   const scrTex = track(new THREE.CanvasTexture(scr));
   scrTex.colorSpace = THREE.SRGBColorSpace;
   scrTex.anisotropy = maxAniso;
-  const screen = new THREE.Mesh(track(new THREE.PlaneGeometry(SW, SHt)), track(new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })));
-  screen.position.set(0, 0.1 + SHt / 2 + 0.03, 0.036);
+  const screen = new THREE.Mesh(track(new THREE.PlaneGeometry(SW, SH)), track(new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })));
+  screen.position.set(0, SCY, 0.0145);
   mon.add(screen);
-  led(mon, SW / 2 - 0.01, 0.1 + 0.012, 0.036, C.ok, "steady", 0.6);
   markHot(monBody, "console");
   markHot(screen, "console");
 
+  // The lock screen: mountains at sunrise, the visitor's local time on top.
+  const paper = document.createElement("canvas");
+  paper.width = scr.width;
+  paper.height = scr.height;
+  {
+    const g = paper.getContext("2d")!;
+    const W = paper.width;
+    const H = paper.height;
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#1c62cf");
+    sky.addColorStop(0.45, "#4f9cec");
+    sky.addColorStop(0.75, "#a9d2f3");
+    sky.addColorStop(1, "#d7ecf4");
+    g.fillStyle = sky;
+    g.fillRect(0, 0, W, H);
+    // clouds
+    const cloud = (x: number, y: number, w: number, h: number, a: number) => {
+      const r = g.createRadialGradient(x, y, 0, x, y, w);
+      r.addColorStop(0, `rgba(255,255,255,${a})`);
+      r.addColorStop(1, "rgba(255,255,255,0)");
+      g.save();
+      g.translate(x, y);
+      g.scale(1, h / w);
+      g.translate(-x, -y);
+      g.fillStyle = r;
+      g.fillRect(x - w, y - w, w * 2, w * 2);
+      g.restore();
+    };
+    for (const [x, y, w, h, a] of [
+      [90, 60, 130, 26, 0.9], [200, 150, 190, 24, 0.75], [330, 205, 150, 20, 0.6], [640, 150, 150, 18, 0.8],
+      [760, 175, 120, 16, 0.7], [430, 120, 60, 12, 0.7], [820, 250, 110, 12, 0.5], [520, 240, 160, 14, 0.45],
+    ] as const)
+      cloud(x, y, w, h, a);
+    // Annapurna South on the left, Machapuchare's fishtail to the right.
+    const ridge = (pts: number[][], top: string, bottom: string, base: number) => {
+      const gr = g.createLinearGradient(0, Math.min(...pts.map((p) => p[1])), 0, base);
+      gr.addColorStop(0, top);
+      gr.addColorStop(1, bottom);
+      g.fillStyle = gr;
+      g.beginPath();
+      g.moveTo(pts[0][0], base);
+      for (const [x, y] of pts) g.lineTo(x, y);
+      g.lineTo(pts[pts.length - 1][0], base);
+      g.closePath();
+      g.fill();
+    };
+    ridge([[0, 335], [50, 292], [95, 236], [130, 188], [150, 210], [176, 246], [214, 286], [250, 268], [282, 252], [306, 280], [350, 312], [400, 338], [450, 356]], "#ffffff", "#5a82b6", 400);
+    ridge([[130, 188], [150, 210], [176, 246], [214, 286], [190, 330], [156, 290], [136, 236]], "#93aed2", "#4f76a8", 350);
+    ridge([[250, 268], [282, 252], [306, 280], [350, 312], [300, 330], [276, 290]], "#a3bad9", "#557aa9", 345);
+    ridge([[420, 366], [456, 334], [480, 298], [492, 268], [504, 292], [524, 324], [566, 360]], "#f6faff", "#6189ba", 380);
+    ridge([[492, 268], [504, 292], [524, 324], [566, 360], [520, 366], [500, 320]], "#9db6d8", "#5b82b2", 372);
+    // haze + green hills
+    ridge([[0, 372], [140, 352], [300, 340], [420, 322], [520, 318], [640, 332], [760, 350], [900, 372], [W, 392]], "#4f8f76", "#a9cfc4", 470);
+    ridge([[0, 410], [200, 392], [420, 372], [620, 360], [800, 372], [W, 352]], "#6aa58a", "#cfe6dc", 520);
+    const haze = g.createLinearGradient(0, 380, 0, H);
+    haze.addColorStop(0, "rgba(214,234,232,0)");
+    haze.addColorStop(0.5, "rgba(214,234,232,0.3)");
+    haze.addColorStop(1, "rgba(190,216,206,0.12)");
+    g.fillStyle = haze;
+    g.fillRect(0, 380, W, H - 380);
+    // sun rays, low on the right
+    const ray = g.createRadialGradient(W * 0.98, H * 1.02, 0, W * 0.98, H * 1.02, 330);
+    ray.addColorStop(0, "rgba(232,255,170,0.75)");
+    ray.addColorStop(1, "rgba(232,255,170,0)");
+    g.fillStyle = ray;
+    g.fillRect(W - 360, H - 340, 360, 340);
+    // pines along the bottom
+    const pine = (x: number, base: number, h: number, c: string) => {
+      g.fillStyle = c;
+      for (let i = 0; i < 5; i++) {
+        const y = base - h + (i * h) / 5;
+        const w = (h * 0.42 * (i + 1.4)) / 6;
+        g.beginPath();
+        g.moveTo(x, y - h * 0.08);
+        g.lineTo(x - w, y + h / 4.2);
+        g.lineTo(x + w, y + h / 4.2);
+        g.closePath();
+        g.fill();
+      }
+    };
+    for (const [x, h] of [[600, 60], [640, 78], [700, 96], [742, 70], [790, 120], [840, 104], [880, 150], [930, 126], [975, 170], [1010, 140], [330, 44], [300, 30], [545, 40]] as const)
+      pine(x, H + 8, h, x > 760 ? "#12402d" : "#0f3326");
+  }
+  const initials = site.name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const fmtDate = new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric" });
+  function drawLock(now: Date) {
+    const W = scr.width;
+    const H = scr.height;
+    sg.drawImage(paper, 0, 0);
+    sg.textAlign = "center";
+    sg.textBaseline = "alphabetic";
+    sg.fillStyle = "rgba(255,255,255,0.92)";
+    sg.font = `500 26px ${DISPLAY}`;
+    sg.fillText(fmtDate.format(now).replace(",", ""), W / 2, 84);
+    sg.fillStyle = "rgba(190,236,255,0.9)";
+    sg.font = `700 92px ${DISPLAY}`;
+    sg.fillText(`${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2, "0")}`, W / 2, 168);
+    // avatar + name
+    sg.fillStyle = "rgba(60,84,120,0.85)";
+    sg.beginPath();
+    sg.arc(W / 2, H - 112, 24, 0, Math.PI * 2);
+    sg.fill();
+    sg.fillStyle = "#fff";
+    sg.font = `700 20px ${DISPLAY}`;
+    sg.fillText(initials, W / 2, H - 105);
+    sg.font = `500 15px ${DISPLAY}`;
+    sg.fillText(site.name, W / 2, H - 70);
+    sg.fillStyle = "rgba(255,255,255,0.28)";
+    sg.fillRect(W / 2 - 70, H - 58, 140, 20);
+    sg.textAlign = "left";
+  }
+
+  // Selecting the monitor wakes it into a terminal.
   const age = `${new Date().getFullYear() - site.opsStart}y`;
   const pad = (s: string, n: number) => s.padEnd(n, " ");
   type TL = { t: "cmd" | "out" | "head" | "kv"; s: string; k?: string };
@@ -494,13 +371,9 @@ export async function initRack(
     { t: "kv", k: "Status", s: site.available ? site.availableLabel : "heads-down" },
   ];
   const termChars = term.reduce((n, l) => n + (l.t === "cmd" ? l.s.length + 8 : 2), 0);
-  let lastTermKey = "";
-  function drawTerm(time: number) {
-    const prog = reduced ? termChars : Math.max(0, (time - 1.6) * 34);
-    const caret = Math.floor(time * 2) % 2 === 0;
-    const key = `${Math.min(prog, termChars) | 0}:${caret}`;
-    if (key === lastTermKey) return;
-    lastTermKey = key;
+  function drawTerm(t: number) {
+    const prog = reduced ? termChars : Math.max(0, (t - 0.5) * 34);
+    const caret = Math.floor(t * 2) % 2 === 0;
     const W = scr.width;
     const H = scr.height;
     sg.fillStyle = "#050a0d";
@@ -508,6 +381,7 @@ export async function initRack(
     sg.fillStyle = "#0e151c";
     sg.fillRect(0, 0, W, 58);
     sg.textBaseline = "middle";
+    sg.textAlign = "left";
     sg.font = `500 26px ${MONO}`;
     sg.fillStyle = C.mut;
     sg.fillText(`${site.handle}@prod: ~`, 28, 30);
@@ -515,11 +389,11 @@ export async function initRack(
     sg.fillStyle = C.ok;
     sg.fillText(`● ${site.region}`, W - 28, 30);
     sg.textAlign = "left";
-    const LH = 52;
-    let yy = 104;
+    const LH = 44;
+    let yy = 98;
     let left = prog;
     let done = true;
-    sg.font = `500 33px ${MONO}`;
+    sg.font = `500 30px ${MONO}`;
     for (const l of term) {
       if (left <= 0) {
         done = false;
@@ -563,134 +437,336 @@ export async function initRack(
         sg.fillRect(64, yy - 18, 16, 36);
       }
     }
-    // scanlines
-    sg.fillStyle = "rgba(0,0,0,0.16)";
-    for (let s = 0; s < H; s += 4) sg.fillRect(0, s, W, 1);
+    sg.textBaseline = "alphabetic";
+  }
+  let screenKey = "";
+  let termSince = 0;
+  function drawScreen(t: number, termOn: boolean) {
+    const now = new Date();
+    const key = termOn
+      ? `t${Math.min((reduced ? termChars : Math.max(0, (t - termSince - 0.5) * 34)) | 0, termChars)}:${Math.floor((t - termSince) * 2) % 2}`
+      : `l${now.getHours()}:${now.getMinutes()}`;
+    if (key === screenKey) return;
+    screenKey = key;
+    if (termOn) drawTerm(t - termSince);
+    else drawLock(now);
     scrTex.needsUpdate = true;
   }
-  drawTerm(0);
+  drawScreen(0, false);
 
-  // Keyboard.
-  const kbTex = tex(512, 180, (g, w, h) => {
-    g.fillStyle = "#171c23";
+  // ── table lamp (left) → house rules ────────────────────────────────────
+  const lampL = new THREE.Group();
+  lampL.position.set(-0.56, TOP, -0.18);
+  scene.add(lampL);
+  cyl(0.05, 0.052, 0.022, std("#c9a06a", 0.6), 0, 0.011, 0, lampL, 32);
+  cyl(0.005, 0.005, 0.12, white, 0, 0.082, 0, lampL, 10);
+  const shadeTex = tex(512, 128, (g, w, h) => {
+    const base = g.createLinearGradient(0, 0, 0, h);
+    base.addColorStop(0, "#ffe9bd");
+    base.addColorStop(0.55, "#fff3d4");
+    base.addColorStop(1, "#ffd995");
+    g.fillStyle = base;
     g.fillRect(0, 0, w, h);
-    g.fillStyle = "#2a323e";
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 15; c++) g.fillRect(12 + c * 33 + (r % 2) * 6, 12 + r * 32, 26, 25);
+    // pleats
+    for (let i = 0; i < 36; i++) {
+      const x = (i / 36) * w;
+      const pl = g.createLinearGradient(x, 0, x + w / 36, 0);
+      pl.addColorStop(0, "rgba(160,96,20,0.34)");
+      pl.addColorStop(0.5, "rgba(255,255,255,0.12)");
+      pl.addColorStop(1, "rgba(160,96,20,0.3)");
+      g.fillStyle = pl;
+      g.fillRect(x, 0, w / 36, h);
+    }
   });
-  const kbTop = track(new THREE.MeshStandardMaterial({ map: kbTex, roughness: 0.7, metalness: 0.2 }));
-  box(0.4, 0.018, 0.14, [cartMat, cartMat, kbTop, cartMat, cartMat, cartMat], -0.1, TOP + 0.024, 0.19, cart);
-
-  // Pager → contact.
-  const pager = new THREE.Group();
-  pager.position.set(0.3, TOP + 0.027, 0.16);
-  pager.rotation.y = -0.35;
-  cart.add(pager);
-  const pagerTop = track(
-    new THREE.MeshStandardMaterial({
-      map: tex(256, 180, (g, w, h) => {
-        g.fillStyle = "#1c222b";
-        g.fillRect(0, 0, w, h);
-        g.fillStyle = "#b9d6a3";
-        g.fillRect(22, 22, w - 44, 84);
-        g.fillStyle = "#16230f";
-        g.font = `700 40px ${MONO}`;
-        g.textBaseline = "middle";
-        g.fillText("PAGE ME", 36, 66);
-        g.fillStyle = "#39424f";
-        for (let i = 0; i < 3; i++) g.fillRect(22 + i * 54, 128, 42, 28);
-      }),
-      roughness: 0.5,
-      metalness: 0.2,
-    }),
+  const shade = new THREE.Mesh(
+    track(new THREE.CylinderGeometry(0.052, 0.082, 0.105, 36, 1, true)),
+    track(new THREE.MeshBasicMaterial({ map: shadeTex, side: THREE.DoubleSide, toneMapped: false })),
   );
-  const pagerMat = std("#1c222b", 0.5, 0.2);
-  const pagerBody = box(0.115, 0.024, 0.08, [pagerMat, pagerMat, pagerTop, pagerMat, pagerMat, pagerMat], 0, 0, 0, pager);
-  const pagerLed = new THREE.Group();
-  pagerLed.rotation.x = -Math.PI / 2;
-  pagerLed.position.set(0.04, 0.0125, 0.024);
-  pager.add(pagerLed);
-  led(pagerLed, 0, 0, 0, C.crit, "canary", 0.8);
-  const pagerHit = box(0.2, 0.12, 0.16, new THREE.MeshBasicMaterial({ visible: false }), 0, 0.04, 0, pager);
-  markHot(pagerBody, "contact");
-  markHot(pagerHit, "contact");
+  shade.position.set(0, 0.2, 0);
+  lampL.add(shade);
+  const shadeGlow = glow(lampL, 0, 0.2, 0.02, "#ffb45e", 0.46, 0.42);
+  hitBox(0.19, 0.28, 0.19, 0, 0.14, 0, "principles", lampL);
 
-  // Console cable from the cart to the rack.
+  // ── succulent → AIOps, still growing ───────────────────────────────────
+  const plant = new THREE.Group();
+  plant.position.set(-0.385, TOP, -0.2);
+  scene.add(plant);
+  const potTex = tex(256, 64, (g, w, h) => {
+    g.fillStyle = "#b9c8bd";
+    g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 28; i++) {
+      g.fillStyle = i % 2 ? "rgba(255,255,255,0.16)" : "rgba(40,60,50,0.16)";
+      g.fillRect((i / 28) * w, 0, w / 28, h);
+    }
+  });
+  cyl(0.046, 0.046, 0.008, std("#aebdb2", 0.6), 0, 0.004, 0, plant, 24);
+  cyl(0.04, 0.034, 0.062, track(new THREE.MeshStandardMaterial({ map: potTex, roughness: 0.7 })), 0, 0.039, 0, plant, 28);
+  cyl(0.036, 0.036, 0.004, std("#3a2c22", 0.95), 0, 0.068, 0, plant, 20);
   {
-    const a = worldOf(mon, 0.2, 0.05, -0.04);
-    const b = new THREE.Vector3(RX - RW / 2 + 0.03, 1.05, FRONT - 0.02);
-    const curve = new THREE.CatmullRomCurve3([a, new THREE.Vector3(a.x + 0.25, 0.35, a.z - 0.05), new THREE.Vector3(b.x - 0.3, 0.08, b.z + 0.12), new THREE.Vector3(b.x - 0.03, 0.5, b.z + 0.03), b]);
-    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(curve, 48, 0.007, 8)), std("#2b7fd6", 0.5, 0)));
+    const leaf = track(new THREE.ConeGeometry(0.009, 0.03, 6));
+    const leafMat = std("#5f9d6c", 0.6);
+    const tipMat = std("#83bd88", 0.6);
+    for (let ring = 0; ring < 3; ring++) {
+      const n = [7, 5, 3][ring];
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + ring * 0.5;
+        const m = new THREE.Mesh(leaf, ring === 2 ? tipMat : leafMat);
+        const r = [0.02, 0.012, 0.004][ring];
+        m.position.set(Math.cos(a) * r, 0.076 + ring * 0.007, Math.sin(a) * r);
+        m.rotation.set(Math.sin(a) * (0.95 - ring * 0.35), 0, -Math.cos(a) * (0.95 - ring * 0.35));
+        plant.add(m);
+      }
+    }
+  }
+  hitBox(0.12, 0.14, 0.12, 0, 0.06, 0, "aiops", plant);
+
+  // ── gooseneck lamp (right) ─────────────────────────────────────────────
+  const lampR = new THREE.Group();
+  lampR.position.set(0.6, TOP, -0.24);
+  scene.add(lampR);
+  cyl(0.058, 0.062, 0.012, white, 0, 0.006, 0, lampR, 32);
+  cyl(0.007, 0.007, 0.26, white, 0, 0.14, 0, lampR, 10);
+  const neck = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0.26, 0),
+    new THREE.Vector3(0, 0.33, 0.004),
+    new THREE.Vector3(-0.022, 0.375, 0.016),
+    new THREE.Vector3(-0.06, 0.375, 0.034),
+    new THREE.Vector3(-0.082, 0.35, 0.046),
+  ]);
+  lampR.add(new THREE.Mesh(track(new THREE.TubeGeometry(neck, 24, 0.008, 8)), std("#e8b53a", 0.55)));
+  const head = cyl(0.012, 0.034, 0.06, track(new THREE.MeshStandardMaterial({ color: "#f3f1ec", roughness: 0.55, side: THREE.DoubleSide })), -0.098, 0.326, 0.056, lampR, 24, true);
+  head.rotation.set(0.5, 0, 0.62);
+  const bulbGlow = glow(lampR, -0.114, 0.3, 0.07, "#ffb45e", 0.17, 0.8);
+  glow(lampR, -0.114, 0.3, 0.07, "#fff2d6", 0.05, 1);
+
+  // ── keyboard + wrist rest → stack ──────────────────────────────────────
+  const kb = new THREE.Group();
+  kb.position.set(0, TOP + 0.004, 0.1);
+  scene.add(kb);
+  const kbTex = tex(1024, 400, (g, w, h) => {
+    g.fillStyle = "#cfd3d8";
+    g.fillRect(0, 0, w, h);
+    const U = 62;
+    const G = 6;
+    const key = (x: number, y: number, kw: number, c: string) => {
+      g.fillStyle = "rgba(0,0,0,0.25)";
+      g.fillRect(x + 2, y + 4, kw - G, U - G);
+      g.fillStyle = c;
+      g.beginPath();
+      g.roundRect(x, y, kw - G, U - G, 8);
+      g.fill();
+    };
+    const lightKey = "#f1f0ea";
+    const modKey = "#8c97a3";
+    const rows: [number, string][][] = [
+      [[1, "#58b76a"], ...Array.from({ length: 13 }, () => [1, lightKey] as [number, string]), [1, "#e0463c"]],
+      [...Array.from({ length: 13 }, () => [1, lightKey] as [number, string]), [2, modKey]],
+      [[1.5, modKey], ...Array.from({ length: 12 }, () => [1, lightKey] as [number, string]), [1.5, lightKey]],
+      [[1.75, modKey], ...Array.from({ length: 11 }, () => [1, lightKey] as [number, string]), [2.25, "#3f6fd0"]],
+      [[2.25, modKey], ...Array.from({ length: 10 }, () => [1, lightKey] as [number, string]), [1.75, modKey], [1, modKey]],
+      [[1.25, modKey], [1.25, modKey], [1.25, modKey], [6.25, "#f0c43c"], [1, modKey], [1, modKey], [1, modKey], [1, modKey], [1, modKey]],
+    ];
+    rows.forEach((row, r) => {
+      let x = 28;
+      for (const [u, c] of row) {
+        key(x, 16 + r * (U + 1), u * U, c);
+        x += u * U;
+      }
+    });
+  });
+  const kbSide = std("#dfe2e6", 0.4);
+  const kbTop = track(new THREE.MeshStandardMaterial({ map: kbTex, roughness: 0.6 }));
+  const kbBody = box(0.33, 0.022, 0.13, [kbSide, kbSide, kbTop, kbSide, kbSide, kbSide], 0, 0.011, 0, kb);
+  kbBody.rotation.x = 0.06;
+  const rest = box(0.34, 0.02, 0.085, std("#8a9099", 0.95), 0, 0.01, 0.118, kb);
+  markHot(kbBody, "stack");
+  markHot(rest, "stack");
+
+  // Mouse.
+  {
+    const m = new THREE.Mesh(track(new THREE.SphereGeometry(0.03, 20, 14)), std("#1b1d20", 0.45));
+    m.scale.set(1, 0.55, 1.6);
+    m.position.set(0.31, TOP + 0.018, 0.17);
+    scene.add(m);
   }
 
-  // Whiteboard → principles.
-  const board = new THREE.Mesh(
-    track(new THREE.PlaneGeometry(1.4, 0.75)),
-    track(
-      new THREE.MeshStandardMaterial({
-        map: tex(1200, 640, (g, w, h) => {
-          g.fillStyle = "#dfe5ea";
-          g.fillRect(0, 0, w, h);
-          g.strokeStyle = "#7c8794";
-          g.lineWidth = 16;
-          g.strokeRect(8, 8, w - 16, h - 16);
-          g.fillStyle = "#b02a2a";
-          g.font = `700 44px ${MONO}`;
-          g.fillText("HOUSE RULES", 70, 110);
-          g.fillRect(70, 128, 300, 5);
-          site.principles.forEach((p, i) => {
-            g.save();
-            g.translate(70, 230 + i * 130);
-            g.rotate((i - 1) * 0.012);
-            g.fillStyle = i === 1 ? "#0b5cad" : "#18222d";
-            fit(g, p, 600, DISPLAY, 62, w - 150);
-            g.fillText(`${i + 1}. ${p}`, 0, 0);
-            g.restore();
-          });
-        }),
-        roughness: 0.4,
-        metalness: 0,
-        emissive: "#ffffff",
-        emissiveIntensity: 0,
+  // ── laptop + glasses → signals ─────────────────────────────────────────
+  const lap = new THREE.Group();
+  lap.position.set(0.43, TOP, -0.06);
+  lap.rotation.y = -0.05;
+  scene.add(lap);
+  const lapBody = box(0.31, 0.013, 0.215, std("#c9ccd0", 0.35, 0.85), 0, 0.0065, 0, lap);
+  markHot(lapBody, "signals");
+  {
+    const frame = std("#111214", 0.4);
+    const ring = track(new THREE.TorusGeometry(0.021, 0.0022, 8, 28));
+    const gl = new THREE.Group();
+    gl.position.set(0.02, 0.036, 0.03);
+    gl.rotation.set(-0.12, 0.25, 0);
+    lap.add(gl);
+    for (const sx of [-1, 1]) {
+      const r = new THREE.Mesh(ring, frame);
+      r.position.set(sx * 0.026, 0, 0);
+      r.scale.set(1.12, 0.9, 1);
+      gl.add(r);
+      const temple = box(0.003, 0.003, 0.12, frame, sx * 0.05, 0.008, -0.06, gl);
+      temple.rotation.x = 0.1;
+    }
+    box(0.012, 0.003, 0.003, frame, 0, 0.006, 0, gl);
+    hitBox(0.14, 0.07, 0.16, 0.02, 0.04, -0.02, "signals", lap);
+  }
+
+  // ── phone → contact ────────────────────────────────────────────────────
+  const phone = new THREE.Group();
+  phone.position.set(-0.3, TOP + 0.004, 0.13);
+  phone.rotation.y = 0.3;
+  scene.add(phone);
+  const phoneTop = track(
+    new THREE.MeshBasicMaterial({
+      map: tex(256, 520, (g, w, h) => {
+        g.fillStyle = "#0b0d10";
+        g.fillRect(0, 0, w, h);
+        g.fillStyle = "rgba(255,255,255,0.72)";
+        g.textAlign = "center";
+        g.font = `500 56px ${DISPLAY}`;
+        g.fillText("on call", w / 2, 150);
+        g.fillStyle = "rgba(255,255,255,0.12)";
+        g.beginPath();
+        g.roundRect(18, 250, w - 36, 130, 22);
+        g.fill();
+        g.textAlign = "left";
+        g.fillStyle = C.ok;
+        g.font = `700 26px ${MONO}`;
+        g.fillText("● PAGE ME", 36, 298);
+        g.fillStyle = "rgba(255,255,255,0.85)";
+        g.font = `500 24px ${DISPLAY}`;
+        g.fillText(site.available ? site.availableLabel : "pager is on", 36, 346);
       }),
-    ),
+      toneMapped: false,
+    }),
   );
-  (board.material as THREE.MeshStandardMaterial).emissiveMap = (board.material as THREE.MeshStandardMaterial).map;
-  board.position.set(-1.0, 1.93, WALL_Z + 0.012);
-  scene.add(board);
-  markHot(board, "principles");
+  const phoneSide = std("#1a1c20", 0.4, 0.5);
+  const phoneBody = box(0.072, 0.008, 0.148, [phoneSide, phoneSide, phoneTop, phoneSide, phoneSide, phoneSide], 0, 0.004, 0, phone);
+  markHot(phoneBody, "contact");
+  hitBox(0.12, 0.05, 0.19, 0, 0.02, 0, "contact", phone);
+
+  // ── books → one per role, newest on top ────────────────────────────────
+  const covers = ["#2f4f46", "#34455f", "#8a4a3a", "#b88a2f"];
+  const pages = std("#efe8d8", 0.9);
+  experience.forEach((role, i) => {
+    const n = experience.length;
+    const col = covers[i % covers.length];
+    const cover = std(col, 0.8);
+    const spine = track(
+      new THREE.MeshStandardMaterial({
+        map: tex(768, 110, (g, w, h) => {
+          g.fillStyle = col;
+          g.fillRect(0, 0, w, h);
+          g.fillStyle = "rgba(255,255,255,0.14)";
+          g.fillRect(24, 14, 4, h - 28);
+          g.fillRect(w - 28, 14, 4, h - 28);
+          g.textBaseline = "middle";
+          g.fillStyle = "#f6efe0";
+          const name = role.company.toUpperCase();
+          fit(g, name, 700, DISPLAY, 54, w - 300);
+          g.fillText(name, 50, h / 2 + 2);
+          g.textAlign = "right";
+          g.fillStyle = "rgba(246,239,224,0.75)";
+          g.font = `500 30px ${MONO}`;
+          g.fillText(role.year.replace(/\s+/g, " "), w - 48, h / 2 + 2);
+        }),
+        roughness: 0.8,
+      }),
+    );
+    const top = track(
+      new THREE.MeshStandardMaterial({
+        map: tex(768, 540, (g, w, h) => {
+          g.fillStyle = col;
+          g.fillRect(0, 0, w, h);
+          g.strokeStyle = "rgba(255,255,255,0.16)";
+          g.lineWidth = 4;
+          g.strokeRect(30, 30, w - 60, h - 60);
+          g.fillStyle = "#f6efe0";
+          const name = role.company.toUpperCase();
+          fit(g, name, 700, DISPLAY, 84, w - 130);
+          g.fillText(name, 64, 170);
+          g.fillStyle = "rgba(246,239,224,0.8)";
+          fit(g, role.title, 500, MONO, 34, w - 130);
+          g.fillText(role.title, 64, 232);
+          g.font = `500 30px ${MONO}`;
+          g.fillText(role.year.replace(/\s+/g, " "), 64, h - 70);
+        }),
+        roughness: 0.8,
+      }),
+    );
+    const grp = new THREE.Group();
+    const BH = 0.03;
+    grp.position.set(-0.565 + ((i % 2) - 0.5) * 0.008, TOP + (n - 1 - i) * (BH + 0.001) + BH / 2, 0.19);
+    grp.rotation.y = 0.1 + (i % 2 ? -0.07 : 0.05) * (i + 1) * 0.5;
+    scene.add(grp);
+    const b = box(0.215, BH, 0.155, [pages, cover, top, cover, spine, pages], 0, 0, 0, grp);
+    markHot(b, `role-${i}`);
+    hots.push({
+      id: `role-${i}`,
+      label: `${role.company} · ${role.year}`,
+      pos: worldOf(grp, 0, 0, 0.08),
+      normal: new THREE.Vector3(0, 0.5, 0.87).normalize(),
+      dist: 0.62,
+      slide: grp,
+      slideBase: grp.position.z,
+      slideNow: 0,
+    });
+  });
 
   scene.updateMatrixWorld(true);
-  const cartN = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), cart.rotation.y);
+  const up = (y: number, z: number) => new THREE.Vector3(0, y, z).normalize();
   hots.push(
-    { id: "console", label: "console · about", pos: screen.getWorldPosition(new THREE.Vector3()), normal: cartN, dist: 1.35 },
-    { id: "contact", label: "pager · contact", pos: pager.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0.75, 0.66).normalize(), dist: 0.85 },
-    { id: "principles", label: "whiteboard · house rules", pos: board.position.clone(), normal: new THREE.Vector3(0, 0, 1), dist: 2.5 },
+    { id: "console", label: "monitor · about", pos: screen.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0, 1), dist: 1.2 },
+    { id: "aiops", label: "succulent · AIOps, still growing", pos: worldOf(plant, 0, 0.06, 0), normal: up(0.3, 0.95), dist: 0.5 },
+    { id: "stack", label: "keyboard · stack", pos: worldOf(kb, 0, 0.01, 0.04), normal: up(0.8, 0.6), dist: 0.66 },
+    { id: "signals", label: "laptop · signals", pos: worldOf(lap, 0, 0.02, 0), normal: up(0.7, 0.72), dist: 0.8 },
+    { id: "principles", label: "lamp · house rules", pos: worldOf(lampL, 0, 0.15, 0), normal: up(0.12, 0.99), dist: 0.72 },
+    { id: "contact", label: "phone · contact", pos: worldOf(phone, 0, 0.01, 0), normal: up(0.86, 0.5), dist: 0.5 },
   );
+  // A soft point of light above each thing that opens.
+  const beaconY: Record<string, number> = { console: 0.23, aiops: 0.1, stack: 0.07, signals: 0.09, principles: 0.19, contact: 0.07 };
+  for (const h of hots) {
+    const isBook = h.id.startsWith("role-");
+    if (isBook && h.id !== "role-0") continue; // one beacon for the stack of books
+    const p = h.pos.clone();
+    p.y += isBook ? 0.075 : (beaconY[h.id] ?? 0.08);
+    if (isBook) p.z -= 0.08;
+    h.beacon = glow(scene, p.x, p.y, p.z + 0.02, "#ffe3b0", 0.034, 0.9);
+  }
 
   // ── light ──────────────────────────────────────────────────────────────
-  const hemi = new THREE.HemisphereLight("#9fb4d6", "#0a0d12", 1.0);
+  const hemi = new THREE.HemisphereLight("#f4e6d6", "#241a12", 0.42);
   scene.add(hemi);
-  const key = new THREE.DirectionalLight("#bcd2ff", 1.7);
-  key.position.set(-1.5, 4, 5);
-  scene.add(key);
-  const monLight = new THREE.PointLight("#58e0a0", 0.9, 3, 1.6);
-  monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).addScaledVector(cartN, 0.35);
+  // Daylight through the curtain, only when the light theme is on.
+  const sun = new THREE.DirectionalLight("#dfe9ff", 0);
+  sun.position.set(2.6, 2.6, 2.4);
+  scene.add(sun);
+  // A faint fill from where the visitor stands, so fronts are not silhouettes.
+  const fill = new THREE.DirectionalLight("#ffe9d2", 0.42);
+  fill.position.set(-0.4, 1.6, 3);
+  scene.add(fill);
+  const lampLLight = new THREE.PointLight("#ffbf82", 1.0, 3.2, 1.7);
+  lampLLight.position.copy(worldOf(lampL, 0, 0.19, 0.03));
+  scene.add(lampLLight);
+  const lampLDown = new THREE.SpotLight("#ffc48a", 1.6, 1.6, 0.85, 0.8, 1.4);
+  lampLDown.position.copy(worldOf(lampL, 0, 0.2, 0));
+  lampLDown.target.position.copy(worldOf(lampL, 0.05, 0, 0.12));
+  scene.add(lampLDown, lampLDown.target);
+  const lampRLight = new THREE.PointLight("#ffbf82", 0.75, 2.6, 1.8);
+  lampRLight.position.copy(worldOf(lampR, -0.12, 0.29, 0.09));
+  scene.add(lampRLight);
+  const monLight = new THREE.PointLight("#9cc8ff", 0.55, 2.4, 1.6);
+  monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, -0.05, 0.3));
   scene.add(monLight);
-  const rackLight = new THREE.PointLight("#3ad98a", 0.8, 3, 1.8);
-  rackLight.position.set(RX, 1.1, FRONT + 0.6);
-  scene.add(rackLight);
-  // Cold aisle strip light: rakes down the front of the rack row.
-  const aisle = new THREE.SpotLight("#a9c8ff", 14, 6, 0.75, 0.9, 1.3);
-  aisle.position.set(RX - 0.2, 3.1, FRONT + 1.5);
-  aisle.target.position.set(RX, 0.9, FRONT);
-  scene.add(aisle, aisle.target);
-  const rim = new THREE.PointLight("#4f7dff", 1.4, 5, 1.5);
-  rim.position.set(-2.2, 1.6, 0.9);
-  scene.add(rim);
-  const boardLight = new THREE.SpotLight("#ffe9c4", 2.2, 4, 0.6, 0.7, 1.4);
-  boardLight.position.set(-1.0, 2.36, 0.5);
-  boardLight.target = board;
-  scene.add(boardLight);
+  // The cool spill behind the monitor onto the wall.
+  const backLight = new THREE.PointLight("#8fb6ff", 0.22, 1.4, 1.6);
+  backLight.position.copy(worldOf(mon, 0, SCY, -0.12));
+  scene.add(backLight);
 
   // ── camera ─────────────────────────────────────────────────────────────
   const home = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -702,25 +778,27 @@ export async function initRack(
 
   function place() {
     const portrait = aspect < 0.9;
-    // Fit ~3.1 m of scene width (2.1 m on phones: rack + console only).
-    const dist = Math.max(3.8, (portrait ? 1.1 : 1.6) / (tanV * aspect));
-    const cx = portrait ? 0.12 : -0.2;
-    // On phones the name sits above the scene, so the room is framed low.
-    home.look.set(cx, portrait ? 1.5 : 1.14, 0);
-    home.pos.set(cx - 0.2, portrait ? 1.62 : 1.34, dist);
+    // The detail panel sits at the bottom up to 760px wide, else on the right.
+    const sheetBottom = matchMedia("(max-width: 760px)").matches;
+    // Fit the desk and a little room either side (the desk alone on phones).
+    const dist = Math.max(1.55, (portrait ? 0.8 : 0.98) / (tanV * aspect));
+    // On wide screens the name sits bottom-left, so the desk is framed a
+    // little right of centre; on phones it sits above, so the desk is low.
+    const cx = portrait ? 0 : -0.2;
+    home.look.set(cx, portrait ? 1.03 : 0.8, 0);
+    home.pos.set(cx, portrait ? 1.2 : 1.04, dist);
     if (!selected) {
       want.pos.copy(home.pos);
       want.look.copy(home.look);
       return;
     }
     const h = selected;
-    const d = h.dist * (portrait ? 1.25 : 1);
+    const d = h.dist * (sheetBottom ? 1.3 : 1);
     const p = h.pos.clone();
-    if (h.slide) p.z += 0.3;
     const right = new THREE.Vector3(h.normal.z, 0, -h.normal.x).normalize();
     const shift = new THREE.Vector3();
-    if (portrait) shift.y = -0.24 * 2 * d * tanV; // sheet covers the bottom half
-    else shift.copy(right).multiplyScalar(0.22 * 2 * d * tanV * aspect); // panel on the right
+    if (sheetBottom) shift.y = -0.22 * 2 * d * tanV; // sheet covers the bottom half
+    else shift.copy(right).multiplyScalar(0.2 * 2 * d * tanV * aspect); // panel on the right
     want.look.copy(p).add(shift);
     want.pos.copy(p).addScaledVector(h.normal, d).add(shift);
     want.pos.y = Math.max(0.35, want.pos.y);
@@ -753,6 +831,11 @@ export async function initRack(
     const hit = ray.intersectObjects(hitTargets, false)[0];
     return hit ? byId(hit.object.userData.hot) : null;
   }
+  function clearHover() {
+    hovered = null;
+    canvas.style.cursor = "";
+    on.hover(null, 0, 0);
+  }
   function onMove(e: PointerEvent) {
     if (e.pointerType === "touch") return;
     const h = pick(e);
@@ -765,9 +848,8 @@ export async function initRack(
     dirty = true;
   }
   function onLeave() {
-    hovered = null;
+    clearHover();
     par.set(0, 0);
-    on.hover(null, 0, 0);
     dirty = true;
   }
   function onClick(e: MouseEvent) {
@@ -786,7 +868,8 @@ export async function initRack(
   canvas.addEventListener("webglcontextrestored", onRestore);
 
   // ── loop ───────────────────────────────────────────────────────────────
-  let lights = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
+  // Dark theme is the evening in the photos; the light theme opens the curtain.
+  let day = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
   const themeWatch = new MutationObserver(() => (dirty = true));
   themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
@@ -797,10 +880,12 @@ export async function initRack(
   io.observe(stage);
   const ro = new ResizeObserver(resize);
   ro.observe(stage);
+  // Keeps the lock-screen clock current under reduced motion.
+  const minute = window.setInterval(() => (dirty = true), 20_000);
 
   resize();
-  // Start pulled back and dolly in.
-  camera.position.copy(home.pos).add(new THREE.Vector3(reduced ? 0 : -0.5, reduced ? 0 : 0.25, reduced ? 0 : 2.2));
+  // Start pulled back and ease in.
+  camera.position.copy(home.pos).add(new THREE.Vector3(reduced ? 0 : -0.25, reduced ? 0 : 0.15, reduced ? 0 : 1.2));
   look.copy(home.look);
 
   const clock = new THREE.Clock();
@@ -825,60 +910,57 @@ export async function initRack(
     const k = reduced ? 1 : 1 - Math.exp(-dt * 3.2);
 
     // camera
-    const px = selected || reduced ? 0 : par.x * 0.16;
-    const py = selected || reduced ? 0 : par.y * 0.07;
+    const px = selected || reduced ? 0 : par.x * 0.1;
+    const py = selected || reduced ? 0 : par.y * 0.05;
     camera.position.x += (want.pos.x + px - camera.position.x) * k;
     camera.position.y += (want.pos.y + py - camera.position.y) * k;
     camera.position.z += (want.pos.z - camera.position.z) * k;
     look.lerp(want.look, k);
     camera.lookAt(look);
 
-    // units slide out on hover / select
+    // books ease out of the stack on hover / select
     for (const h of hots) {
-      if (!h.slide) continue;
-      const target = h === selected ? 0.3 : h === hovered ? 0.035 : 0;
-      h.slideNow! += (target - h.slideNow!) * (reduced ? 1 : 1 - Math.exp(-dt * 7));
-      h.slide.position.z = RD / 2 - UD / 2 - 0.004 + h.slideNow!;
-    }
-
-    // LEDs
-    for (const l of leds) {
-      let v = 1;
-      if (!reduced) {
-        if (time < l.boot) v = 0;
-        else if (l.mode === "blink") v = Math.sin(time * 3 + l.phase) > -0.2 ? 1 : 0.25;
-        else if (l.mode === "activity") v = Math.sin(time * (9 + (l.phase % 7)) + l.phase) * Math.sin(time * 2.3 + l.phase * 3) > -0.15 ? 1 : 0.12;
-        else if (l.mode === "canary") v = 0.35 + 0.65 * Math.abs(Math.sin(time * 1.6 + l.phase));
+      if (h.slide) {
+        const target = h === selected ? 0.11 : h === hovered ? 0.022 : 0;
+        h.slideNow! += (target - h.slideNow!) * (reduced ? 1 : 1 - Math.exp(-dt * 7));
+        h.slide.position.z = h.slideBase! + h.slideNow!;
       }
-      l.mat.color.copy(l.glow.color).multiplyScalar(0.25 + 0.75 * v);
-      l.glow.opacity = 0.85 * v;
+      if (h.beacon) {
+        const pulse = reduced ? 0.8 : 0.55 + 0.45 * Math.sin(time * 2.2 + h.pos.x * 9);
+        h.beacon.opacity = selected ? 0 : pulse * (h === hovered ? 1 : 0.85);
+      }
     }
-    farLeds.forEach((m, i) => {
-      m.opacity = reduced ? 0.8 : 0.45 + 0.55 * (Math.sin(time * (1.7 + i * 1.3) + i * 2) > 0 ? 1 : 0.3);
-    });
 
-    // "lights on" for the light theme
-    const wantLights = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
-    lights += (wantLights - lights) * (reduced ? 1 : 1 - Math.exp(-dt * 4));
-    hemi.intensity = 1.0 + lights * 2.0;
-    key.intensity = 1.7 + lights * 1.6;
-    (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, lights);
+    // Lamps breathe very slightly; daylight fades in for the light theme.
+    const wantDay = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
+    day += (wantDay - day) * (reduced ? 1 : 1 - Math.exp(-dt * 4));
+    const breathe = reduced ? 1 : 1 + Math.sin(time * 1.3) * 0.015;
+    hemi.intensity = 0.42 + day * 1.5;
+    sun.intensity = day * 1.5;
+    lampLLight.intensity = 1.0 * breathe;
+    lampRLight.intensity = 0.75 * breathe;
+    shadeGlow.opacity = 0.42 - day * 0.22;
+    bulbGlow.opacity = 0.8 - day * 0.35;
+    (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
     (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
-    wallMat.color.copy(wallDark).lerp(wallLight, lights);
 
-    drawTerm(time);
+    drawScreen(time, selected?.id === "console");
     renderer.render(scene, camera);
   }
   frame();
 
   return {
     select(id) {
-      selected = byId(id);
+      const next = byId(id);
+      if (next?.id === "console" && selected?.id !== "console") termSince = time;
+      selected = next;
+      clearHover();
       place();
       dirty = true;
     },
     dispose() {
       cancelAnimationFrame(raf);
+      clearInterval(minute);
       io.disconnect();
       ro.disconnect();
       themeWatch.disconnect();
