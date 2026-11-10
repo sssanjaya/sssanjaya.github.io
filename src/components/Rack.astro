@@ -182,8 +182,10 @@ const hots = [
   };
 
   function capable() {
-    // Short screens (landscape phones, zoomed windows) cannot fit the stage.
-    if (window.innerHeight < 620) return false;
+    // Short screens (landscape phones, zoomed windows) cannot fit the stage:
+    // top bar plus the stage's min-height at each breakpoint in the CSS below.
+    const w = window.innerWidth;
+    if (window.innerHeight < (w <= 760 ? 536 : w <= 880 ? 656 : 620)) return false;
     const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
     if (nav.connection?.saveData) return false;
     if ((nav.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency ?? 8) < 4) return false;
@@ -207,7 +209,11 @@ const hots = [
     const prev = current;
     // Closing hides whatever is focused inside the sheet; hand focus back to
     // the unit's button so keyboard users are not dropped at the page start.
-    const refocus = !id && returnFocus && sheet.contains(document.activeElement);
+    const inSheet = sheet.contains(document.activeElement);
+    const refocus = !id && returnFocus && inSheet;
+    // Switching panels hides the old panel; keep focus in the sheet.
+    const closeBtn = sheet.querySelector<HTMLElement>("[data-rack-close]");
+    const keep = !!id && id !== prev && inSheet && document.activeElement !== closeBtn;
     current = id;
     ctl?.select(id);
     stage.classList.toggle("focused", !!id);
@@ -216,6 +222,7 @@ const hots = [
     buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hot === id)));
     sheet.scrollTop = 0;
     if (refocus) buttons.find((b) => b.dataset.hot === prev)?.focus({ preventScroll: true });
+    else if (keep) closeBtn?.focus({ preventScroll: true });
   }
 
   function showTip(label: string | null, x: number, y: number) {
@@ -233,11 +240,15 @@ const hots = [
   // a stop during loading disposes the scene instead of swapping it in.
   let wanted = false;
   let starting = false;
+  // The control that asked for the scene from the keyboard, if any. It is
+  // hidden once the scene is up, so focus is handed into the scene then.
+  let focusTrigger: Element | null = null;
 
   async function start(focusAfter = false) {
     if (!stage || !canvas) return;
     wanted = true;
     if (ctl) return;
+    if (focusAfter) focusTrigger = document.activeElement;
     // While loading, the stage is laid out (the scene sizes itself from it)
     // but invisible and out of flow, so the plain hero stays put until the
     // scene is ready to replace it.
@@ -254,17 +265,26 @@ const hots = [
         return;
       }
       ctl = c;
+      // Only take focus if the visitor has not moved it elsewhere meanwhile.
+      const active = document.activeElement;
+      const takeFocus = !!focusTrigger && (active === focusTrigger || active === document.body || !active);
+      const before = root.scrollHeight;
       stage.hidden = false;
       stage.classList.remove("pending");
       root.classList.add("rack-on");
+      // The stage and the hero differ in height. A visitor who has already
+      // scrolled keeps their place (the browser's own scroll anchoring does
+      // not cover an element entering the flow).
+      if (window.scrollY > 0) window.scrollBy({ top: root.scrollHeight - before, behavior: "instant" });
       requestAnimationFrame(() => stage.classList.add("ready"));
-      if (focusAfter) buttons[0]?.focus({ preventScroll: true });
+      if (takeFocus) buttons[0]?.focus({ preventScroll: true });
     } catch (err) {
       console.warn("3D view unavailable, staying on the plain hero.", err);
       stage.hidden = true;
     } finally {
       stage.classList.remove("pending");
       starting = false;
+      focusTrigger = null;
     }
   }
 
@@ -280,6 +300,17 @@ const hots = [
 
   if (stage && canvas) {
     buttons.forEach((b) => b.addEventListener("click", () => select(current === b.dataset.hot ? null : b.dataset.hot!)));
+    // On phones the units are a horizontal strip: bring a keyboard-focused
+    // button into it. Keyboard only: scrolling under a tap would move the
+    // button away between press and release and lose the tap. Scrolls the
+    // strip, never the page.
+    buttons.forEach((b) =>
+      b.addEventListener("focus", () => {
+        const strip = b.parentElement;
+        if (!strip || !b.matches(":focus-visible") || strip.scrollWidth <= strip.clientWidth) return;
+        strip.scrollTo({ left: b.offsetLeft - (strip.clientWidth - b.offsetWidth) / 2 });
+      }),
+    );
     stage.querySelector("[data-rack-close]")?.addEventListener("click", () => select(null));
     stage.querySelector("[data-rack-off]")?.addEventListener("click", () => {
       remember("off");
@@ -749,6 +780,12 @@ const hots = [
         opacity: 0;
         transform: translateY(14px);
       }
+    }
+  }
+  /* Where the unit row wraps to two lines, keep the sheet clear of it. */
+  @media (min-width: 761px) and (max-width: 1200px) {
+    .sheet {
+      max-height: calc(100% - 140px);
     }
   }
   /* The top bar wraps to two rows (96px) at this width; see TopBar.astro. */
