@@ -432,6 +432,18 @@ const hots = [
     opacity: 0;
     transition-delay: 0s;
   }
+  /* The veil backs the name; step it down when a close-up replaces the name. */
+  .veil {
+    transition: opacity 0.4s ease;
+  }
+  .focused .veil {
+    opacity: 0.3;
+  }
+  /* The pill can sit over the lit desk, so it carries its own dark backing. */
+  .ident .pill {
+    background: rgba(12, 9, 7, 0.72);
+    backdrop-filter: blur(6px);
+  }
   .ident .sep {
     color: var(--fg-2);
   }
