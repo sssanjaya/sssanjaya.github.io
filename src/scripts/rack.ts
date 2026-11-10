@@ -4,6 +4,13 @@
 // generated here, so there are no model or image downloads and the CSP stays
 // 'self'-only. Loaded lazily by Rack.astro, only on devices that can run it.
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { site } from "../data/site.ts";
 import { experience } from "../data/experience.ts";
 
@@ -65,10 +72,14 @@ export async function initRack(
   }
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // Phones get a lighter pipeline: lower pixel ratio, smaller shadow maps.
+  const small = matchMedia("(max-width: 760px)").matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new THREE.Scene();
@@ -77,7 +88,7 @@ export async function initRack(
   scene.background = bgDark.clone();
   scene.fog = new THREE.Fog(scene.background as THREE.Color, 6, 14);
 
-  const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 40);
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 40);
 
   const WALL_Z = -0.42;
   const TOP = 0.74; // desk surface height
@@ -101,6 +112,12 @@ export async function initRack(
     track(new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal }));
   function box(w: number, h: number, d: number, mat: THREE.Material | THREE.Material[], x = 0, y = 0, z = 0, parent: THREE.Object3D = scene) {
     const m = new THREE.Mesh(track(new THREE.BoxGeometry(w, h, d)), mat);
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  }
+  function rbox(w: number, h: number, d: number, r: number, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = scene) {
+    const m = new THREE.Mesh(track(new RoundedBoxGeometry(w, h, d, 3, r)), mat);
     m.position.set(x, y, z);
     parent.add(m);
     return m;
@@ -159,7 +176,7 @@ export async function initRack(
     parent.add(m);
     return { mesh: m, mat };
   }
-  const shadow = (w: number, d: number, x: number, z: number, y = TOP + 0.0052, o = 0.5) => disc(w, d, x, y, z, "#000000", o, false);
+  const shadow = (w: number, d: number, x: number, z: number, y = TOP + 0.0052, o = 0.5) => disc(w, d, x, y, z, "#000000", o * 0.45, false);
 
   const hots: Hot[] = [];
   const hitTargets: THREE.Object3D[] = [];
@@ -171,6 +188,18 @@ export async function initRack(
   const hitMat = track(new THREE.MeshBasicMaterial({ visible: false }));
   const hitBox = (w: number, h: number, d: number, x: number, y: number, z: number, id: string, parent: THREE.Object3D = scene) =>
     markHot(box(w, h, d, hitMat, x, y, z, parent), id);
+
+  // Soft reflections on metal, glass and glazed surfaces, from a generated
+  // room (no image download).
+  {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    const env = track(pmrem.fromScene(room, 0.04).texture);
+    scene.environment = env;
+    scene.environmentIntensity = 0.05;
+    room.dispose();
+    pmrem.dispose();
+  }
 
   // ── room ───────────────────────────────────────────────────────────────
 
@@ -192,7 +221,23 @@ export async function initRack(
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  const wallMat = std("#e3d6c2", 0.96);
+  const wallMat = track(
+    new THREE.MeshStandardMaterial({
+      color: "#e3d6c2",
+      roughness: 0.97,
+      map: tex(512, 512, (g, w, h) => {
+        g.fillStyle = "#ffffff";
+        g.fillRect(0, 0, w, h);
+        // faint roller marks and mottling in the paint
+        for (let i = 0; i < 2600; i++) {
+          g.fillStyle = `rgba(${Math.random() < 0.5 ? "0,0,0" : "255,255,255"},${Math.random() * 0.014})`;
+          g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 26, 1 + Math.random() * 3);
+        }
+      }),
+    }),
+  );
+  (wallMat.map as THREE.Texture).wrapS = (wallMat.map as THREE.Texture).wrapT = THREE.RepeatWrapping;
+  (wallMat.map as THREE.Texture).repeat.set(10, 3);
   const wall = new THREE.Mesh(track(new THREE.PlaneGeometry(16, 4.2)), wallMat);
   wall.position.set(0, 2.1, WALL_Z);
   scene.add(wall);
@@ -236,7 +281,7 @@ export async function initRack(
   const DW = 1.44;
   const DD = 0.74;
   const white = std("#f3f1ec", 0.55);
-  box(DW, 0.026, DD, white, 0, TOP - 0.013, 0);
+  rbox(DW, 0.026, DD, 0.012, white, 0, TOP - 0.013, 0);
   for (const sx of [-1, 1]) {
     cyl(0.03, 0.03, TOP - 0.05, white, sx * 0.58, (TOP - 0.05) / 2 + 0.02, -0.02);
     box(0.075, 0.024, 0.62, white, sx * 0.58, 0.012, 0);
@@ -244,7 +289,30 @@ export async function initRack(
   }
   box(1.1, 0.03, 0.06, white, 0, TOP - 0.041, -0.02);
   // Desk mat.
-  box(0.94, 0.004, 0.37, std("#1d2622", 0.85), 0, TOP + 0.002, 0.14);
+  box(
+    0.94,
+    0.004,
+    0.37,
+    track(
+      new THREE.MeshStandardMaterial({
+        color: "#1d2622",
+        roughness: 0.8,
+        // leather grain
+        bumpMap: tex(256, 256, (g, w, h) => {
+          g.fillStyle = "#808080";
+          g.fillRect(0, 0, w, h);
+          for (let i = 0; i < 5000; i++) {
+            g.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.25)";
+            g.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+          }
+        }),
+        bumpScale: 0.6,
+      }),
+    ),
+    0,
+    TOP + 0.002,
+    0.14,
+  );
   {
     // Stitched edge of the mat.
     const stitch = std("#3b4a43", 0.9);
@@ -266,10 +334,10 @@ export async function initRack(
   mon.position.set(0, TOP, -0.2);
   scene.add(mon);
   const dark = std("#17191c", 0.5, 0.3);
-  box(0.34, 0.012, 0.24, dark, 0, 0.006, 0.02, mon);
+  rbox(0.34, 0.012, 0.24, 0.005, dark, 0, 0.006, 0.02, mon);
   cyl(0.02, 0.02, 0.3, std("#b9bdc2", 0.3, 0.9), 0, 0.16, -0.03, mon);
   const SCY = 0.15 + SH / 2;
-  const monBody = box(SW + 0.014, SH + 0.022, 0.028, dark, 0, SCY - 0.004, 0, mon);
+  const monBody = rbox(SW + 0.014, SH + 0.022, 0.028, 0.006, dark, 0, SCY - 0.004, 0, mon);
   const scr = document.createElement("canvas");
   scr.width = 1024;
   scr.height = Math.round((1024 * SH) / SW);
@@ -541,7 +609,7 @@ export async function initRack(
   );
   shade.position.set(0, 0.2, 0);
   lampL.add(shade);
-  const shadeGlow = glow(lampL, 0, 0.2, 0.02, "#ffae38", 0.46, 0.42);
+  const shadeGlow = glow(lampL, 0, 0.2, 0.02, "#ffae38", 0.4, 0.26);
   hitBox(0.19, 0.28, 0.19, 0, 0.14, 0, "principles", lampL);
   // Finial, bulb, and the pools of light the shade throws on wall and desk.
   cyl(0.004, 0.006, 0.012, std("#d9c08a", 0.4, 0.6), 0, 0.258, 0, lampL, 10);
@@ -601,7 +669,7 @@ export async function initRack(
   lampR.add(new THREE.Mesh(track(new THREE.TubeGeometry(neck, 24, 0.008, 8)), std("#e8b53a", 0.55)));
   const head = cyl(0.012, 0.034, 0.06, track(new THREE.MeshStandardMaterial({ color: "#f3f1ec", roughness: 0.55, side: THREE.DoubleSide })), -0.098, 0.326, 0.056, lampR, 24, true);
   head.rotation.set(0.5, 0, 0.62);
-  const bulbGlow = glow(lampR, -0.114, 0.3, 0.07, "#ffae38", 0.17, 0.8);
+  const bulbGlow = glow(lampR, -0.114, 0.3, 0.07, "#ffae38", 0.13, 0.55);
   const bulbCore = glow(lampR, -0.114, 0.3, 0.07, "#fff0c8", 0.05, 1);
   {
     // Yellow cord with its inline switch, trailing off behind the laptop.
@@ -628,42 +696,48 @@ export async function initRack(
   const kb = new THREE.Group();
   kb.position.set(0, TOP + 0.004, 0.1);
   scene.add(kb);
-  const kbTex = tex(1024, 400, (g, w, h) => {
-    g.fillStyle = "#cfd3d8";
-    g.fillRect(0, 0, w, h);
-    const U = 62;
-    const G = 6;
-    const key = (x: number, y: number, kw: number, c: string) => {
-      g.fillStyle = "rgba(0,0,0,0.25)";
-      g.fillRect(x + 2, y + 4, kw - G, U - G);
-      g.fillStyle = c;
-      g.beginPath();
-      g.roundRect(x, y, kw - G, U - G, 8);
-      g.fill();
-    };
-    const lightKey = "#f1f0ea";
+  // A 75% board: translucent-white case, one real keycap per key.
+  const kbTilt = new THREE.Group();
+  kbTilt.rotation.x = 0.07;
+  kbTilt.position.y = 0.003;
+  kb.add(kbTilt);
+  const kbBody = rbox(0.318, 0.02, 0.128, 0.006, std("#dfe2e6", 0.35), 0, 0.01, 0, kbTilt);
+  {
+    const U = 0.0192;
+    const lightKey = "#f2f1eb";
     const modKey = "#8c97a3";
+    const L = (n: number) => Array.from({ length: n }, () => [1, lightKey] as [number, string]);
     const rows: [number, string][][] = [
-      [[1, "#58b76a"], ...Array.from({ length: 13 }, () => [1, lightKey] as [number, string]), [1, "#e0463c"]],
-      [...Array.from({ length: 13 }, () => [1, lightKey] as [number, string]), [2, modKey]],
-      [[1.5, modKey], ...Array.from({ length: 12 }, () => [1, lightKey] as [number, string]), [1.5, lightKey]],
-      [[1.75, modKey], ...Array.from({ length: 11 }, () => [1, lightKey] as [number, string]), [2.25, "#3f6fd0"]],
-      [[2.25, modKey], ...Array.from({ length: 10 }, () => [1, lightKey] as [number, string]), [1.75, modKey], [1, modKey]],
+      [[1, "#58b76a"], ...L(13), [1, "#e0463c"]],
+      [...L(13), [2, modKey]],
+      [[1.5, modKey], ...L(12), [1.5, lightKey]],
+      [[1.75, modKey], ...L(11), [2.25, "#3f6fd0"]],
+      [[2.25, modKey], ...L(10), [1.75, modKey], [1, modKey]],
       [[1.25, modKey], [1.25, modKey], [1.25, modKey], [6.25, "#f0c43c"], [1, modKey], [1, modKey], [1, modKey], [1, modKey], [1, modKey]],
     ];
-    rows.forEach((row, r) => {
-      let x = 28;
-      for (const [u, c] of row) {
-        key(x, 16 + r * (U + 1), u * U, c);
-        x += u * U;
-      }
+    const keys = rows.flatMap((row, r) => {
+      let x = 0;
+      return row.map(([u, c]) => {
+        const k = { x: x + u / 2, r, u, c };
+        x += u;
+        return k;
+      });
     });
-  });
-  const kbSide = std("#dfe2e6", 0.4);
-  const kbTop = track(new THREE.MeshStandardMaterial({ map: kbTex, roughness: 0.6 }));
-  const kbBody = box(0.33, 0.022, 0.13, [kbSide, kbSide, kbTop, kbSide, kbSide, kbSide], 0, 0.011, 0, kb);
-  kbBody.rotation.x = 0.06;
-  const rest = box(0.34, 0.02, 0.085, std("#8a9099", 0.95), 0, 0.01, 0.118, kb);
+    const caps = new THREE.InstancedMesh(track(new RoundedBoxGeometry(1, 1, 1, 2, 0.16)), std("#ffffff", 0.55), keys.length);
+    const m4 = new THREE.Matrix4();
+    const col = new THREE.Color();
+    keys.forEach((k, i) => {
+      m4.makeScale(k.u * U - 0.0022, 0.0075, U - 0.0022);
+      m4.setPosition((k.x - 7.5) * U, 0.0225, (k.r - 2.5) * U);
+      caps.setMatrixAt(i, m4);
+      caps.setColorAt(i, col.set(k.c));
+    });
+    caps.instanceMatrix.needsUpdate = true;
+    if (caps.instanceColor) caps.instanceColor.needsUpdate = true;
+    kbTilt.add(caps);
+    markHot(caps, "stack");
+  }
+  const rest = rbox(0.33, 0.02, 0.082, 0.009, std("#8a9099", 0.95), 0, 0.01, 0.118, kb);
   markHot(kbBody, "stack");
   markHot(rest, "stack");
   shadow(0.42, 0.3, 0, 0.16, TOP + 0.0046, 0.5);
@@ -735,7 +809,7 @@ export async function initRack(
   lap.position.set(0.43, TOP, -0.06);
   lap.rotation.y = -0.05;
   scene.add(lap);
-  const lapBody = box(0.31, 0.013, 0.215, std("#c9ccd0", 0.35, 0.85), 0, 0.0065, 0, lap);
+  const lapBody = rbox(0.31, 0.013, 0.215, 0.006, std("#c9ccd0", 0.32, 0.9), 0, 0.0065, 0, lap);
   markHot(lapBody, "signals");
   {
     const frame = std("#111214", 0.4);
@@ -891,6 +965,20 @@ export async function initRack(
     h.beacon = glow(scene, p.x, p.y, p.z + 0.02, "#ffd27a", 0.034, 0.9);
   }
 
+  // Everything solid casts and receives the lamps' shadows; flat blended
+  // discs, glows and the lamps' own shades do not.
+  scene.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh) return;
+    const mat = m.material as THREE.Material;
+    if (Array.isArray(m.material) || (mat.visible && !mat.transparent && !(mat as THREE.MeshBasicMaterial).isMeshBasicMaterial)) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
+  });
+  for (const lamp of [lampL, lampR]) lamp.traverse((o) => (o.castShadow = false));
+  wall.castShadow = floor.castShadow = false;
+
   // ── light ──────────────────────────────────────────────────────────────
   const hemi = new THREE.HemisphereLight("#ffd9a0", "#22170c", 0.3);
   scene.add(hemi);
@@ -902,17 +990,32 @@ export async function initRack(
   const fill = new THREE.DirectionalLight("#ffd49a", 0.34);
   fill.position.set(-0.4, 1.6, 3);
   scene.add(fill);
-  const lampLLight = new THREE.PointLight("#ffb347", 1.05, 3.2, 1.7);
+  const lampLLight = new THREE.PointLight("#ffb347", 1.05, 2.0, 1.9);
   lampLLight.position.copy(worldOf(lampL, 0, 0.19, 0.03));
   scene.add(lampLLight);
-  const lampLDown = new THREE.SpotLight("#ffb955", 1.6, 1.6, 0.85, 0.8, 1.4);
-  lampLDown.position.copy(worldOf(lampL, 0, 0.2, 0));
-  lampLDown.target.position.copy(worldOf(lampL, 0.05, 0, 0.12));
+  // The lamps also throw the scene's real shadows: the table lamp rakes
+  // across the desk from the left, the desk lamp shines down on the right.
+  const lampLDown = new THREE.SpotLight("#ffb955", 1.25, 3.2, 1.15, 0.9, 1.5);
+  lampLDown.position.copy(worldOf(lampL, 0.02, 0.17, 0.02));
+  lampLDown.target.position.set(0.25, TOP, 0.1);
   scene.add(lampLDown, lampLDown.target);
-  const lampRLight = new THREE.PointLight("#ffb347", 0.8, 2.6, 1.8);
+  const lampRSpot = new THREE.SpotLight("#ffb955", 1.1, 2.4, 0.95, 0.85, 1.5);
+  lampRSpot.position.copy(worldOf(lampR, -0.112, 0.305, 0.068));
+  lampRSpot.target.position.set(0.2, TOP, 0.12);
+  scene.add(lampRSpot, lampRSpot.target);
+  for (const l of [lampLDown, lampRSpot]) {
+    l.castShadow = true;
+    l.shadow.mapSize.set(small ? 512 : 1024, small ? 512 : 1024);
+    l.shadow.camera.near = 0.05;
+    l.shadow.camera.far = 3;
+    l.shadow.bias = -0.0015;
+    l.shadow.normalBias = 0.01;
+    l.shadow.radius = 5;
+  }
+  const lampRLight = new THREE.PointLight("#ffb347", 0.8, 1.7, 1.9);
   lampRLight.position.copy(worldOf(lampR, -0.12, 0.29, 0.09));
   scene.add(lampRLight);
-  const monLight = new THREE.PointLight("#a9cdfa", 0.4, 2.2, 1.6);
+  const monLight = new THREE.PointLight("#a9cdfa", 0.3, 2.2, 1.6);
   monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, -0.05, 0.3));
   scene.add(monLight);
   // The cool spill behind the monitor onto the wall.
@@ -933,12 +1036,12 @@ export async function initRack(
     // The detail panel sits at the bottom up to 760px wide, else on the right.
     const sheetBottom = matchMedia("(max-width: 760px)").matches;
     // Fit the desk and a little room either side (the desk alone on phones).
-    const dist = Math.max(1.55, (portrait ? 0.8 : 0.98) / (tanV * aspect));
+    const dist = Math.max(1.5, (portrait ? 0.78 : 0.84) / (tanV * aspect));
     // On wide screens the name sits bottom-left, so the desk is framed a
     // little right of centre; on phones it sits above, so the desk is low.
     const cx = portrait ? 0 : -0.2;
-    home.look.set(cx, portrait ? 1.03 : 0.8, 0);
-    home.pos.set(cx, portrait ? 1.2 : 1.04, dist);
+    home.look.set(cx, portrait ? 1.03 : 0.78, 0);
+    home.pos.set(cx - 0.12, portrait ? 1.16 : 0.97, dist);
     if (!selected) {
       want.pos.copy(home.pos);
       want.look.copy(home.look);
@@ -960,12 +1063,38 @@ export async function initRack(
     want.pos.y = Math.max(0.35, want.pos.y);
   }
 
+  // ── lens ───────────────────────────────────────────────────────────────
+  // Bloom lets the lamps and screen glow the way a camera sees them; a last
+  // pass adds a soft vignette and a little film grain.
+  const target = track(new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: small ? 0 : 4 }));
+  const composer = new EffectComposer(renderer, target);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(4, 4), 0.2, 0.6, 0.92);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  const lens = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uGrain: { value: reduced ? 0.0 : 0.035 } },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uGrain; varying vec2 vUv;
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uTime) * 43758.5453); }
+      void main(){
+        vec4 c = texture2D(tDiffuse, vUv);
+        vec2 d = vUv - 0.5;
+        c.rgb *= mix(1.0, 0.5, smoothstep(0.2, 0.9, dot(d, d) * 2.2));
+        c.rgb += (hash(vUv * 900.0) - 0.5) * uGrain;
+        gl_FragColor = c;
+      }`,
+  });
+  composer.addPass(lens);
+
   function resize() {
     const w = stage.clientWidth;
     const h = stage.clientHeight;
     if (!w || !h) return;
     aspect = w / h;
     renderer.setSize(w, h, false);
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(w, h);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
     place();
@@ -1169,8 +1298,8 @@ export async function initRack(
     const wantDay = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
     day += (wantDay - day) * (reduced ? 1 : 1 - Math.exp(-dt * 4));
     const breathe = reduced ? 1 : 1 + Math.sin(time * 1.3) * 0.015;
-    hemi.intensity = 0.3 + day * 1.5;
-    sun.intensity = day * 1.5;
+    hemi.intensity = 0.07 + day * 1.2;
+    sun.intensity = day * 1.0;
     lampRLevel += ((lampROn && (reduced || time > 1.25) ? 1 : 0) - lampRLevel) * (reduced ? 1 : 1 - Math.exp(-dt * 12));
     // Opening beat: the room is dark, then the table lamp stutters on, the
     // desk lamp follows, and the monitor wakes.
@@ -1178,14 +1307,15 @@ export async function initRack(
     const flick = reduced || time > 1.15 ? 1 : Math.sin(time * 85) > -0.2 ? 1 : 0.3;
     const L = ramp(0.55, 0.1) * flick;
     const S = ramp(1.9, 0.8);
-    lampLLight.intensity = 1.05 * breathe * L;
-    lampLDown.intensity = 1.6 * L;
-    (shade.material as THREE.MeshBasicMaterial).color.setScalar(0.22 + 0.78 * L);
+    lampLLight.intensity = 0.5 * breathe * L;
+    lampLDown.intensity = 1.25 * L;
+    lampRSpot.intensity = 1.1 * lampRLevel;
+    (shade.material as THREE.MeshBasicMaterial).color.setRGB(0.22 + 0.78 * L, 0.2 + 0.68 * L, 0.16 + 0.44 * L);
     (screen.material as THREE.MeshBasicMaterial).color.setScalar(S);
-    monLight.intensity = 0.4 * S;
+    monLight.intensity = 0.3 * S;
     backLight.intensity = 0.12 * S;
     phoneTop.color.setScalar(reduced ? 1 : 0.72 + 0.28 * Math.max(0, Math.sin(time * 0.9)) ** 6);
-    fill.intensity = 0.34 * (0.35 + 0.65 * Math.max(L, lampRLevel));
+    fill.intensity = 0.07 * (0.35 + 0.65 * Math.max(L, lampRLevel));
 
     // Ambient life: steam, dust, and a slow sway in the curtain.
     for (const p of steam) {
@@ -1215,19 +1345,20 @@ export async function initRack(
     }
     dustMat.opacity = 0.42 * Math.max(L, lampRLevel) * (1 - day * 0.6);
     const dim = 1 - day * 0.55;
-    lampRLight.intensity = 0.8 * breathe * lampRLevel;
-    shadeGlow.opacity = (0.42 - day * 0.22) * L;
-    bulbGlow.opacity = (0.8 - day * 0.35) * lampRLevel;
+    lampRLight.intensity = 0.4 * breathe * lampRLevel;
+    shadeGlow.opacity = (0.26 - day * 0.14) * L;
+    bulbGlow.opacity = (0.55 - day * 0.25) * lampRLevel;
     bulbCore.opacity = 0.15 + 0.85 * lampRLevel;
-    poolWallL.mat.opacity = 0.3 * dim * L;
-    poolDeskL.mat.opacity = 0.28 * dim * L;
-    poolWallR.mat.opacity = 0.27 * dim * lampRLevel;
-    poolDeskR.mat.opacity = 0.22 * dim * lampRLevel;
+    poolWallL.mat.opacity = 0.34 * dim * L;
+    poolDeskL.mat.opacity = 0.1 * dim * L;
+    poolWallR.mat.opacity = 0.3 * dim * lampRLevel;
+    poolDeskR.mat.opacity = 0.08 * dim * lampRLevel;
     (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
     (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
 
     drawScreen(time, selected?.id === "console");
-    renderer.render(scene, camera);
+    lens.uniforms.uTime.value = reduced ? 0 : time % 10;
+    composer.render();
   }
   frame();
 
@@ -1254,6 +1385,8 @@ export async function initRack(
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("webglcontextrestored", onRestore);
       disposables.forEach((d) => d.dispose());
+      composer.dispose();
+      bloom.dispose();
       renderer.dispose();
     },
   };

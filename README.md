@@ -28,7 +28,7 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
 - About 8 KB of client JavaScript: theme toggle, local clock, command palette, 3D loader
-- The home page hero is an interactive [three.js](https://threejs.org) scene of a desk in the evening (monitor, two warm lamps, books for each role) (about 133 KB gzipped), loaded lazily and only on capable devices. The "plain view" button, or `localStorage.rack = "off"`, turns it off
+- The home page hero is an interactive [three.js](https://threejs.org) scene of a desk in the evening (monitor, two warm lamps, books for each role) (about 145 KB gzipped), loaded lazily and only on capable devices. The "plain view" button, or `localStorage.rack = "off"`, turns it off
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 
