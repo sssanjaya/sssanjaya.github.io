@@ -689,9 +689,10 @@ const hots = [
 
 <style is:global>
   /* The 3D stage replaces the plain hero while it runs. */
-  .rack-on .hero,
-  .rack-on .beat,
-  .rack-on [data-rack-on] {
+  /* html. prefix: must outrank the hero's own scoped display rule. */
+  html.rack-on .hero,
+  html.rack-on .beat,
+  html.rack-on [data-rack-on] {
     display: none;
   }
 </style>
