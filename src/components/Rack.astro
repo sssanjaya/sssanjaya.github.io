@@ -1,6 +1,6 @@
 ---
-// Interactive 3D hero: a server rack where every lit unit opens part of the
-// site. It is progressive enhancement over <Hero>: the stage stays hidden
+// Interactive 3D hero: a desk in the evening where every object with a glow
+// opens part of the site. It is progressive enhancement over <Hero>: the stage stays hidden
 // until WebGL is confirmed and the first frame is ready, and "plain view"
 // (or a weak device, or no WebGL) leaves the regular hero in place.
 // The panels below are ordinary HTML, so their text is crawlable.
@@ -13,17 +13,17 @@ const core = site.stack.filter((s) => s.place === "core");
 const cross = site.stack.filter((s) => s.place !== "core");
 
 const hots = [
-  { id: "console", label: "console" },
+  { id: "console", label: "monitor" },
   ...experience.map((r, i) => ({ id: `role-${i}`, label: r.company.split(" ")[0].toLowerCase() })),
   { id: "aiops", label: "aiops" },
   { id: "stack", label: "stack" },
   { id: "signals", label: "signals" },
   { id: "principles", label: "rules" },
-  { id: "contact", label: "pager" },
+  { id: "contact", label: "phone" },
 ];
 ---
 
-<section class="rack" data-rack hidden aria-label="Interactive server rack">
+<section class="rack" data-rack hidden aria-label="Interactive desk">
   <canvas data-rack-canvas aria-hidden="true"></canvas>
   <div class="veil" aria-hidden="true"></div>
 
@@ -36,10 +36,10 @@ const hots = [
     </p>
     <p class="nm" role="heading" aria-level="1">{site.name}</p>
     <p class="rl">{site.currentTitle} <span>@ {site.currentCompany}</span></p>
-    <p class="how">Everything with a light on opens. Start with the rack.</p>
+    <p class="how">Everything with a glow opens. Drag to look around, and try the desk lamp.</p>
   </div>
 
-  <nav class="units" aria-label="Rack units">
+  <nav class="units" aria-label="Desk items">
     {
       hots.map((h, i) => (
         <button type="button" data-hot={h.id} aria-pressed="false">
@@ -63,7 +63,7 @@ const hots = [
     </button>
 
     <article data-panel="console" hidden>
-      <p class="kick"><span class="dot" aria-hidden="true"></span> console · about</p>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> monitor · about</p>
       <h2>{site.name}</h2>
       <p class="body">
         I build and secure cloud platforms that <b>ship fast and stay up</b>.
@@ -82,7 +82,7 @@ const hots = [
         <article data-panel={`role-${i}`} hidden>
           <p class="kick">
             <span class="dot" aria-hidden="true" />
-            U{String(experience.length - i).padStart(2, "0")} · {r.year}
+            book {experience.length - i} of {experience.length} · {r.year}
           </p>
           <h2>{r.company}</h2>
           <p class="sub">{r.title}</p>
@@ -95,11 +95,11 @@ const hots = [
     }
 
     <article data-panel="aiops" hidden>
-      <p class="kick warn"><span class="dot warn" aria-hidden="true"></span> canary{aiops ? ` · since ${aiops.since}` : ""}</p>
+      <p class="kick warn"><span class="dot warn" aria-hidden="true"></span> succulent · canary{aiops ? ` since ${aiops.since}` : ""}</p>
       <h2>{site.learning}</h2>
       <p class="body">
-        The newest unit in the rack, and the only one with an amber light. It
-        is racked and powered, taking a little traffic, and not promoted to
+        The newest thing on the desk, small and still growing. It gets a
+        little traffic and plenty of attention, and it is not promoted to
         production yet.
       </p>
       <dl class="kv">
@@ -109,7 +109,7 @@ const hots = [
     </article>
 
     <article data-panel="stack" hidden>
-      <p class="kick"><span class="dot" aria-hidden="true"></span> core switch · stack</p>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> keyboard · stack</p>
       <h2>What it all runs on</h2>
       <dl class="kv wide">
         {core.map((s) => <div><dt>{s.label}</dt><dd>{s.items.join(" · ")}</dd></div>)}
@@ -119,7 +119,7 @@ const hots = [
     </article>
 
     <article data-panel="signals" hidden>
-      <p class="kick"><span class="dot" aria-hidden="true"></span> ups · golden signals</p>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> laptop · golden signals</p>
       <h2>Numbers from production</h2>
       <ul class="sig">
         {site.signals.map((s) => (
@@ -133,16 +133,16 @@ const hots = [
     </article>
 
     <article data-panel="principles" hidden>
-      <p class="kick"><span class="dot" aria-hidden="true"></span> whiteboard</p>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> lamp</p>
       <h2>House rules</h2>
       <ol class="rules">{site.principles.map((p) => <li>{p}</li>)}</ol>
     </article>
 
     <article data-panel="contact" hidden>
-      <p class="kick crit"><span class="dot crit" aria-hidden="true"></span> pager</p>
+      <p class="kick crit"><span class="dot crit" aria-hidden="true"></span> phone</p>
       <h2>Page me</h2>
       <p class="body">
-        {site.available ? `Currently ${site.availableLabel}.` : "Heads-down right now, but the pager is on."}{" "}
+        {site.available ? `Currently ${site.availableLabel}.` : "Heads-down right now, but the phone is on."}{" "}
         Based in {site.location}.
       </p>
       <div class="cta">
@@ -355,9 +355,9 @@ const hots = [
     min-height: 560px;
     max-height: 1100px;
     overflow: hidden;
-    background: #05070b;
+    background: #0c0907;
     border-bottom: 1px solid var(--line);
-    /* The room is dark in both themes; the light theme turns its lights on. */
+    /* The room is an evening scene in both themes; the light theme lets daylight in. */
     --fg: #e6ebf2;
     --fg-2: #c3ccd8;
     --mut: #9aa6b7;
@@ -400,8 +400,8 @@ const hots = [
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(180deg, rgba(5, 7, 11, 0.5) 0%, rgba(5, 7, 11, 0) 16%),
-      linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 36%);
+      linear-gradient(180deg, rgba(12, 9, 7, 0.5) 0%, rgba(12, 9, 7, 0) 16%),
+      linear-gradient(0deg, rgba(12, 9, 7, 0.85) 0%, rgba(12, 9, 7, 0) 36%);
   }
 
   /* Name above the unit row, both anchored to the bottom; the row may wrap. */
@@ -518,7 +518,7 @@ const hots = [
     padding: 6px 9px;
     border-radius: 6px;
     border: 1px solid var(--ok-line);
-    background: rgba(5, 7, 11, 0.9);
+    background: rgba(12, 9, 7, 0.9);
     color: var(--ok);
     white-space: nowrap;
     opacity: 0;
@@ -762,8 +762,8 @@ const hots = [
     }
     .veil {
       background:
-        linear-gradient(180deg, rgba(5, 7, 11, 0.92) 0%, rgba(5, 7, 11, 0.7) 18%, rgba(5, 7, 11, 0) 34%),
-        linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 20%);
+        linear-gradient(180deg, rgba(12, 9, 7, 0.92) 0%, rgba(12, 9, 7, 0.7) 18%, rgba(12, 9, 7, 0) 34%),
+        linear-gradient(0deg, rgba(12, 9, 7, 0.85) 0%, rgba(12, 9, 7, 0) 20%);
     }
     .sheet {
       top: auto;
