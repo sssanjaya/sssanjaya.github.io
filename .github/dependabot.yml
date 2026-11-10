@@ -25,3 +25,9 @@ updates:
       npm-security:
         applies-to: security-updates
         patterns: ["*"]
+    # three ships breaking changes in 0.x "minor" releases, and the build does
+    # not exercise the scene, so it must not ride the auto-merged group. Bump
+    # it by hand and check the home page. Security updates still arrive.
+    ignore:
+      - dependency-name: "three"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]

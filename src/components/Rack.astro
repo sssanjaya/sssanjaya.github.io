@@ -1,0 +1,820 @@
+---
+// Interactive 3D hero: a server rack where every lit unit opens part of the
+// site. It is progressive enhancement over <Hero>: the stage stays hidden
+// until WebGL is confirmed and the first frame is ready, and "plain view"
+// (or a weak device, or no WebGL) leaves the regular hero in place.
+// The panels below are ordinary HTML, so their text is crawlable.
+import { site } from "../data/site.ts";
+import { experience } from "../data/experience.ts";
+
+const linkedin = site.socials.find((s) => s.label === "LinkedIn");
+const aiops = site.status.find((s) => s.name === "AIOps");
+const core = site.stack.filter((s) => s.place === "core");
+const cross = site.stack.filter((s) => s.place !== "core");
+
+const hots = [
+  { id: "console", label: "console" },
+  ...experience.map((r, i) => ({ id: `role-${i}`, label: r.company.split(" ")[0].toLowerCase() })),
+  { id: "aiops", label: "aiops" },
+  { id: "stack", label: "stack" },
+  { id: "signals", label: "signals" },
+  { id: "principles", label: "rules" },
+  { id: "contact", label: "pager" },
+];
+---
+
+<section class="rack" data-rack hidden aria-label="Interactive server rack">
+  <canvas data-rack-canvas aria-hidden="true"></canvas>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="foot">
+  <div class="ident" data-rack-ident>
+    <p class="pill">
+      <span class="dot pulse" aria-hidden="true"></span>
+      all systems operational
+      {site.available ? <span class="sep">· {site.availableLabel}</span> : null}
+    </p>
+    <p class="nm" role="heading" aria-level="1">{site.name}</p>
+    <p class="rl">{site.currentTitle} <span>@ {site.currentCompany}</span></p>
+    <p class="how">Everything with a light on opens. Start with the rack.</p>
+  </div>
+
+  <nav class="units" aria-label="Rack units">
+    {
+      hots.map((h, i) => (
+        <button type="button" data-hot={h.id} aria-pressed="false">
+          <kbd aria-hidden="true">{i + 1 === 10 ? 0 : i + 1}</kbd>
+          {h.label}
+        </button>
+      ))
+    }
+  </nav>
+  </div>
+
+  <div class="hud">
+    <button class="hbtn" type="button" data-rack-off>plain view</button>
+  </div>
+
+  <div class="tip mono" data-rack-tip aria-hidden="true"></div>
+
+  <aside class="sheet panel" data-rack-sheet hidden aria-live="polite">
+    <button class="x" type="button" data-rack-close aria-label="Close and step back">
+      <span aria-hidden="true">esc ✕</span>
+    </button>
+
+    <article data-panel="console" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> console · about</p>
+      <h2>{site.name}</h2>
+      <p class="body">
+        I build and secure cloud platforms that <b>ship fast and stay up</b>.
+        Seven years across Kubernetes, Terraform, and hardened CI/CD, plus the
+        observability and automation that keep production reliable.
+      </p>
+      <dl class="kv">
+        <div><dt>Location</dt><dd>{site.location}</dd></div>
+        {site.currently.map((c) => <div><dt>{c.key}</dt><dd>{c.value}</dd></div>)}
+      </dl>
+      <p class="more"><a href="#about">more about me <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    {
+      experience.map((r, i) => (
+        <article data-panel={`role-${i}`} hidden>
+          <p class="kick">
+            <span class="dot" aria-hidden="true" />
+            U{String(experience.length - i).padStart(2, "0")} · {r.year}
+          </p>
+          <h2>{r.company}</h2>
+          <p class="sub">{r.title}</p>
+          <p class="body">{r.blurb}</p>
+          {r.impact ? <ul class="impact">{r.impact.map((m) => <li>{m}</li>)}</ul> : null}
+          <ul class="tags">{r.tags.map((t) => <li class="chip">{t}</li>)}</ul>
+          <p class="more"><a href="#experience">full timeline <span aria-hidden="true">↓</span></a></p>
+        </article>
+      ))
+    }
+
+    <article data-panel="aiops" hidden>
+      <p class="kick warn"><span class="dot warn" aria-hidden="true"></span> canary{aiops ? ` · since ${aiops.since}` : ""}</p>
+      <h2>{site.learning}</h2>
+      <p class="body">
+        The newest unit in the rack, and the only one with an amber light. It
+        is racked and powered, taking a little traffic, and not promoted to
+        production yet.
+      </p>
+      <dl class="kv">
+        {site.currently.filter((c) => ["Learning", "Reading", "Practicing"].includes(c.key)).map((c) => <div><dt>{c.key}</dt><dd>{c.value}</dd></div>)}
+      </dl>
+      <p class="more"><a href="#status">status page <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    <article data-panel="stack" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> core switch · stack</p>
+      <h2>What it all runs on</h2>
+      <dl class="kv wide">
+        {core.map((s) => <div><dt>{s.label}</dt><dd>{s.items.join(" · ")}</dd></div>)}
+        {cross.map((s) => <div><dt>{s.label}</dt><dd>{s.items.join(" · ")}</dd></div>)}
+      </dl>
+      <p class="more"><a href="#stack">topology <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    <article data-panel="signals" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> ups · golden signals</p>
+      <h2>Numbers from production</h2>
+      <ul class="sig">
+        {site.signals.map((s) => (
+          <li>
+            <b>{s.value}</b> <span class="u">{s.unit}</span>
+            <span class="l">{s.label}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="more"><a href="#signals">all signals <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    <article data-panel="principles" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> whiteboard</p>
+      <h2>House rules</h2>
+      <ol class="rules">{site.principles.map((p) => <li>{p}</li>)}</ol>
+    </article>
+
+    <article data-panel="contact" hidden>
+      <p class="kick crit"><span class="dot crit" aria-hidden="true"></span> pager</p>
+      <h2>Page me</h2>
+      <p class="body">
+        {site.available ? `Currently ${site.availableLabel}.` : "Heads-down right now, but the pager is on."}{" "}
+        Based in {site.location}.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href={`mailto:${site.email}`}>Send email <span class="arr" aria-hidden="true">→</span></a>
+        <button class="btn" type="button" data-copy={site.email}>Copy address</button>
+        {linkedin ? <a class="btn" href={linkedin.href} target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a> : null}
+      </div>
+    </article>
+  </aside>
+</section>
+
+<script>
+  import type { RackController } from "../scripts/rack.ts";
+
+  const root = document.documentElement;
+  const stage = document.querySelector<HTMLElement>("[data-rack]");
+  const canvas = stage?.querySelector<HTMLCanvasElement>("[data-rack-canvas]");
+  const sheet = stage?.querySelector<HTMLElement>("[data-rack-sheet]");
+  const tip = stage?.querySelector<HTMLElement>("[data-rack-tip]");
+  const buttons = Array.from(stage?.querySelectorAll<HTMLButtonElement>("[data-hot]") ?? []);
+  let ctl: RackController | null = null;
+  let current: string | null = null;
+
+  const pref = () => {
+    try {
+      return localStorage.getItem("rack");
+    } catch {
+      return null;
+    }
+  };
+  const remember = (v: string) => {
+    try {
+      localStorage.setItem("rack", v);
+    } catch {
+      /* storage blocked */
+    }
+  };
+
+  function capable() {
+    // Short screens (landscape phones, zoomed windows) cannot fit the stage:
+    // top bar plus the stage's min-height at each breakpoint in the CSS below.
+    const w = window.innerWidth;
+    if (window.innerHeight < (w <= 760 ? 536 : w <= 880 ? 656 : 620)) return false;
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
+    if (nav.connection?.saveData) return false;
+    if ((nav.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency ?? 8) < 4) return false;
+    try {
+      // three.js needs WebGL 2. A software renderer (no usable GPU, a VM)
+      // would run the scene at a few frames a second, so it stays opt-in.
+      const gl = document.createElement("canvas").getContext("webgl2", { failIfMajorPerformanceCaveat: true });
+      if (!gl) return false;
+      const info = gl.getExtension("WEBGL_debug_renderer_info");
+      const renderer = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      if (/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) return false;
+    } catch {
+      return false;
+    }
+    return true;
+  }
+
+  function select(id: string | null, returnFocus = true) {
+    if (!stage || !sheet) return;
+    const prev = current;
+    // Closing hides whatever is focused inside the sheet; hand focus back to
+    // the unit's button so keyboard users are not dropped at the page start.
+    const inSheet = sheet.contains(document.activeElement);
+    const refocus = !id && returnFocus && inSheet;
+    // Switching panels hides the old panel; keep focus in the sheet.
+    const closeBtn = sheet.querySelector<HTMLElement>("[data-rack-close]");
+    const keep = !!id && id !== prev && inSheet && document.activeElement !== closeBtn;
+    current = id;
+    ctl?.select(id);
+    stage.classList.toggle("focused", !!id);
+    sheet.hidden = !id;
+    sheet.querySelectorAll<HTMLElement>("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== id));
+    buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hot === id)));
+    sheet.scrollTop = 0;
+    if (refocus) buttons.find((b) => b.dataset.hot === prev)?.focus({ preventScroll: true });
+    else if (keep) closeBtn?.focus({ preventScroll: true });
+  }
+
+  function showTip(label: string | null, x: number, y: number) {
+    if (!stage || !tip) return;
+    tip.textContent = label ?? "";
+    tip.classList.toggle("on", !!label);
+    if (!label) return;
+    const r = stage.getBoundingClientRect();
+    const tx = Math.max(8, Math.min(x - r.left + 14, r.width - tip.offsetWidth - 8));
+    tip.style.transform = `translate(${tx}px, ${y - r.top + 16}px)`;
+  }
+
+  // `wanted` is the latest request (start or stop); `starting` marks the one
+  // load in flight. Together they make start() single-flight and cancellable:
+  // a stop during loading disposes the scene instead of swapping it in.
+  let wanted = false;
+  let starting = false;
+  // The control that asked for the scene from the keyboard, if any. It is
+  // hidden once the scene is up, so focus is handed into the scene then.
+  let focusTrigger: Element | null = null;
+
+  async function start(focusAfter = false) {
+    if (!stage || !canvas) return;
+    wanted = true;
+    if (ctl) return;
+    if (focusAfter) focusTrigger = document.activeElement;
+    // While loading, the stage is laid out (the scene sizes itself from it)
+    // but invisible and out of flow, so the plain hero stays put until the
+    // scene is ready to replace it.
+    stage.classList.add("pending");
+    stage.hidden = false;
+    if (starting) return;
+    starting = true;
+    try {
+      const { initRack } = await import("../scripts/rack.ts");
+      const c = await initRack(stage, canvas, { select, hover: showTip });
+      if (!wanted) {
+        c.dispose();
+        stage.hidden = true;
+        return;
+      }
+      ctl = c;
+      // Only take focus if the visitor has not moved it elsewhere meanwhile.
+      const active = document.activeElement;
+      const takeFocus = !!focusTrigger && (active === focusTrigger || active === document.body || !active);
+      const before = root.scrollHeight;
+      stage.hidden = false;
+      stage.classList.remove("pending");
+      root.classList.add("rack-on");
+      // The stage and the hero differ in height. A visitor who has already
+      // scrolled keeps their place (the browser's own scroll anchoring does
+      // not cover an element entering the flow).
+      if (window.scrollY > 0) window.scrollBy({ top: root.scrollHeight - before, behavior: "instant" });
+      requestAnimationFrame(() => stage.classList.add("ready"));
+      if (takeFocus) buttons[0]?.focus({ preventScroll: true });
+    } catch (err) {
+      console.warn("3D view unavailable, staying on the plain hero.", err);
+      stage.hidden = true;
+    } finally {
+      stage.classList.remove("pending");
+      starting = false;
+      focusTrigger = null;
+    }
+  }
+
+  function stop() {
+    wanted = false;
+    select(null);
+    ctl?.dispose();
+    ctl = null;
+    root.classList.remove("rack-on");
+    stage?.classList.remove("ready");
+    if (stage) stage.hidden = true;
+  }
+
+  if (stage && canvas) {
+    buttons.forEach((b) => b.addEventListener("click", () => select(current === b.dataset.hot ? null : b.dataset.hot!)));
+    // On phones the units are a horizontal strip: bring a keyboard-focused
+    // button into it. Keyboard only: scrolling under a tap would move the
+    // button away between press and release and lose the tap. Scrolls the
+    // strip, never the page.
+    buttons.forEach((b) =>
+      b.addEventListener("focus", () => {
+        const strip = b.parentElement;
+        if (!strip || !b.matches(":focus-visible") || strip.scrollWidth <= strip.clientWidth) return;
+        strip.scrollTo({ left: b.offsetLeft - (strip.clientWidth - b.offsetWidth) / 2 });
+      }),
+    );
+    stage.querySelector("[data-rack-close]")?.addEventListener("click", () => select(null));
+    stage.querySelector("[data-rack-off]")?.addEventListener("click", () => {
+      remember("off");
+      stop();
+      document.querySelector<HTMLElement>("[data-rack-on]")?.focus();
+    });
+    document.querySelectorAll("[data-rack-on]").forEach((b) =>
+      b.addEventListener("click", () => {
+        remember("on");
+        // The trigger is hidden once the scene is up; move focus into it.
+        void start(document.activeElement === b);
+        window.scrollTo({ top: 0 });
+      }),
+    );
+    // Links inside a panel lead down the page: step back first.
+    sheet?.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", () => select(null, false)));
+
+    window.addEventListener("keydown", (e) => {
+      if (!ctl || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.closest("input, textarea, dialog") || t.isContentEditable)) return;
+      if (document.querySelector("dialog[open]")) return;
+      if (e.key === "Escape" && current) select(null);
+      else if (/^[0-9]$/.test(e.key) && stage.getBoundingClientRect().bottom > 120) {
+        const b = buttons[(Number(e.key) + 9) % 10];
+        if (b) select(current === b.dataset.hot ? null : b.dataset.hot!);
+      }
+    });
+
+    // A deep link (/#experience) is scrolling to its target right now; swapping
+    // the hero for the stage above it would land the visitor in the wrong place.
+    const deep = location.hash.length > 1 && location.hash !== "#top";
+    const p = pref();
+    if (!deep && p !== "off" && (p === "on" || capable())) void start();
+  }
+</script>
+
+<style>
+  .rack {
+    position: relative;
+    height: calc(100svh - 60px);
+    min-height: 560px;
+    max-height: 1100px;
+    overflow: hidden;
+    background: #05070b;
+    border-bottom: 1px solid var(--line);
+    /* The room is dark in both themes; the light theme turns its lights on. */
+    --fg: #e6ebf2;
+    --fg-2: #c3ccd8;
+    --mut: #9aa6b7;
+    --ok: #39e58c;
+    --warn: #ffb02e;
+    --crit: #ff5f56;
+    --panel: rgba(10, 14, 19, 0.88);
+    --panel-2: rgba(255, 255, 255, 0.05);
+    --line: rgba(255, 255, 255, 0.1);
+    --line-2: rgba(255, 255, 255, 0.18);
+    --ok-soft: rgba(57, 229, 140, 0.12);
+    --ok-line: rgba(57, 229, 140, 0.32);
+    color: var(--fg);
+  }
+  .rack[hidden] {
+    display: none;
+  }
+  .rack.pending {
+    position: absolute;
+    left: 0;
+    right: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    touch-action: pan-y pinch-zoom;
+  }
+  .ready canvas {
+    opacity: 1;
+  }
+  .veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(5, 7, 11, 0.5) 0%, rgba(5, 7, 11, 0) 16%),
+      linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 36%);
+  }
+
+  /* Name above the unit row, both anchored to the bottom; the row may wrap. */
+  .foot {
+    position: absolute;
+    --edge: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    left: var(--edge);
+    right: calc(var(--edge) + 120px);
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    pointer-events: none;
+  }
+  .ident {
+    max-width: min(520px, 100%);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .ready .ident {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.5s;
+  }
+  .focused .ident {
+    opacity: 0;
+    transition-delay: 0s;
+  }
+  .ident .sep {
+    color: var(--fg-2);
+  }
+  .nm {
+    margin-top: 18px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(40px, 6vw, 76px);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.7);
+  }
+  .rl {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--fg-2);
+  }
+  .rl span {
+    color: var(--ok);
+  }
+  .how {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--mut);
+  }
+
+  .units {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    pointer-events: auto;
+  }
+  .units button,
+  .hbtn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: rgba(10, 14, 19, 0.72);
+    color: var(--fg-2);
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .units button:hover,
+  .hbtn:hover {
+    border-color: var(--line-2);
+    color: var(--fg);
+  }
+  .units button[aria-pressed="true"] {
+    border-color: var(--ok-line);
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .units kbd {
+    font-size: 10.5px;
+    padding: 1px 4px;
+    border-color: var(--line-2);
+    background: transparent;
+    color: var(--mut);
+  }
+  .hud {
+    position: absolute;
+    right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    bottom: 18px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .tip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    pointer-events: none;
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--ok-line);
+    background: rgba(5, 7, 11, 0.9);
+    color: var(--ok);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .tip.on {
+    opacity: 1;
+  }
+
+  .sheet {
+    position: absolute;
+    z-index: 4;
+    top: 32px;
+    right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    width: min(430px, 42%);
+    max-height: calc(100% - 100px);
+    overflow-y: auto;
+    padding: 26px 26px 22px;
+    backdrop-filter: blur(14px);
+    animation: in 0.35s ease both;
+  }
+  .sheet[hidden] {
+    display: none;
+  }
+  @keyframes in {
+    from {
+      opacity: 0;
+      transform: translateX(14px);
+    }
+  }
+  .x {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--mut);
+    cursor: pointer;
+  }
+  .x:hover {
+    color: var(--fg);
+    border-color: var(--line-2);
+  }
+  .kick {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ok);
+    padding-right: 70px;
+  }
+  .kick.warn {
+    color: var(--warn);
+  }
+  .kick.crit {
+    color: var(--crit);
+  }
+  .dot.crit {
+    --c: var(--crit);
+  }
+  h2 {
+    margin-top: 12px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  .sub {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    color: var(--fg-2);
+  }
+  .body {
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--fg-2);
+  }
+  .body b {
+    color: var(--fg);
+  }
+  .impact {
+    list-style: none;
+    margin-top: 16px;
+    display: grid;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ok);
+  }
+  .impact li::before {
+    content: "▸ ";
+    opacity: 0.7;
+  }
+  .tags {
+    list-style: none;
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .kv {
+    margin-top: 16px;
+    display: grid;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .kv div {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 10px;
+  }
+  .kv.wide div {
+    grid-template-columns: 116px 1fr;
+  }
+  .kv dt {
+    color: #62b6ff;
+  }
+  .kv dd {
+    color: var(--fg);
+  }
+  .sig {
+    list-style: none;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .sig b {
+    font-family: var(--display);
+    font-size: 26px;
+    letter-spacing: -0.03em;
+    color: var(--ok);
+  }
+  .sig .u {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--fg-2);
+  }
+  .sig .l {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--mut);
+  }
+  .rules {
+    margin: 16px 0 0 20px;
+    display: grid;
+    gap: 10px;
+    font-family: var(--display);
+    font-size: 19px;
+    line-height: 1.3;
+  }
+  .rules li::marker {
+    color: var(--ok);
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+  .cta {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cta .btn {
+    padding: 10px 13px;
+    font-size: 13px;
+  }
+  .more {
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .more a {
+    color: var(--mut);
+    border-bottom: 1px dashed var(--line-2);
+  }
+  .more a:hover {
+    color: var(--fg);
+  }
+
+  @media (max-width: 760px) {
+    .rack {
+      min-height: 440px;
+    }
+    .ident {
+      bottom: auto;
+      top: 26px;
+    }
+    .how {
+      display: none;
+    }
+    /* Phones: name at the top, units in a swipeable strip at the bottom. */
+    .foot {
+      display: contents;
+    }
+    .ident {
+      position: absolute;
+      left: var(--gutter);
+      right: var(--gutter);
+      max-width: none;
+    }
+    .nm {
+      font-size: clamp(32px, 10.5vw, 40px);
+    }
+    .units {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 8px;
+      /* Vertical padding leaves room for the focus ring inside the scrollport. */
+      padding: 6px var(--gutter);
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .units::-webkit-scrollbar {
+      display: none;
+    }
+    .hud {
+      bottom: auto;
+      top: 22px;
+    }
+    .ident .pill {
+      display: none;
+    }
+    .nm {
+      margin-top: 0;
+    }
+    .rl {
+      font-size: 13px;
+    }
+    .veil {
+      background:
+        linear-gradient(180deg, rgba(5, 7, 11, 0.92) 0%, rgba(5, 7, 11, 0.7) 18%, rgba(5, 7, 11, 0) 34%),
+        linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 20%);
+    }
+    .sheet {
+      top: auto;
+      right: 10px;
+      left: 10px;
+      bottom: 58px;
+      width: auto;
+      max-height: 50%;
+      padding: 20px 18px 18px;
+      animation-name: up;
+    }
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+    }
+  }
+  /* Where the unit row wraps to two lines, keep the sheet clear of it. */
+  @media (min-width: 761px) and (max-width: 1200px) {
+    .sheet {
+      max-height: calc(100% - 140px);
+    }
+  }
+  /* The top bar wraps to two rows (96px) at this width; see TopBar.astro. */
+  @media (max-width: 880px) {
+    .rack {
+      height: calc(100svh - 96px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    canvas,
+    .ident {
+      transition: none;
+    }
+    .sheet {
+      animation: none;
+    }
+  }
+</style>
+
+<style is:global>
+  /* The 3D stage replaces the plain hero while it runs. */
+  /* html. prefix: must outrank the hero's own scoped display rule. */
+  html.rack-on .hero,
+  html.rack-on .beat,
+  html.rack-on [data-rack-on] {
+    display: none;
+  }
+  /* The room is dark in both themes, so keep the dark-theme button text. */
+  :root[data-theme="light"] .rack .btn.primary {
+    color: #04130b;
+  }
+</style>
