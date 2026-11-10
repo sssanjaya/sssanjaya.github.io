@@ -1,0 +1,697 @@
+---
+// Interactive 3D hero: a server rack where every lit unit opens part of the
+// site. It is progressive enhancement over <Hero>: the stage stays hidden
+// until WebGL is confirmed and the first frame is ready, and "plain view"
+// (or a weak device, or no WebGL) leaves the regular hero in place.
+// The panels below are ordinary HTML, so their text is crawlable.
+import { site } from "../data/site.ts";
+import { experience } from "../data/experience.ts";
+
+const linkedin = site.socials.find((s) => s.label === "LinkedIn");
+const aiops = site.status.find((s) => s.name === "AIOps");
+const core = site.stack.filter((s) => s.place === "core");
+const cross = site.stack.filter((s) => s.place !== "core");
+
+const hots = [
+  { id: "console", label: "console" },
+  ...experience.map((r, i) => ({ id: `role-${i}`, label: r.company.split(" ")[0].toLowerCase() })),
+  { id: "aiops", label: "aiops" },
+  { id: "stack", label: "stack" },
+  { id: "signals", label: "signals" },
+  { id: "principles", label: "rules" },
+  { id: "contact", label: "pager" },
+];
+---
+
+<section class="rack" data-rack hidden aria-label="Interactive server rack">
+  <canvas data-rack-canvas aria-hidden="true"></canvas>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="ident" data-rack-ident>
+    <p class="pill">
+      <span class="dot pulse" aria-hidden="true"></span>
+      all systems operational
+      {site.available ? <span class="sep">· {site.availableLabel}</span> : null}
+    </p>
+    <p class="nm" role="heading" aria-level="1">{site.name}</p>
+    <p class="rl">{site.currentTitle} <span>@ {site.currentCompany}</span></p>
+    <p class="how">Everything with a light on opens. Start with the rack.</p>
+  </div>
+
+  <nav class="units" aria-label="Rack units">
+    {
+      hots.map((h, i) => (
+        <button type="button" data-hot={h.id} aria-pressed="false">
+          <kbd aria-hidden="true">{i + 1 === 10 ? 0 : i + 1}</kbd>
+          {h.label}
+        </button>
+      ))
+    }
+  </nav>
+
+  <div class="hud">
+    <button class="hbtn" type="button" data-rack-off>plain view</button>
+  </div>
+
+  <div class="tip mono" data-rack-tip aria-hidden="true"></div>
+
+  <aside class="sheet panel" data-rack-sheet hidden aria-live="polite">
+    <button class="x" type="button" data-rack-close aria-label="Close and step back">
+      <span aria-hidden="true">esc ✕</span>
+    </button>
+
+    <article data-panel="console" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> console · about</p>
+      <h2>{site.name}</h2>
+      <p class="body">
+        I build and secure cloud platforms that <b>ship fast and stay up</b>.
+        Seven years across Kubernetes, Terraform, and hardened CI/CD, plus the
+        observability and automation that keep production reliable.
+      </p>
+      <dl class="kv">
+        <div><dt>Location</dt><dd>{site.location}</dd></div>
+        {site.currently.map((c) => <div><dt>{c.key}</dt><dd>{c.value}</dd></div>)}
+      </dl>
+      <p class="more"><a href="#about">more about me <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    {
+      experience.map((r, i) => (
+        <article data-panel={`role-${i}`} hidden>
+          <p class="kick">
+            <span class="dot" aria-hidden="true" />
+            U{String(experience.length - i).padStart(2, "0")} · {r.year}
+          </p>
+          <h2>{r.company}</h2>
+          <p class="sub">{r.title}</p>
+          <p class="body">{r.blurb}</p>
+          {r.impact ? <ul class="impact">{r.impact.map((m) => <li>{m}</li>)}</ul> : null}
+          <ul class="tags">{r.tags.map((t) => <li class="chip">{t}</li>)}</ul>
+          <p class="more"><a href="#experience">full timeline <span aria-hidden="true">↓</span></a></p>
+        </article>
+      ))
+    }
+
+    <article data-panel="aiops" hidden>
+      <p class="kick warn"><span class="dot warn" aria-hidden="true"></span> canary{aiops ? ` · since ${aiops.since}` : ""}</p>
+      <h2>{site.learning}</h2>
+      <p class="body">
+        The newest unit in the rack, and the only one with an amber light. It
+        is racked and powered, taking a little traffic, and not promoted to
+        production yet.
+      </p>
+      <dl class="kv">
+        {site.currently.filter((c) => ["Learning", "Reading", "Practicing"].includes(c.key)).map((c) => <div><dt>{c.key}</dt><dd>{c.value}</dd></div>)}
+      </dl>
+      <p class="more"><a href="#status">status page <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    <article data-panel="stack" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> core switch · stack</p>
+      <h2>What it all runs on</h2>
+      <dl class="kv wide">
+        {core.map((s) => <div><dt>{s.label}</dt><dd>{s.items.join(" · ")}</dd></div>)}
+        {cross.map((s) => <div><dt>{s.label}</dt><dd>{s.items.join(" · ")}</dd></div>)}
+      </dl>
+      <p class="more"><a href="#stack">topology <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    <article data-panel="signals" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> ups · golden signals</p>
+      <h2>Numbers from production</h2>
+      <ul class="sig">
+        {site.signals.map((s) => (
+          <li>
+            <b>{s.value}</b> <span class="u">{s.unit}</span>
+            <span class="l">{s.label}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="more"><a href="#signals">all signals <span aria-hidden="true">↓</span></a></p>
+    </article>
+
+    <article data-panel="principles" hidden>
+      <p class="kick"><span class="dot" aria-hidden="true"></span> whiteboard</p>
+      <h2>House rules</h2>
+      <ol class="rules">{site.principles.map((p) => <li>{p}</li>)}</ol>
+    </article>
+
+    <article data-panel="contact" hidden>
+      <p class="kick crit"><span class="dot crit" aria-hidden="true"></span> pager</p>
+      <h2>Page me</h2>
+      <p class="body">
+        {site.available ? `Currently ${site.availableLabel}.` : "Heads-down right now, but the pager is on."}{" "}
+        Based in {site.location}.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href={`mailto:${site.email}`}>Send email <span class="arr" aria-hidden="true">→</span></a>
+        <button class="btn" type="button" data-copy={site.email}>Copy address</button>
+        {linkedin ? <a class="btn" href={linkedin.href} target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a> : null}
+      </div>
+    </article>
+  </aside>
+</section>
+
+<script>
+  import type { RackController } from "../scripts/rack.ts";
+
+  const root = document.documentElement;
+  const stage = document.querySelector<HTMLElement>("[data-rack]");
+  const canvas = stage?.querySelector<HTMLCanvasElement>("[data-rack-canvas]");
+  const sheet = stage?.querySelector<HTMLElement>("[data-rack-sheet]");
+  const tip = stage?.querySelector<HTMLElement>("[data-rack-tip]");
+  const buttons = Array.from(stage?.querySelectorAll<HTMLButtonElement>("[data-hot]") ?? []);
+  let ctl: RackController | null = null;
+  let current: string | null = null;
+
+  const pref = () => {
+    try {
+      return localStorage.getItem("rack");
+    } catch {
+      return null;
+    }
+  };
+  const remember = (v: string) => {
+    try {
+      localStorage.setItem("rack", v);
+    } catch {
+      /* storage blocked */
+    }
+  };
+
+  function capable() {
+    try {
+      const c = document.createElement("canvas");
+      if (!(c.getContext("webgl2") || c.getContext("webgl"))) return false;
+    } catch {
+      return false;
+    }
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
+    if (nav.connection?.saveData) return false;
+    if ((nav.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency ?? 8) < 4) return false;
+    return true;
+  }
+
+  function select(id: string | null) {
+    if (!stage || !sheet) return;
+    current = id;
+    ctl?.select(id);
+    stage.classList.toggle("focused", !!id);
+    sheet.hidden = !id;
+    sheet.querySelectorAll<HTMLElement>("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== id));
+    buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hot === id)));
+    sheet.scrollTop = 0;
+  }
+
+  async function start() {
+    if (!stage || !canvas || ctl) return;
+    stage.hidden = false;
+    try {
+      const { initRack } = await import("../scripts/rack.ts");
+      ctl = await initRack(stage, canvas, {
+        select,
+        hover(label, x, y) {
+          if (!tip) return;
+          tip.textContent = label ?? "";
+          tip.classList.toggle("on", !!label);
+          if (label) {
+            const r = stage.getBoundingClientRect();
+            tip.style.transform = `translate(${x - r.left + 14}px, ${y - r.top + 16}px)`;
+          }
+        },
+      });
+      root.classList.add("rack-on");
+      requestAnimationFrame(() => stage.classList.add("ready"));
+    } catch (err) {
+      console.warn("3D view unavailable, staying on the plain hero.", err);
+      stage.hidden = true;
+    }
+  }
+
+  function stop() {
+    select(null);
+    ctl?.dispose();
+    ctl = null;
+    root.classList.remove("rack-on");
+    stage?.classList.remove("ready");
+    if (stage) stage.hidden = true;
+  }
+
+  if (stage && canvas) {
+    buttons.forEach((b) => b.addEventListener("click", () => select(current === b.dataset.hot ? null : b.dataset.hot!)));
+    stage.querySelector("[data-rack-close]")?.addEventListener("click", () => select(null));
+    stage.querySelector("[data-rack-off]")?.addEventListener("click", () => {
+      remember("off");
+      stop();
+      document.querySelector<HTMLElement>("[data-rack-on]")?.focus();
+    });
+    document.querySelectorAll("[data-rack-on]").forEach((b) =>
+      b.addEventListener("click", () => {
+        remember("on");
+        void start();
+        window.scrollTo({ top: 0 });
+      }),
+    );
+    // Links inside a panel lead down the page: step back first.
+    sheet?.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", () => select(null)));
+
+    window.addEventListener("keydown", (e) => {
+      if (!ctl || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.closest("input, textarea, dialog") || t.isContentEditable)) return;
+      if (document.querySelector("dialog[open]")) return;
+      if (e.key === "Escape" && current) select(null);
+      else if (/^[0-9]$/.test(e.key) && stage.getBoundingClientRect().bottom > 120) {
+        const b = buttons[(Number(e.key) + 9) % 10];
+        if (b) select(current === b.dataset.hot ? null : b.dataset.hot!);
+      }
+    });
+
+    const p = pref();
+    if (p !== "off" && (p === "on" || capable())) void start();
+  }
+</script>
+
+<style>
+  .rack {
+    position: relative;
+    height: calc(100svh - 60px);
+    min-height: 560px;
+    max-height: 1100px;
+    overflow: hidden;
+    background: #05070b;
+    border-bottom: 1px solid var(--line);
+    /* The room is dark in both themes; the light theme turns its lights on. */
+    --fg: #e6ebf2;
+    --fg-2: #c3ccd8;
+    --mut: #9aa6b7;
+    --ok: #39e58c;
+    --warn: #ffb02e;
+    --crit: #ff5f56;
+    --panel: rgba(10, 14, 19, 0.88);
+    --panel-2: rgba(255, 255, 255, 0.05);
+    --line: rgba(255, 255, 255, 0.1);
+    --line-2: rgba(255, 255, 255, 0.18);
+    --ok-soft: rgba(57, 229, 140, 0.12);
+    --ok-line: rgba(57, 229, 140, 0.32);
+    color: var(--fg);
+  }
+  .rack[hidden] {
+    display: none;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    touch-action: pan-y;
+  }
+  .ready canvas {
+    opacity: 1;
+  }
+  .veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(5, 7, 11, 0.5) 0%, rgba(5, 7, 11, 0) 16%),
+      linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 36%);
+  }
+
+  .ident {
+    position: absolute;
+    left: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    bottom: 84px;
+    max-width: min(520px, 80%);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .ready .ident {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.5s;
+  }
+  .focused .ident {
+    opacity: 0;
+    transition-delay: 0s;
+  }
+  .ident .sep {
+    color: var(--fg-2);
+  }
+  .nm {
+    margin-top: 18px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(40px, 6vw, 76px);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.7);
+  }
+  .rl {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--fg-2);
+  }
+  .rl span {
+    color: var(--ok);
+  }
+  .how {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--mut);
+  }
+
+  .units {
+    position: absolute;
+    --edge: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    left: var(--edge);
+    right: calc(var(--edge) + 120px);
+    bottom: 18px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .units::-webkit-scrollbar {
+    display: none;
+  }
+  .units button,
+  .hbtn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: rgba(10, 14, 19, 0.72);
+    color: var(--fg-2);
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .units button:hover,
+  .hbtn:hover {
+    border-color: var(--line-2);
+    color: var(--fg);
+  }
+  .units button[aria-pressed="true"] {
+    border-color: var(--ok-line);
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .units kbd {
+    font-size: 10.5px;
+    padding: 1px 4px;
+    border-color: var(--line-2);
+    background: transparent;
+    color: var(--mut);
+  }
+  .hud {
+    position: absolute;
+    right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    bottom: 18px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .tip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    pointer-events: none;
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--ok-line);
+    background: rgba(5, 7, 11, 0.9);
+    color: var(--ok);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .tip.on {
+    opacity: 1;
+  }
+
+  .sheet {
+    position: absolute;
+    z-index: 4;
+    top: 32px;
+    right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    width: min(430px, 42%);
+    max-height: calc(100% - 100px);
+    overflow-y: auto;
+    padding: 26px 26px 22px;
+    backdrop-filter: blur(14px);
+    animation: in 0.35s ease both;
+  }
+  .sheet[hidden] {
+    display: none;
+  }
+  @keyframes in {
+    from {
+      opacity: 0;
+      transform: translateX(14px);
+    }
+  }
+  .x {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--mut);
+    cursor: pointer;
+  }
+  .x:hover {
+    color: var(--fg);
+    border-color: var(--line-2);
+  }
+  .kick {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ok);
+    padding-right: 70px;
+  }
+  .kick.warn {
+    color: var(--warn);
+  }
+  .kick.crit {
+    color: var(--crit);
+  }
+  .dot.crit {
+    --c: var(--crit);
+  }
+  h2 {
+    margin-top: 12px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  .sub {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    color: var(--fg-2);
+  }
+  .body {
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--fg-2);
+  }
+  .body b {
+    color: var(--fg);
+  }
+  .impact {
+    list-style: none;
+    margin-top: 16px;
+    display: grid;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ok);
+  }
+  .impact li::before {
+    content: "▸ ";
+    opacity: 0.7;
+  }
+  .tags {
+    list-style: none;
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .kv {
+    margin-top: 16px;
+    display: grid;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .kv div {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 10px;
+  }
+  .kv.wide div {
+    grid-template-columns: 116px 1fr;
+  }
+  .kv dt {
+    color: #62b6ff;
+  }
+  .kv dd {
+    color: var(--fg);
+  }
+  .sig {
+    list-style: none;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .sig b {
+    font-family: var(--display);
+    font-size: 26px;
+    letter-spacing: -0.03em;
+    color: var(--ok);
+  }
+  .sig .u {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--fg-2);
+  }
+  .sig .l {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--mut);
+  }
+  .rules {
+    margin: 16px 0 0 20px;
+    display: grid;
+    gap: 10px;
+    font-family: var(--display);
+    font-size: 19px;
+    line-height: 1.3;
+  }
+  .rules li::marker {
+    color: var(--ok);
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+  .cta {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cta .btn {
+    padding: 10px 13px;
+    font-size: 13px;
+  }
+  .more {
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .more a {
+    color: var(--mut);
+    border-bottom: 1px dashed var(--line-2);
+  }
+  .more a:hover {
+    color: var(--fg);
+  }
+
+  @media (max-width: 760px) {
+    .rack {
+      min-height: 520px;
+    }
+    .ident {
+      bottom: auto;
+      top: 26px;
+    }
+    .how {
+      display: none;
+    }
+    .units {
+      bottom: 14px;
+      right: 0;
+      padding-right: var(--gutter);
+    }
+    .hud {
+      bottom: auto;
+      top: 22px;
+    }
+    .ident .pill {
+      display: none;
+    }
+    .nm {
+      margin-top: 0;
+    }
+    .rl {
+      font-size: 13px;
+    }
+    .veil {
+      background:
+        linear-gradient(180deg, rgba(5, 7, 11, 0.92) 0%, rgba(5, 7, 11, 0.7) 18%, rgba(5, 7, 11, 0) 34%),
+        linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 20%);
+    }
+    .sheet {
+      top: auto;
+      right: 10px;
+      left: 10px;
+      bottom: 58px;
+      width: auto;
+      max-height: 50%;
+      padding: 20px 18px 18px;
+      animation-name: up;
+    }
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    canvas,
+    .ident {
+      transition: none;
+    }
+    .sheet {
+      animation: none;
+    }
+  }
+</style>
+
+<style is:global>
+  /* The 3D stage replaces the plain hero while it runs. */
+  .rack-on .hero,
+  .rack-on .beat,
+  .rack-on [data-rack-on] {
+    display: none;
+  }
+</style>
