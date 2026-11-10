@@ -23,6 +23,8 @@ type Hot = {
   pos: THREE.Vector3;
   normal: THREE.Vector3;
   dist: number;
+  /** Width the close-up must keep in view, in metres. */
+  w?: number;
   /** Objects that nudge toward the visitor on hover / select. */
   slide?: THREE.Object3D;
   slideBase?: number;
@@ -208,7 +210,8 @@ export async function initRack(
     scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(lead, 40, 0.004, 6)), std("#ecebe6", 0.6)));
   }
 
-  // Curtain on the right: a pleated sheet from ceiling to floor.
+  // Curtain on the right: a pleated sheet from ceiling to floor. It sways.
+  let curtain: THREE.PlaneGeometry | null = null;
   {
     const geo = track(new THREE.PlaneGeometry(1.5, 3.2, 90, 1));
     const p = geo.attributes.position;
@@ -217,6 +220,7 @@ export async function initRack(
     const m = new THREE.Mesh(geo, track(new THREE.MeshStandardMaterial({ color: "#7c8ba3", roughness: 0.95, side: THREE.DoubleSide })));
     m.position.set(1.56, 1.6, WALL_Z + 0.2);
     scene.add(m);
+    curtain = geo;
   }
 
   // Couch on the left: just the arm and seat that show in frame.
@@ -687,6 +691,45 @@ export async function initRack(
     scene.add(m);
   }
 
+  // Mug of something hot, with steam curling off it.
+  const steam: { mat: THREE.SpriteMaterial; sprite: THREE.Sprite; phase: number }[] = [];
+  {
+    const mug = new THREE.Group();
+    mug.position.set(0.215, TOP + 0.004, 0.0);
+    scene.add(mug);
+    const glaze = std("#e9dfcf", 0.35);
+    cyl(0.036, 0.032, 0.082, glaze, 0, 0.041, 0, mug, 28);
+    cyl(0.031, 0.031, 0.002, std("#2a1a10", 0.3), 0, 0.0815, 0, mug, 24);
+    const handle = new THREE.Mesh(track(new THREE.TorusGeometry(0.022, 0.006, 8, 20, Math.PI)), glaze);
+    handle.position.set(0.034, 0.042, 0);
+    handle.rotation.z = -Math.PI / 2;
+    mug.add(handle);
+    shadow(0.12, 0.12, 0.215, 0.0, TOP + 0.0046, 0.5);
+    for (let i = 0; i < 6; i++) {
+      const mat = track(new THREE.SpriteMaterial({ map: glowTex, color: "#fff1dc", transparent: true, opacity: 0, depthWrite: false }));
+      const sprite = new THREE.Sprite(mat);
+      mug.add(sprite);
+      steam.push({ mat, sprite, phase: i / 6 });
+    }
+  }
+
+  // Dust drifting through the lamplight.
+  const DUST = 80;
+  const dustPos = new Float32Array(DUST * 3);
+  const dustSeed = new Float32Array(DUST);
+  for (let i = 0; i < DUST; i++) {
+    dustPos[i * 3] = (Math.random() - 0.5) * 1.9;
+    dustPos[i * 3 + 1] = TOP + Math.random() * 0.95;
+    dustPos[i * 3 + 2] = -0.3 + Math.random() * 0.85;
+    dustSeed[i] = Math.random() * 20;
+  }
+  const dustGeo = track(new THREE.BufferGeometry());
+  dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+  const dustMat = track(
+    new THREE.PointsMaterial({ size: 0.011, map: glowTex, color: "#ffd9a0", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+  );
+  scene.add(new THREE.Points(dustGeo, dustMat));
+
   // ── laptop + glasses → signals ─────────────────────────────────────────
   const lap = new THREE.Group();
   lap.position.set(0.43, TOP, -0.06);
@@ -819,6 +862,7 @@ export async function initRack(
       pos: worldOf(grp, 0, 0, 0.08),
       normal: new THREE.Vector3(0, 0.5, 0.87).normalize(),
       dist: 0.62,
+      w: 0.27,
       slide: grp,
       slideBase: grp.position.z,
       slideNow: 0,
@@ -828,11 +872,11 @@ export async function initRack(
   scene.updateMatrixWorld(true);
   const up = (y: number, z: number) => new THREE.Vector3(0, y, z).normalize();
   hots.push(
-    { id: "console", label: "monitor · about", pos: screen.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0, 1), dist: 1.2 },
+    { id: "console", label: "monitor · about", pos: screen.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0, 1), dist: 1.2, w: 0.68 },
     { id: "aiops", label: "succulent · AIOps, still growing", pos: worldOf(plant, 0, 0.06, 0), normal: up(0.3, 0.95), dist: 0.5, lift: plant },
-    { id: "stack", label: "keyboard · stack", pos: worldOf(kb, 0, 0.01, 0.04), normal: up(0.8, 0.6), dist: 0.66, lift: kb },
-    { id: "signals", label: "laptop · signals", pos: worldOf(lap, 0, 0.02, 0), normal: up(0.7, 0.72), dist: 0.8, lift: lap },
-    { id: "principles", label: "lamp · house rules", pos: worldOf(lampL, 0, 0.15, 0), normal: up(0.12, 0.99), dist: 0.72 },
+    { id: "stack", label: "keyboard · stack", pos: worldOf(kb, 0, 0.01, 0.04), normal: up(0.8, 0.6), dist: 0.66, w: 0.4, lift: kb },
+    { id: "signals", label: "laptop · signals", pos: worldOf(lap, 0, 0.02, 0), normal: up(0.7, 0.72), dist: 0.8, w: 0.36, lift: lap },
+    { id: "principles", label: "lamp · house rules", pos: worldOf(lampL, 0, 0.15, 0), normal: new THREE.Vector3(0.38, 0.2, 0.9).normalize(), dist: 0.72 },
     { id: "contact", label: "phone · contact", pos: worldOf(phone, 0, 0.01, 0), normal: up(0.86, 0.5), dist: 0.5, lift: phone },
   );
   for (const h of hots) if (h.lift) (h.liftBase = h.lift.position.y), (h.liftNow = 0);
@@ -901,7 +945,11 @@ export async function initRack(
       return;
     }
     const h = selected;
-    const d = h.dist * (sheetBottom ? 1.3 : 1);
+    // Far enough back that the whole object fits in the part of the view the
+    // panel leaves free (all of the width above a bottom sheet, about half
+    // of it beside a side panel).
+    const free = sheetBottom ? 0.9 : 0.52;
+    const d = Math.max(h.dist * (sheetBottom ? 1.3 : 1), (h.w ?? 0.2) / (2 * tanV * aspect * free));
     const p = h.pos.clone();
     const right = new THREE.Vector3(h.normal.z, 0, -h.normal.x).normalize();
     const shift = new THREE.Vector3();
@@ -1123,15 +1171,56 @@ export async function initRack(
     const breathe = reduced ? 1 : 1 + Math.sin(time * 1.3) * 0.015;
     hemi.intensity = 0.3 + day * 1.5;
     sun.intensity = day * 1.5;
-    lampLLight.intensity = 1.05 * breathe;
-    lampRLevel += ((lampROn ? 1 : 0) - lampRLevel) * (reduced ? 1 : 1 - Math.exp(-dt * 12));
+    lampRLevel += ((lampROn && (reduced || time > 1.25) ? 1 : 0) - lampRLevel) * (reduced ? 1 : 1 - Math.exp(-dt * 12));
+    // Opening beat: the room is dark, then the table lamp stutters on, the
+    // desk lamp follows, and the monitor wakes.
+    const ramp = (t0: number, dur: number) => (reduced ? 1 : THREE.MathUtils.clamp((time - t0) / dur, 0, 1));
+    const flick = reduced || time > 1.15 ? 1 : Math.sin(time * 85) > -0.2 ? 1 : 0.3;
+    const L = ramp(0.55, 0.1) * flick;
+    const S = ramp(1.9, 0.8);
+    lampLLight.intensity = 1.05 * breathe * L;
+    lampLDown.intensity = 1.6 * L;
+    (shade.material as THREE.MeshBasicMaterial).color.setScalar(0.22 + 0.78 * L);
+    (screen.material as THREE.MeshBasicMaterial).color.setScalar(S);
+    monLight.intensity = 0.4 * S;
+    backLight.intensity = 0.12 * S;
+    phoneTop.color.setScalar(reduced ? 1 : 0.72 + 0.28 * Math.max(0, Math.sin(time * 0.9)) ** 6);
+    fill.intensity = 0.34 * (0.35 + 0.65 * Math.max(L, lampRLevel));
+
+    // Ambient life: steam, dust, and a slow sway in the curtain.
+    for (const p of steam) {
+      const u = reduced ? 0.35 : (time * 0.22 + p.phase) % 1;
+      p.sprite.position.set(Math.sin(u * 5 + p.phase * 9) * 0.012 * (0.4 + u), 0.09 + u * 0.16, Math.cos(u * 4 + p.phase * 5) * 0.008);
+      p.sprite.scale.setScalar(0.03 + u * 0.06);
+      p.mat.opacity = Math.sin(u * Math.PI) * 0.16;
+    }
+    if (!reduced) {
+      for (let i = 0; i < DUST; i++) {
+        const sd = dustSeed[i];
+        dustPos[i * 3] += Math.sin(time * 0.25 + sd) * dt * 0.006;
+        dustPos[i * 3 + 1] += dt * (0.004 + (sd % 3) * 0.003);
+        dustPos[i * 3 + 2] += Math.cos(time * 0.2 + sd * 2) * dt * 0.004;
+        if (dustPos[i * 3 + 1] > TOP + 0.95) dustPos[i * 3 + 1] = TOP;
+      }
+      dustGeo.attributes.position.needsUpdate = true;
+      if (curtain) {
+        const cp = curtain.attributes.position;
+        for (let i = 0; i < cp.count; i++) {
+          const x = cp.getX(i);
+          const free = cp.getY(i) < 0 ? 1 : 0.25; // the hem moves more than the top
+          cp.setZ(i, Math.sin(x * 46) * 0.028 + Math.sin(x * 13) * 0.02 + Math.sin(time * 0.7 + x * 3.2) * 0.012 * free);
+        }
+        cp.needsUpdate = true;
+      }
+    }
+    dustMat.opacity = 0.42 * Math.max(L, lampRLevel) * (1 - day * 0.6);
     const dim = 1 - day * 0.55;
     lampRLight.intensity = 0.8 * breathe * lampRLevel;
-    shadeGlow.opacity = 0.42 - day * 0.22;
+    shadeGlow.opacity = (0.42 - day * 0.22) * L;
     bulbGlow.opacity = (0.8 - day * 0.35) * lampRLevel;
     bulbCore.opacity = 0.15 + 0.85 * lampRLevel;
-    poolWallL.mat.opacity = 0.3 * dim;
-    poolDeskL.mat.opacity = 0.28 * dim;
+    poolWallL.mat.opacity = 0.3 * dim * L;
+    poolDeskL.mat.opacity = 0.28 * dim * L;
     poolWallR.mat.opacity = 0.27 * dim * lampRLevel;
     poolDeskR.mat.opacity = 0.22 * dim * lampRLevel;
     (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
