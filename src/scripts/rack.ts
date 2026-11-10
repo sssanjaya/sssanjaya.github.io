@@ -42,10 +42,14 @@ export async function initRack(
 
   // Canvas textures use the page fonts; make sure they are loaded first.
   try {
-    await Promise.all([
-      document.fonts.load(`700 40px ${DISPLAY}`),
-      document.fonts.load(`500 24px ${MONO}`),
-      document.fonts.load(`700 24px ${MONO}`),
+    // Bounded: a stalled font request must not hold the scene back.
+    await Promise.race([
+      Promise.all([
+        document.fonts.load(`700 40px ${DISPLAY}`),
+        document.fonts.load(`500 24px ${MONO}`),
+        document.fonts.load(`700 24px ${MONO}`),
+      ]),
+      new Promise((done) => setTimeout(done, 1500)),
     ]);
   } catch {
     /* fall back to system fonts */
@@ -774,6 +778,12 @@ export async function initRack(
   canvas.addEventListener("pointermove", onMove);
   canvas.addEventListener("pointerleave", onLeave);
   canvas.addEventListener("click", onClick);
+  // After a lost GPU context comes back, the reduced-motion path (which only
+  // draws on change) needs telling that the canvas is blank.
+  const onRestore = () => {
+    dirty = true;
+  };
+  canvas.addEventListener("webglcontextrestored", onRestore);
 
   // ── loop ───────────────────────────────────────────────────────────────
   let lights = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
@@ -875,6 +885,7 @@ export async function initRack(
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("click", onClick);
+      canvas.removeEventListener("webglcontextrestored", onRestore);
       disposables.forEach((d) => d.dispose());
       renderer.dispose();
     },

@@ -27,6 +27,7 @@ const hots = [
   <canvas data-rack-canvas aria-hidden="true"></canvas>
   <div class="veil" aria-hidden="true"></div>
 
+  <div class="foot">
   <div class="ident" data-rack-ident>
     <p class="pill">
       <span class="dot pulse" aria-hidden="true"></span>
@@ -48,6 +49,7 @@ const hots = [
       ))
     }
   </nav>
+  </div>
 
   <div class="hud">
     <button class="hbtn" type="button" data-rack-off>plain view</button>
@@ -180,20 +182,32 @@ const hots = [
   };
 
   function capable() {
-    try {
-      const c = document.createElement("canvas");
-      if (!(c.getContext("webgl2") || c.getContext("webgl"))) return false;
-    } catch {
-      return false;
-    }
+    // Short screens (landscape phones, zoomed windows) cannot fit the stage.
+    if (window.innerHeight < 620) return false;
     const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
     if (nav.connection?.saveData) return false;
     if ((nav.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency ?? 8) < 4) return false;
+    try {
+      // three.js needs WebGL 2. A software renderer (no usable GPU, a VM)
+      // would run the scene at a few frames a second, so it stays opt-in.
+      const gl = document.createElement("canvas").getContext("webgl2", { failIfMajorPerformanceCaveat: true });
+      if (!gl) return false;
+      const info = gl.getExtension("WEBGL_debug_renderer_info");
+      const renderer = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      if (/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) return false;
+    } catch {
+      return false;
+    }
     return true;
   }
 
-  function select(id: string | null) {
+  function select(id: string | null, returnFocus = true) {
     if (!stage || !sheet) return;
+    const prev = current;
+    // Closing hides whatever is focused inside the sheet; hand focus back to
+    // the unit's button so keyboard users are not dropped at the page start.
+    const refocus = !id && returnFocus && sheet.contains(document.activeElement);
     current = id;
     ctl?.select(id);
     stage.classList.toggle("focused", !!id);
@@ -201,34 +215,61 @@ const hots = [
     sheet.querySelectorAll<HTMLElement>("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== id));
     buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hot === id)));
     sheet.scrollTop = 0;
+    if (refocus) buttons.find((b) => b.dataset.hot === prev)?.focus({ preventScroll: true });
   }
 
-  async function start() {
-    if (!stage || !canvas || ctl) return;
+  function showTip(label: string | null, x: number, y: number) {
+    if (!stage || !tip) return;
+    tip.textContent = label ?? "";
+    tip.classList.toggle("on", !!label);
+    if (!label) return;
+    const r = stage.getBoundingClientRect();
+    const tx = Math.max(8, Math.min(x - r.left + 14, r.width - tip.offsetWidth - 8));
+    tip.style.transform = `translate(${tx}px, ${y - r.top + 16}px)`;
+  }
+
+  // `wanted` is the latest request (start or stop); `starting` marks the one
+  // load in flight. Together they make start() single-flight and cancellable:
+  // a stop during loading disposes the scene instead of swapping it in.
+  let wanted = false;
+  let starting = false;
+
+  async function start(focusAfter = false) {
+    if (!stage || !canvas) return;
+    wanted = true;
+    if (ctl) return;
+    // While loading, the stage is laid out (the scene sizes itself from it)
+    // but invisible and out of flow, so the plain hero stays put until the
+    // scene is ready to replace it.
+    stage.classList.add("pending");
     stage.hidden = false;
+    if (starting) return;
+    starting = true;
     try {
       const { initRack } = await import("../scripts/rack.ts");
-      ctl = await initRack(stage, canvas, {
-        select,
-        hover(label, x, y) {
-          if (!tip) return;
-          tip.textContent = label ?? "";
-          tip.classList.toggle("on", !!label);
-          if (label) {
-            const r = stage.getBoundingClientRect();
-            tip.style.transform = `translate(${x - r.left + 14}px, ${y - r.top + 16}px)`;
-          }
-        },
-      });
+      const c = await initRack(stage, canvas, { select, hover: showTip });
+      if (!wanted) {
+        c.dispose();
+        stage.hidden = true;
+        return;
+      }
+      ctl = c;
+      stage.hidden = false;
+      stage.classList.remove("pending");
       root.classList.add("rack-on");
       requestAnimationFrame(() => stage.classList.add("ready"));
+      if (focusAfter) buttons[0]?.focus({ preventScroll: true });
     } catch (err) {
       console.warn("3D view unavailable, staying on the plain hero.", err);
       stage.hidden = true;
+    } finally {
+      stage.classList.remove("pending");
+      starting = false;
     }
   }
 
   function stop() {
+    wanted = false;
     select(null);
     ctl?.dispose();
     ctl = null;
@@ -248,12 +289,13 @@ const hots = [
     document.querySelectorAll("[data-rack-on]").forEach((b) =>
       b.addEventListener("click", () => {
         remember("on");
-        void start();
+        // The trigger is hidden once the scene is up; move focus into it.
+        void start(document.activeElement === b);
         window.scrollTo({ top: 0 });
       }),
     );
     // Links inside a panel lead down the page: step back first.
-    sheet?.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", () => select(null)));
+    sheet?.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", () => select(null, false)));
 
     window.addEventListener("keydown", (e) => {
       if (!ctl || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -267,8 +309,11 @@ const hots = [
       }
     });
 
+    // A deep link (/#experience) is scrolling to its target right now; swapping
+    // the hero for the stage above it would land the visitor in the wrong place.
+    const deep = location.hash.length > 1 && location.hash !== "#top";
     const p = pref();
-    if (p !== "off" && (p === "on" || capable())) void start();
+    if (!deep && p !== "off" && (p === "on" || capable())) void start();
   }
 </script>
 
@@ -299,6 +344,13 @@ const hots = [
   .rack[hidden] {
     display: none;
   }
+  .rack.pending {
+    position: absolute;
+    left: 0;
+    right: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
   canvas {
     position: absolute;
     inset: 0;
@@ -307,7 +359,7 @@ const hots = [
     display: block;
     opacity: 0;
     transition: opacity 0.9s ease;
-    touch-action: pan-y;
+    touch-action: pan-y pinch-zoom;
   }
   .ready canvas {
     opacity: 1;
@@ -321,11 +373,20 @@ const hots = [
       linear-gradient(0deg, rgba(5, 7, 11, 0.85) 0%, rgba(5, 7, 11, 0) 36%);
   }
 
-  .ident {
+  /* Name above the unit row, both anchored to the bottom; the row may wrap. */
+  .foot {
     position: absolute;
-    left: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
-    bottom: 84px;
-    max-width: min(520px, 80%);
+    --edge: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    left: var(--edge);
+    right: calc(var(--edge) + 120px);
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    pointer-events: none;
+  }
+  .ident {
+    max-width: min(520px, 100%);
     pointer-events: none;
     opacity: 0;
     transform: translateY(8px);
@@ -368,18 +429,10 @@ const hots = [
   }
 
   .units {
-    position: absolute;
-    --edge: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
-    left: var(--edge);
-    right: calc(var(--edge) + 120px);
-    bottom: 18px;
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .units::-webkit-scrollbar {
-    display: none;
+    pointer-events: auto;
   }
   .units button,
   .hbtn {
@@ -627,7 +680,7 @@ const hots = [
 
   @media (max-width: 760px) {
     .rack {
-      min-height: 520px;
+      min-height: 440px;
     }
     .ident {
       bottom: auto;
@@ -636,10 +689,32 @@ const hots = [
     .how {
       display: none;
     }
+    /* Phones: name at the top, units in a swipeable strip at the bottom. */
+    .foot {
+      display: contents;
+    }
+    .ident {
+      position: absolute;
+      left: var(--gutter);
+      right: var(--gutter);
+      max-width: none;
+    }
+    .nm {
+      font-size: clamp(32px, 10.5vw, 40px);
+    }
     .units {
-      bottom: 14px;
+      position: absolute;
+      left: 0;
       right: 0;
-      padding-right: var(--gutter);
+      bottom: 8px;
+      /* Vertical padding leaves room for the focus ring inside the scrollport. */
+      padding: 6px var(--gutter);
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .units::-webkit-scrollbar {
+      display: none;
     }
     .hud {
       bottom: auto;
@@ -676,6 +751,12 @@ const hots = [
       }
     }
   }
+  /* The top bar wraps to two rows (96px) at this width; see TopBar.astro. */
+  @media (max-width: 880px) {
+    .rack {
+      height: calc(100svh - 96px);
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     canvas,
     .ident {
@@ -694,5 +775,9 @@ const hots = [
   html.rack-on .beat,
   html.rack-on [data-rack-on] {
     display: none;
+  }
+  /* The room is dark in both themes, so keep the dark-theme button text. */
+  :root[data-theme="light"] .rack .btn.primary {
+    color: #04130b;
   }
 </style>

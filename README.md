@@ -27,7 +27,8 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - [Astro](https://astro.build) 7, static output, no client framework
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
-- About 4 KB of client JavaScript: theme toggle, local clock, command palette
+- About 8 KB of client JavaScript: theme toggle, local clock, command palette, 3D loader
+- The home page hero is an interactive [three.js](https://threejs.org) scene (about 133 KB gzipped), loaded lazily and only on capable devices. The "plain view" button, or `localStorage.rack = "off"`, turns it off
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 
@@ -62,6 +63,7 @@ src/
   layouts/      Base.astro: meta tags, JSON-LD, theme bootstrap
   pages/        index.astro and 404.astro
   scripts/      console.ts: theme, clock, nav highlight, palette, copy
+                rack.ts: the 3D hero scene (mounted by components/Rack.astro)
   styles/       global.css: design tokens and shared primitives
 public/         favicon, OG image, CNAME, robots.txt, web manifest
 ```
