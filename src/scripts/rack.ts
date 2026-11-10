@@ -27,6 +27,10 @@ type Hot = {
   slide?: THREE.Object3D;
   slideBase?: number;
   slideNow?: number;
+  /** Objects that rise a few millimetres under the pointer. */
+  lift?: THREE.Object3D;
+  liftBase?: number;
+  liftNow?: number;
   beacon?: THREE.SpriteMaterial;
 };
 
@@ -72,6 +76,9 @@ export async function initRack(
   scene.fog = new THREE.Fog(scene.background as THREE.Color, 6, 14);
 
   const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 40);
+
+  const WALL_Z = -0.42;
+  const TOP = 0.74; // desk surface height
 
   // ── helpers ────────────────────────────────────────────────────────────
   const disposables: { dispose(): void }[] = [];
@@ -129,6 +136,29 @@ export async function initRack(
     return mat;
   }
 
+  // Soft contact shadows and pools of lamplight are flat, blended discs: far
+  // cheaper than shadow maps, and they sell the evening light.
+  function disc(w: number, d: number, x: number, y: number, z: number, color: string, opacity: number, additive: boolean, parent: THREE.Object3D = scene) {
+    const mat = track(
+      new THREE.MeshBasicMaterial({
+        map: glowTex,
+        color,
+        transparent: true,
+        opacity,
+        depthWrite: false,
+        blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+        toneMapped: false,
+      }),
+    );
+    const m = new THREE.Mesh(track(new THREE.PlaneGeometry(w, d)), mat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, y, z);
+    m.renderOrder = additive ? 2 : 1;
+    parent.add(m);
+    return { mesh: m, mat };
+  }
+  const shadow = (w: number, d: number, x: number, z: number, y = TOP + 0.0052, o = 0.5) => disc(w, d, x, y, z, "#000000", o, false);
+
   const hots: Hot[] = [];
   const hitTargets: THREE.Object3D[] = [];
   const markHot = (o: THREE.Object3D, id: string) => {
@@ -141,8 +171,6 @@ export async function initRack(
     markHot(box(w, h, d, hitMat, x, y, z, parent), id);
 
   // ── room ───────────────────────────────────────────────────────────────
-  const WALL_Z = -0.42;
-  const TOP = 0.74; // desk surface height
 
   const floorTex = tex(256, 256, (g, w, h) => {
     g.fillStyle = "#b8b4ad";
@@ -162,7 +190,7 @@ export async function initRack(
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  const wallMat = std("#e6dfd4", 0.96);
+  const wallMat = std("#e3d6c2", 0.96);
   const wall = new THREE.Mesh(track(new THREE.PlaneGeometry(16, 4.2)), wallMat);
   wall.position.set(0, 2.1, WALL_Z);
   scene.add(wall);
@@ -213,6 +241,17 @@ export async function initRack(
   box(1.1, 0.03, 0.06, white, 0, TOP - 0.041, -0.02);
   // Desk mat.
   box(0.94, 0.004, 0.37, std("#1d2622", 0.85), 0, TOP + 0.002, 0.14);
+  {
+    // Stitched edge of the mat.
+    const stitch = std("#3b4a43", 0.9);
+    for (const sz of [-1, 1]) box(0.92, 0.0006, 0.0025, stitch, 0, TOP + 0.0044, 0.14 + sz * 0.176);
+    for (const sx of [-1, 1]) box(0.0025, 0.0006, 0.352, stitch, sx * 0.461, TOP + 0.0044, 0.14);
+  }
+  // Height controller under the front-right edge, and the desk's shadow.
+  box(0.11, 0.022, 0.05, std("#e9e6e0", 0.5), 0.56, TOP - 0.037, 0.33);
+  box(0.03, 0.004, 0.012, std("#9aa0a6", 0.5), 0.56, TOP - 0.037, 0.356);
+  disc(2.3, 1.5, 0, 0.004, 0.02, "#000000", 0.55, false);
+  disc(1.9, 0.5, 0, 0.5, WALL_Z + 0.012, "#000000", 0.28, false).mesh.rotation.x = 0;
 
   const worldOf = (o: THREE.Object3D, x = 0, y = 0, z = 0) => o.localToWorld(new THREE.Vector3(x, y, z));
 
@@ -239,6 +278,20 @@ export async function initRack(
   mon.add(screen);
   markHot(monBody, "console");
   markHot(screen, "console");
+  box(0.012, 0.0025, 0.002, track(new THREE.MeshBasicMaterial({ color: "#9fd0ff", toneMapped: false })), 0.1, 0.143, 0.0146, mon);
+  box(0.05, 0.012, 0.012, dark, 0.1, 0.136, 0.006, mon);
+  shadow(0.5, 0.36, 0, -0.18, TOP + 0.0006, 0.55);
+  {
+    // Display cable from the monitor round to the laptop.
+    const c = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.1, TOP + 0.2, -0.222),
+      new THREE.Vector3(0.12, TOP + 0.04, -0.26),
+      new THREE.Vector3(0.22, TOP + 0.008, -0.2),
+      new THREE.Vector3(0.27, TOP + 0.008, -0.13),
+      new THREE.Vector3(0.285, TOP + 0.008, -0.08),
+    ]);
+    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.0022, 6)), std("#111214", 0.6)));
+  }
 
   // The lock screen: mountains at sunrise, the visitor's local time on top.
   const paper = document.createElement("canvas");
@@ -484,8 +537,15 @@ export async function initRack(
   );
   shade.position.set(0, 0.2, 0);
   lampL.add(shade);
-  const shadeGlow = glow(lampL, 0, 0.2, 0.02, "#ffb45e", 0.46, 0.42);
+  const shadeGlow = glow(lampL, 0, 0.2, 0.02, "#ffae38", 0.46, 0.42);
   hitBox(0.19, 0.28, 0.19, 0, 0.14, 0, "principles", lampL);
+  // Finial, bulb, and the pools of light the shade throws on wall and desk.
+  cyl(0.004, 0.006, 0.012, std("#d9c08a", 0.4, 0.6), 0, 0.258, 0, lampL, 10);
+  glow(lampL, 0, 0.185, 0, "#fff0c8", 0.06, 0.9);
+  const poolWallL = disc(1.25, 1.25, -0.56, TOP + 0.24, WALL_Z + 0.006, "#ffab40", 0.3, true);
+  poolWallL.mesh.rotation.x = 0;
+  const poolDeskL = disc(0.62, 0.5, -0.54, TOP + 0.0008, -0.12, "#ffab40", 0.28, true);
+  shadow(0.14, 0.14, -0.56, -0.18, TOP + 0.0012, 0.45);
 
   // ── succulent → AIOps, still growing ───────────────────────────────────
   const plant = new THREE.Group();
@@ -519,6 +579,7 @@ export async function initRack(
     }
   }
   hitBox(0.12, 0.14, 0.12, 0, 0.06, 0, "aiops", plant);
+  shadow(0.13, 0.13, -0.385, -0.2, TOP + 0.0012, 0.45);
 
   // ── gooseneck lamp (right) ─────────────────────────────────────────────
   const lampR = new THREE.Group();
@@ -536,8 +597,28 @@ export async function initRack(
   lampR.add(new THREE.Mesh(track(new THREE.TubeGeometry(neck, 24, 0.008, 8)), std("#e8b53a", 0.55)));
   const head = cyl(0.012, 0.034, 0.06, track(new THREE.MeshStandardMaterial({ color: "#f3f1ec", roughness: 0.55, side: THREE.DoubleSide })), -0.098, 0.326, 0.056, lampR, 24, true);
   head.rotation.set(0.5, 0, 0.62);
-  const bulbGlow = glow(lampR, -0.114, 0.3, 0.07, "#ffb45e", 0.17, 0.8);
-  glow(lampR, -0.114, 0.3, 0.07, "#fff2d6", 0.05, 1);
+  const bulbGlow = glow(lampR, -0.114, 0.3, 0.07, "#ffae38", 0.17, 0.8);
+  const bulbCore = glow(lampR, -0.114, 0.3, 0.07, "#fff0c8", 0.05, 1);
+  {
+    // Yellow cord with its inline switch, trailing off behind the laptop.
+    const c = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.6, TOP + 0.008, -0.27),
+      new THREE.Vector3(0.52, TOP + 0.005, -0.3),
+      new THREE.Vector3(0.4, TOP + 0.005, -0.285),
+      new THREE.Vector3(0.3, TOP + 0.005, -0.31),
+      new THREE.Vector3(0.24, TOP + 0.005, -0.34),
+    ]);
+    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.003, 6)), std("#e8b53a", 0.6)));
+    box(0.04, 0.012, 0.018, std("#f3f1ec", 0.5), 0.46, TOP + 0.007, -0.293);
+  }
+  const poolWallR = disc(1.0, 1.0, 0.52, TOP + 0.34, WALL_Z + 0.006, "#ffab40", 0.27, true);
+  poolWallR.mesh.rotation.x = 0;
+  const poolDeskR = disc(0.5, 0.42, 0.47, TOP + 0.0008, -0.12, "#ffab40", 0.22, true);
+  shadow(0.16, 0.16, 0.6, -0.24, TOP + 0.0012, 0.4);
+  // The desk lamp is a real switch: click it to turn it off and on.
+  const lampRHit = box(0.2, 0.42, 0.18, hitMat, -0.03, 0.2, 0.02, lampR);
+  lampRHit.userData.toggle = "lampR";
+  hitTargets.push(lampRHit);
 
   // ── keyboard + wrist rest → stack ──────────────────────────────────────
   const kb = new THREE.Group();
@@ -581,6 +662,22 @@ export async function initRack(
   const rest = box(0.34, 0.02, 0.085, std("#8a9099", 0.95), 0, 0.01, 0.118, kb);
   markHot(kbBody, "stack");
   markHot(rest, "stack");
+  shadow(0.42, 0.3, 0, 0.16, TOP + 0.0046, 0.5);
+  shadow(0.1, 0.13, 0.31, 0.172, TOP + 0.0046, 0.55);
+  {
+    // Coiled charging lead and the earbud case at the left of the mat.
+    const c = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.2, TOP + 0.006, -0.04),
+      new THREE.Vector3(-0.12, TOP + 0.006, -0.02),
+      new THREE.Vector3(-0.1, TOP + 0.007, 0.03),
+      new THREE.Vector3(-0.17, TOP + 0.007, 0.04),
+      new THREE.Vector3(-0.235, TOP + 0.007, 0.0),
+      new THREE.Vector3(-0.3, TOP + 0.004, -0.06),
+      new THREE.Vector3(-0.3, TOP + 0.004, -0.2),
+    ]);
+    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 40, 0.0025, 6)), std("#ecebe6", 0.6)));
+    box(0.05, 0.022, 0.045, std("#eeece7", 0.4), -0.215, TOP + 0.011, -0.045);
+  }
 
   // Mouse.
   {
@@ -613,7 +710,15 @@ export async function initRack(
       temple.rotation.x = 0.1;
     }
     box(0.012, 0.003, 0.003, frame, 0, 0.006, 0, gl);
+    const lens = track(new THREE.MeshBasicMaterial({ color: "#cfe2ff", transparent: true, opacity: 0.1, depthWrite: false }));
+    for (const sx of [-1, 1]) {
+      const l = new THREE.Mesh(track(new THREE.CircleGeometry(0.02, 20)), lens);
+      l.position.set(sx * 0.026, 0, 0);
+      l.scale.set(1.12, 0.9, 1);
+      gl.add(l);
+    }
     hitBox(0.14, 0.07, 0.16, 0.02, 0.04, -0.02, "signals", lap);
+    shadow(0.4, 0.3, 0.43, -0.06, TOP + 0.0012, 0.5);
   }
 
   // ── phone → contact ────────────────────────────────────────────────────
@@ -649,6 +754,8 @@ export async function initRack(
   const phoneBody = box(0.072, 0.008, 0.148, [phoneSide, phoneSide, phoneTop, phoneSide, phoneSide, phoneSide], 0, 0.004, 0, phone);
   markHot(phoneBody, "contact");
   hitBox(0.12, 0.05, 0.19, 0, 0.02, 0, "contact", phone);
+  shadow(0.12, 0.2, -0.3, 0.13, TOP + 0.0046, 0.5);
+  shadow(0.32, 0.26, -0.565, 0.19, TOP + 0.0012, 0.55);
 
   // ── books → one per role, newest on top ────────────────────────────────
   const covers = ["#2f4f46", "#34455f", "#8a4a3a", "#b88a2f"];
@@ -722,12 +829,13 @@ export async function initRack(
   const up = (y: number, z: number) => new THREE.Vector3(0, y, z).normalize();
   hots.push(
     { id: "console", label: "monitor · about", pos: screen.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0, 1), dist: 1.2 },
-    { id: "aiops", label: "succulent · AIOps, still growing", pos: worldOf(plant, 0, 0.06, 0), normal: up(0.3, 0.95), dist: 0.5 },
-    { id: "stack", label: "keyboard · stack", pos: worldOf(kb, 0, 0.01, 0.04), normal: up(0.8, 0.6), dist: 0.66 },
-    { id: "signals", label: "laptop · signals", pos: worldOf(lap, 0, 0.02, 0), normal: up(0.7, 0.72), dist: 0.8 },
+    { id: "aiops", label: "succulent · AIOps, still growing", pos: worldOf(plant, 0, 0.06, 0), normal: up(0.3, 0.95), dist: 0.5, lift: plant },
+    { id: "stack", label: "keyboard · stack", pos: worldOf(kb, 0, 0.01, 0.04), normal: up(0.8, 0.6), dist: 0.66, lift: kb },
+    { id: "signals", label: "laptop · signals", pos: worldOf(lap, 0, 0.02, 0), normal: up(0.7, 0.72), dist: 0.8, lift: lap },
     { id: "principles", label: "lamp · house rules", pos: worldOf(lampL, 0, 0.15, 0), normal: up(0.12, 0.99), dist: 0.72 },
-    { id: "contact", label: "phone · contact", pos: worldOf(phone, 0, 0.01, 0), normal: up(0.86, 0.5), dist: 0.5 },
+    { id: "contact", label: "phone · contact", pos: worldOf(phone, 0, 0.01, 0), normal: up(0.86, 0.5), dist: 0.5, lift: phone },
   );
+  for (const h of hots) if (h.lift) (h.liftBase = h.lift.position.y), (h.liftNow = 0);
   // A soft point of light above each thing that opens.
   const beaconY: Record<string, number> = { console: 0.23, aiops: 0.1, stack: 0.07, signals: 0.09, principles: 0.19, contact: 0.07 };
   for (const h of hots) {
@@ -736,35 +844,35 @@ export async function initRack(
     const p = h.pos.clone();
     p.y += isBook ? 0.075 : (beaconY[h.id] ?? 0.08);
     if (isBook) p.z -= 0.08;
-    h.beacon = glow(scene, p.x, p.y, p.z + 0.02, "#ffe3b0", 0.034, 0.9);
+    h.beacon = glow(scene, p.x, p.y, p.z + 0.02, "#ffd27a", 0.034, 0.9);
   }
 
   // ── light ──────────────────────────────────────────────────────────────
-  const hemi = new THREE.HemisphereLight("#f4e6d6", "#241a12", 0.42);
+  const hemi = new THREE.HemisphereLight("#ffd9a0", "#22170c", 0.3);
   scene.add(hemi);
   // Daylight through the curtain, only when the light theme is on.
   const sun = new THREE.DirectionalLight("#dfe9ff", 0);
   sun.position.set(2.6, 2.6, 2.4);
   scene.add(sun);
   // A faint fill from where the visitor stands, so fronts are not silhouettes.
-  const fill = new THREE.DirectionalLight("#ffe9d2", 0.42);
+  const fill = new THREE.DirectionalLight("#ffd49a", 0.34);
   fill.position.set(-0.4, 1.6, 3);
   scene.add(fill);
-  const lampLLight = new THREE.PointLight("#ffbf82", 1.0, 3.2, 1.7);
+  const lampLLight = new THREE.PointLight("#ffb347", 1.05, 3.2, 1.7);
   lampLLight.position.copy(worldOf(lampL, 0, 0.19, 0.03));
   scene.add(lampLLight);
-  const lampLDown = new THREE.SpotLight("#ffc48a", 1.6, 1.6, 0.85, 0.8, 1.4);
+  const lampLDown = new THREE.SpotLight("#ffb955", 1.6, 1.6, 0.85, 0.8, 1.4);
   lampLDown.position.copy(worldOf(lampL, 0, 0.2, 0));
   lampLDown.target.position.copy(worldOf(lampL, 0.05, 0, 0.12));
   scene.add(lampLDown, lampLDown.target);
-  const lampRLight = new THREE.PointLight("#ffbf82", 0.75, 2.6, 1.8);
+  const lampRLight = new THREE.PointLight("#ffb347", 0.8, 2.6, 1.8);
   lampRLight.position.copy(worldOf(lampR, -0.12, 0.29, 0.09));
   scene.add(lampRLight);
-  const monLight = new THREE.PointLight("#9cc8ff", 0.55, 2.4, 1.6);
+  const monLight = new THREE.PointLight("#a9cdfa", 0.4, 2.2, 1.6);
   monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, -0.05, 0.3));
   scene.add(monLight);
   // The cool spill behind the monitor onto the wall.
-  const backLight = new THREE.PointLight("#8fb6ff", 0.22, 1.4, 1.6);
+  const backLight = new THREE.PointLight("#9dbdf5", 0.12, 1.2, 1.6);
   backLight.position.copy(worldOf(mon, 0, SCY, -0.12));
   scene.add(backLight);
 
@@ -824,40 +932,95 @@ export async function initRack(
   let dirty = true;
   const byId = (id: string | null) => hots.find((h) => h.id === id) ?? null;
 
-  function pick(e: PointerEvent | MouseEvent) {
+  // The desk lamp's switch, and how far the visitor has dragged the view.
+  let lampROn = true;
+  let lampRLevel = 1;
+  let overToggle = false;
+  const orbit = { yaw: 0, pitch: 0, nowYaw: 0, nowPitch: 0 };
+  let drag: { x: number; y: number; id: number; moved: boolean } | null = null;
+  let dragged = false;
+
+  function pickRaw(e: PointerEvent | MouseEvent) {
     const r = canvas.getBoundingClientRect();
     ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ptr, camera);
-    const hit = ray.intersectObjects(hitTargets, false)[0];
-    return hit ? byId(hit.object.userData.hot) : null;
+    return ray.intersectObjects(hitTargets, false)[0]?.object ?? null;
   }
+  const pick = (e: PointerEvent | MouseEvent) => {
+    const o = pickRaw(e);
+    return o?.userData.hot ? byId(o.userData.hot) : null;
+  };
   function clearHover() {
     hovered = null;
     canvas.style.cursor = "";
     on.hover(null, 0, 0);
   }
+  function onDown(e: PointerEvent) {
+    if (e.button !== 0) return;
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false };
+    dragged = false;
+  }
   function onMove(e: PointerEvent) {
-    if (e.pointerType === "touch") return;
-    const h = pick(e);
-    par.copy(ptr);
-    if (h !== hovered) {
-      hovered = h;
-      canvas.style.cursor = h ? "pointer" : "";
+    if (drag && e.pointerId === drag.id) {
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      // A sideways drag looks around the desk. On touch, a mostly vertical
+      // drag is the page scrolling, so it is left alone.
+      if (!drag.moved && Math.hypot(dx, dy) > 6 && (e.pointerType !== "touch" || Math.abs(dx) > Math.abs(dy))) {
+        drag.moved = true;
+        dragged = true;
+        canvas.setPointerCapture?.(e.pointerId);
+        on.hover(null, 0, 0);
+      }
+      if (drag.moved) {
+        orbit.yaw = THREE.MathUtils.clamp(orbit.yaw - dx * 0.0045, -0.7, 0.7);
+        orbit.pitch = THREE.MathUtils.clamp(orbit.pitch + dy * 0.003, -0.1, 0.38);
+        drag.x = e.clientX;
+        drag.y = e.clientY;
+        canvas.style.cursor = "grabbing";
+        dirty = true;
+        return;
+      }
     }
-    on.hover(h && h !== selected ? h.label : null, e.clientX, e.clientY);
+    if (e.pointerType === "touch") return;
+    const o = pickRaw(e);
+    const h = o?.userData.hot ? byId(o.userData.hot) : null;
+    overToggle = !!o?.userData.toggle;
+    par.copy(ptr);
+    hovered = h;
+    canvas.style.cursor = h || overToggle ? "pointer" : "grab";
+    on.hover(overToggle ? `desk lamp · switch ${lampROn ? "off" : "on"}` : h && h !== selected ? h.label : null, e.clientX, e.clientY);
     dirty = true;
+  }
+  function onUp(e: PointerEvent) {
+    if (drag && e.pointerId === drag.id) drag = null;
   }
   function onLeave() {
     clearHover();
+    overToggle = false;
     par.set(0, 0);
     dirty = true;
   }
   function onClick(e: MouseEvent) {
-    const h = pick(e);
+    // The click that ends a drag is not a choice.
+    if (dragged) {
+      dragged = false;
+      return;
+    }
+    const o = pickRaw(e);
     on.hover(null, 0, 0);
+    if (o?.userData.toggle) {
+      lampROn = !lampROn;
+      dirty = true;
+      return;
+    }
+    const h = o?.userData.hot ? byId(o.userData.hot) : null;
     on.select(h && h !== selected ? h.id : null);
   }
+  canvas.addEventListener("pointerdown", onDown);
   canvas.addEventListener("pointermove", onMove);
+  canvas.addEventListener("pointerup", onUp);
+  canvas.addEventListener("pointercancel", onUp);
   canvas.addEventListener("pointerleave", onLeave);
   canvas.addEventListener("click", onClick);
   // After a lost GPU context comes back, the reduced-motion path (which only
@@ -888,6 +1051,7 @@ export async function initRack(
   camera.position.copy(home.pos).add(new THREE.Vector3(reduced ? 0 : -0.25, reduced ? 0 : 0.15, reduced ? 0 : 1.2));
   look.copy(home.look);
 
+  const orbitOff = new THREE.Vector3();
   const clock = new THREE.Clock();
   let time = 0;
   let raf = 0;
@@ -912,9 +1076,26 @@ export async function initRack(
     // camera
     const px = selected || reduced ? 0 : par.x * 0.1;
     const py = selected || reduced ? 0 : par.y * 0.05;
-    camera.position.x += (want.pos.x + px - camera.position.x) * k;
-    camera.position.y += (want.pos.y + py - camera.position.y) * k;
-    camera.position.z += (want.pos.z - camera.position.z) * k;
+    // The dragged view eases back to centre once the visitor lets go.
+    if (!drag?.moved) {
+      const back = reduced ? 0 : Math.exp(-dt * 0.35);
+      orbit.yaw *= back;
+      orbit.pitch *= back;
+    }
+    const ko = reduced ? 1 : 1 - Math.exp(-dt * 9);
+    orbit.nowYaw += (orbit.yaw - orbit.nowYaw) * ko;
+    orbit.nowPitch += (orbit.pitch - orbit.nowPitch) * ko;
+    orbitOff.copy(want.pos).sub(want.look);
+    const flat = Math.hypot(orbitOff.x, orbitOff.z);
+    const len = orbitOff.length();
+    const yaw0 = Math.atan2(orbitOff.x, orbitOff.z) + orbit.nowYaw;
+    const pitch0 = Math.min(1.45, Math.atan2(orbitOff.y, flat) + orbit.nowPitch);
+    orbitOff.set(Math.sin(yaw0) * Math.cos(pitch0) * len, Math.sin(pitch0) * len, Math.cos(yaw0) * Math.cos(pitch0) * len);
+    camera.position.x += (want.look.x + orbitOff.x + px - camera.position.x) * k;
+    camera.position.y += (want.look.y + orbitOff.y + py - camera.position.y) * k;
+    camera.position.z += (want.look.z + orbitOff.z - camera.position.z) * k;
+    // Stay in front of the wall however far the view is dragged.
+    camera.position.z = Math.max(camera.position.z, WALL_Z + 0.3);
     look.lerp(want.look, k);
     camera.lookAt(look);
 
@@ -924,6 +1105,11 @@ export async function initRack(
         const target = h === selected ? 0.11 : h === hovered ? 0.022 : 0;
         h.slideNow! += (target - h.slideNow!) * (reduced ? 1 : 1 - Math.exp(-dt * 7));
         h.slide.position.z = h.slideBase! + h.slideNow!;
+      }
+      if (h.lift) {
+        const target = h === hovered && h !== selected ? 0.007 : 0;
+        h.liftNow! += (target - h.liftNow!) * (reduced ? 1 : 1 - Math.exp(-dt * 10));
+        h.lift.position.y = h.liftBase! + h.liftNow!;
       }
       if (h.beacon) {
         const pulse = reduced ? 0.8 : 0.55 + 0.45 * Math.sin(time * 2.2 + h.pos.x * 9);
@@ -935,12 +1121,19 @@ export async function initRack(
     const wantDay = document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
     day += (wantDay - day) * (reduced ? 1 : 1 - Math.exp(-dt * 4));
     const breathe = reduced ? 1 : 1 + Math.sin(time * 1.3) * 0.015;
-    hemi.intensity = 0.42 + day * 1.5;
+    hemi.intensity = 0.3 + day * 1.5;
     sun.intensity = day * 1.5;
-    lampLLight.intensity = 1.0 * breathe;
-    lampRLight.intensity = 0.75 * breathe;
+    lampLLight.intensity = 1.05 * breathe;
+    lampRLevel += ((lampROn ? 1 : 0) - lampRLevel) * (reduced ? 1 : 1 - Math.exp(-dt * 12));
+    const dim = 1 - day * 0.55;
+    lampRLight.intensity = 0.8 * breathe * lampRLevel;
     shadeGlow.opacity = 0.42 - day * 0.22;
-    bulbGlow.opacity = 0.8 - day * 0.35;
+    bulbGlow.opacity = (0.8 - day * 0.35) * lampRLevel;
+    bulbCore.opacity = 0.15 + 0.85 * lampRLevel;
+    poolWallL.mat.opacity = 0.3 * dim;
+    poolDeskL.mat.opacity = 0.28 * dim;
+    poolWallR.mat.opacity = 0.27 * dim * lampRLevel;
+    poolDeskR.mat.opacity = 0.22 * dim * lampRLevel;
     (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
     (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
 
@@ -964,7 +1157,10 @@ export async function initRack(
       io.disconnect();
       ro.disconnect();
       themeWatch.disconnect();
+      canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("webglcontextrestored", onRestore);
