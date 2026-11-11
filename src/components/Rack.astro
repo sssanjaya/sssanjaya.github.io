@@ -8,7 +8,6 @@
 // The panels and the desktop's windows are ordinary HTML, so their text is
 // crawlable.
 import { site } from "../data/site.ts";
-import { experience } from "../data/experience.ts";
 import DeskOS from "./DeskOS.astro";
 
 const linkedin = site.socials.find((s) => s.label === "LinkedIn");
@@ -16,13 +15,12 @@ const aiops = site.status.find((s) => s.name === "AIOps");
 const core = site.stack.filter((s) => s.place === "core");
 const cross = site.stack.filter((s) => s.place !== "core");
 
+// The things on the desk that open a part of the site.
 const hots = [
   { id: "console", label: "computer" },
-  ...experience.map((r, i) => ({ id: `role-${i}`, label: r.company.split(" ")[0].toLowerCase() })),
   { id: "aiops", label: "aiops" },
   { id: "stack", label: "stack" },
   { id: "signals", label: "signals" },
-  { id: "principles", label: "rules" },
   { id: "contact", label: "phone" },
 ];
 ---
@@ -38,7 +36,6 @@ const hots = [
   <p class="loading mono" aria-hidden="true">setting up the desk…</p>
 
   <div class="foot">
-    <p class="how">Everything on this desk works. Click the monitor to unlock it, or try a lamp.</p>
     <nav class="units" data-rack-units aria-label="Desk items">
       {
         hots.map((h, i) => (
@@ -67,23 +64,6 @@ const hots = [
     <button class="x" type="button" data-rack-close aria-label="Close and step back">
       <span aria-hidden="true">esc ✕</span>
     </button>
-
-    {
-      experience.map((r, i) => (
-        <article data-panel={`role-${i}`} hidden>
-          <p class="kick">
-            <span class="dot" aria-hidden="true" />
-            book {experience.length - i} of {experience.length} · {r.year}
-          </p>
-          <h2>{r.company}</h2>
-          <p class="sub">{r.title}</p>
-          <p class="body">{r.blurb}</p>
-          {r.impact ? <ul class="impact">{r.impact.map((m) => <li>{m}</li>)}</ul> : null}
-          <ul class="tags">{r.tags.map((t) => <li class="chip">{t}</li>)}</ul>
-          <p class="more"><button type="button" data-os-open={`role:${i}`}>open on the computer <span aria-hidden="true">→</span></button></p>
-        </article>
-      ))
-    }
 
     <article data-panel="aiops" hidden>
       <p class="kick warn"><span class="dot warn" aria-hidden="true"></span> succulent · canary{aiops ? ` since ${aiops.since}` : ""}</p>
@@ -120,12 +100,6 @@ const hots = [
         ))}
       </ul>
       <p class="more"><button type="button" data-os-open="signals">open signals.json <span aria-hidden="true">→</span></button></p>
-    </article>
-
-    <article data-panel="principles" hidden>
-      <p class="kick"><span class="dot" aria-hidden="true"></span> sticky notes</p>
-      <h2>House rules</h2>
-      <ol class="rules">{site.principles.map((p) => <li>{p}</li>)}</ol>
     </article>
 
     <article data-panel="contact" hidden>
@@ -208,7 +182,7 @@ const hots = [
     if (!wall || painted) return;
     painted = true;
     const { paintWallpaper } = await import("../scripts/wallpaper.ts");
-    paintWallpaper(wall);
+    paintWallpaper(wall, 2);
   }
 
   // The scene reports where the monitor's screen is, every frame, while the
@@ -529,7 +503,7 @@ const hots = [
     pointer-events: none;
     background:
       linear-gradient(180deg, rgba(12, 9, 7, 0.45) 0%, rgba(12, 9, 7, 0) 14%),
-      linear-gradient(0deg, rgba(12, 9, 7, 0.7) 0%, rgba(12, 9, 7, 0) 20%);
+      linear-gradient(0deg, rgba(12, 9, 7, 0.3) 0%, rgba(12, 9, 7, 0) 12%);
     transition: opacity 0.4s ease;
   }
   /* Up close the picture should be clean. */
@@ -590,23 +564,6 @@ const hots = [
   .rl span {
     color: var(--ok);
   }
-  .how {
-    font-size: 13px;
-    color: var(--fg-2);
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.9);
-    opacity: 0;
-    transition: opacity 0.5s ease;
-  }
-  .ready .how {
-    opacity: 1;
-    transition-delay: 1.4s;
-  }
-  /* The hint has done its job after the first click. */
-  .touched .how {
-    opacity: 0;
-    transition-delay: 0s;
-  }
-
   /* Every object can be clicked in the scene itself, so the row of unit
      buttons stays out of sight. It is still there for keyboards and screen
      readers, and shows itself while one of its buttons has keyboard focus. */
@@ -762,12 +719,6 @@ const hots = [
     line-height: 1.05;
     letter-spacing: -0.03em;
   }
-  .sub {
-    margin-top: 6px;
-    font-family: var(--mono);
-    font-size: 13.5px;
-    color: var(--fg-2);
-  }
   .body {
     margin-top: 14px;
     font-size: 15px;
@@ -776,26 +727,6 @@ const hots = [
   }
   .body b {
     color: var(--fg);
-  }
-  .impact {
-    list-style: none;
-    margin-top: 16px;
-    display: grid;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--ok);
-  }
-  .impact li::before {
-    content: "▸ ";
-    opacity: 0.7;
-  }
-  .tags {
-    list-style: none;
-    margin-top: 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
   }
   .kv {
     margin-top: 16px;
@@ -842,19 +773,6 @@ const hots = [
     font-size: 12.5px;
     color: var(--mut);
   }
-  .rules {
-    margin: 16px 0 0 20px;
-    display: grid;
-    gap: 10px;
-    font-family: var(--display);
-    font-size: 19px;
-    line-height: 1.3;
-  }
-  .rules li::marker {
-    color: var(--ok);
-    font-family: var(--mono);
-    font-size: 14px;
-  }
   .cta {
     margin-top: 18px;
     display: flex;
@@ -886,9 +804,6 @@ const hots = [
   @media (max-width: 760px) {
     .rack {
       min-height: 440px;
-    }
-    .how {
-      display: none;
     }
     /* Phones: name tag top-left, units in a swipeable strip at the bottom. */
     .ident {
@@ -960,7 +875,6 @@ const hots = [
     canvas,
     .ident,
     .foot,
-    .how,
     .veil {
       transition: none;
     }

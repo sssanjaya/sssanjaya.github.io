@@ -2,7 +2,7 @@
 
 Personal site of **Sanjay Hona**, Site Reliability Engineer in Ottawa.
 
-The home page is a desk. On a device that can run it, you get a 3D desk in the evening, and the computer on that desk holds the site: every part of it is a file you can open. Every number and date on it comes from real work history, not sample data.
+The home page is my desk. On a device that can run it, you get the desk in 3D in the evening, modelled on photographs of the real one, and the computer on it holds the site: every part of it is a file you can open. Every number and date on it comes from real work history, not sample data.
 
 **Live:** https://sanjayhona.com.np
 
@@ -14,6 +14,7 @@ The home page is a desk. On a device that can run it, you get a 3D desk in the e
 |---|---|
 | `about.txt` | Name, role, disciplines, a short bio, and the "currently" block |
 | `experience/` | One file per role, newest first |
+| `photos/` | My photography from [Unsplash](https://unsplash.com/@sssanjaya): a grid, and a viewer with arrow-key paging |
 | `stack.yaml` | Delivery → runtime → cloud, plus security and observability |
 | `signals.json` | Career metrics: years in production, edge fleet size, MTTR, release frequency, env setup time, audit findings |
 | `status.log` | Each discipline tracked like a service |
@@ -21,7 +22,9 @@ The home page is a desk. On a device that can run it, you get a 3D desk in the e
 | `contact.vcf` | Email first, LinkedIn second |
 | Terminal | `ls`, `cat`, `open`, `status`, `kubectl get engineer` |
 
-The rest of the desk works too: both lamps switch, the standing desk rises, the keys dip as you type, the wall clock keeps time, and the books, plant, laptop, phone and sticky notes each open a panel.
+The rest of the desk works too: both lamps switch, the standing desk rises, the keys dip as you type, the phone shows the time, and the plant, keyboard, laptop and phone each open a panel.
+
+What is on the desk is what is on the real one, at the makers' dimensions: an IKEA BEKANT sit/stand desk, a BenQ MA320U monitor with a laptop docked on its base, a NuPhy Kick75 keyboard and wrist rest, an IKEA NÄVLINGE lamp, a pleated table lamp, a succulent, a second laptop with a pair of glasses on it, a mouse and a phone. The wallpaper on the monitor is one of the photos.
 
 Three ways the page shows up:
 
@@ -37,8 +40,8 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
 - About 9 KB of client JavaScript: theme toggle, local clock, command palette, the desktop and its terminal, the 3D loader
-- The desk is a [three.js](https://threejs.org) scene (about 165 KB gzipped), loaded lazily and only on devices that can run it
-- Six objects on it are real 3D models from [Poly Haven](https://polyhaven.com) (CC0): the succulent, the architect lamp (repainted white), the spectacles, the notebook, the pencil cup and the wall clock, which shows your local time. About 1.3 MB in all, fetched only with the 3D scene. Sources and how they were prepared: [`public/models/CREDITS.md`](public/models/CREDITS.md). The rest is built in code. The plant, lamp and spectacles each have a simple built-in stand-in that stays if a file fails to load; the notebook, pencil cup and clock are just absent then
+- The desk is a [three.js](https://threejs.org) scene (about 160 KB gzipped), loaded lazily and only on devices that can run it. Every object is built in code; there are no model files to download
+- The photos are self-hosted WebP copies in [`public/photos/`](public/photos/) (1280 px, plus thumbnails), listed in [`src/data/photos.ts`](src/data/photos.ts). Nothing is fetched until the folder is opened, and nothing comes from Unsplash's servers, so the CSP stays `'self'`-only
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 
@@ -50,6 +53,7 @@ All copy and data live in two files. Components read from them, so most edits ne
 |---|---|
 | [`src/data/site.ts`](src/data/site.ts) | Name, contact, nav, signal panels, status rows, stack topology, principles, "currently" block |
 | [`src/data/experience.ts`](src/data/experience.ts) | Roles, blurbs, impact chips, tags |
+| [`src/data/photos.ts`](src/data/photos.ts) | The photos folder: one line per picture (Unsplash id, caption, size) |
 
 The bio prose and the windows live in [`src/components/DeskOS.astro`](src/components/DeskOS.astro); the list of files is [`src/data/desktop.ts`](src/data/desktop.ts). The 3D scene is [`src/scripts/rack.ts`](src/scripts/rack.ts).
 
@@ -68,14 +72,15 @@ npm run preview   # serve dist/
 
 ```text
 src/
-  components/   one file per section, plus TopBar, CommandPalette, SectionHead
-  data/         site.ts and experience.ts (all content)
+  components/   Rack (the stage), DeskOS (the computer), TopBar, CommandPalette
+  data/         site.ts and experience.ts (all content), desktop.ts, photos.ts
   layouts/      Base.astro: meta tags, JSON-LD, theme bootstrap
   pages/        index.astro and 404.astro
   scripts/      console.ts: theme, clock, nav highlight, palette, copy
-                rack.ts: the 3D hero scene (mounted by components/Rack.astro)
+                rack.ts: the 3D desk (mounted by components/Rack.astro)
+                wallpaper.ts: the monitor's wallpaper
   styles/       global.css: design tokens and shared primitives
-public/         favicon, OG image, CNAME, robots.txt, web manifest
+public/         favicon, OG image, wallpaper, photos/, CNAME, robots.txt, web manifest
 ```
 
 ## Blog
