@@ -6,6 +6,7 @@ export const deskFiles = [
   { id: "experience", name: "experience", kind: "dir" },
   { id: "stack", name: "stack.yaml", kind: "code" },
   { id: "signals", name: "signals.json", kind: "chart" },
+  { id: "status", name: "status.log", kind: "txt" },
   { id: "rules", name: "house-rules.md", kind: "txt" },
   { id: "contact", name: "contact.vcf", kind: "card" },
   { id: "terminal", name: "Terminal", kind: "term" },

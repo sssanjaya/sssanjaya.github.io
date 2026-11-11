@@ -2,23 +2,32 @@
 
 Personal site of **Sanjay Hona**, Site Reliability Engineer in Ottawa.
 
-The site is built like an ops console: a status page, golden-signal panels, a deploy history, and a platform topology. Every number and date on it comes from real work history, not sample data.
+The home page is a desk. On a device that can run it, you get a 3D desk in the evening, and the computer on that desk holds the site: every part of it is a file you can open. Every number and date on it comes from real work history, not sample data.
 
 **Live:** https://sanjayhona.com.np
 
 ![Social preview of the site](public/og.png)
 
-## What's on the page
+## What's on the computer
 
-| Section | What it shows |
+| File | What it shows |
 |---|---|
-| Hero | Name, role, and a terminal that runs `kubectl get` / `kubectl describe` against the "currently" data |
-| Golden signals | Career metrics as dashboard panels: years in production, edge fleet size, MTTR, release frequency, env setup time, audit findings |
-| Service status | Each discipline tracked like a service, one cell per quarter since 2016 |
-| Deploy history | Roles, newest first. The current role is `running`, past roles `exit 0` |
-| Platform stack | Delivery → runtime → cloud, with security and observability as cross-cutting layers |
-| About | Short README plus operating principles |
-| Contact | Escalation policy: email first, LinkedIn second |
+| `about.txt` | Name, role, disciplines, a short bio, and the "currently" block |
+| `experience/` | One file per role, newest first |
+| `stack.yaml` | Delivery → runtime → cloud, plus security and observability |
+| `signals.json` | Career metrics: years in production, edge fleet size, MTTR, release frequency, env setup time, audit findings |
+| `status.log` | Each discipline tracked like a service |
+| `house-rules.md` | Operating principles |
+| `contact.vcf` | Email first, LinkedIn second |
+| Terminal | `ls`, `cat`, `open`, `status`, `kubectl get engineer` |
+
+The rest of the desk works too: both lamps switch, the standing desk rises, the keys dip as you type, and the books, plant, laptop, phone and sticky notes each open a panel.
+
+Three ways the page shows up:
+
+- **3D desk**, where the device can run it. "turn off 3D" switches to the next one.
+- **The desktop on its own**, filling the window, on weak devices, without WebGL, or after "turn off 3D" (`localStorage.rack = "off"`). Same files, same terminal.
+- **A plain page**, with scripts off: the same files laid out one under another.
 
 Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command palette.
 
@@ -27,8 +36,8 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - [Astro](https://astro.build) 7, static output, no client framework
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
-- About 8 KB of client JavaScript: theme toggle, local clock, command palette, 3D loader
-- On capable devices the home page is an interactive [three.js](https://threejs.org) scene of a desk in the evening, loaded lazily (about 150 KB gzipped). The things on it work: the monitor unlocks to a desktop with the site's content as files and a terminal, both lamps switch, the standing desk rises, the keys dip as you type. While it runs, the sections below are hidden. The "plain view" button, or `localStorage.rack = "off"`, brings the regular page back, and devices without a capable GPU get the regular page
+- About 9 KB of client JavaScript: theme toggle, local clock, command palette, the desktop and its terminal, the 3D loader
+- The desk is a [three.js](https://threejs.org) scene (about 150 KB gzipped), loaded lazily and only on devices that can run it. Everything in it is generated in code, so there are no model or image downloads
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 
@@ -41,7 +50,7 @@ All copy and data live in two files. Components read from them, so most edits ne
 | [`src/data/site.ts`](src/data/site.ts) | Name, contact, nav, signal panels, status rows, stack topology, principles, "currently" block |
 | [`src/data/experience.ts`](src/data/experience.ts) | Roles, blurbs, impact chips, tags |
 
-Hero and About prose live in [`src/components/Hero.astro`](src/components/Hero.astro) and [`src/components/About.astro`](src/components/About.astro).
+The bio prose and the windows live in [`src/components/DeskOS.astro`](src/components/DeskOS.astro); the list of files is [`src/data/desktop.ts`](src/data/desktop.ts). The 3D scene is [`src/scripts/rack.ts`](src/scripts/rack.ts).
 
 ## Run it locally
 
