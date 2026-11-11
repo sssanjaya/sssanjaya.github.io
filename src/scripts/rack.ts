@@ -1,8 +1,10 @@
 // The 3D hero: a desk in the evening, lit by two warm lamps and a monitor.
-// Every object with a soft glow above it opens a piece of the site (about,
-// roles, stack, signals, house rules, contact). Geometry and textures are all
-// generated here, so there are no model or image downloads and the CSP stays
-// 'self'-only. Loaded lazily by Rack.astro, only on devices that can run it.
+// Things on it work the way they do on a real desk: the monitor unlocks to a
+// desktop of files, both lamps switch, the standing desk rises, the keys dip
+// as you type. Objects with a soft glow above them open a piece of the site.
+// Geometry and textures are all generated here, so there are no model or
+// image downloads and the CSP stays 'self'-only. Loaded lazily by Rack.astro,
+// only on devices that can run it.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
@@ -13,6 +15,7 @@ import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { site } from "../data/site.ts";
 import { experience } from "../data/experience.ts";
+import { deskFiles, dockFiles } from "../data/desktop.ts";
 
 const C = {
   ok: "#39e58c",
@@ -43,15 +46,25 @@ type Hot = {
   beacon?: THREE.SpriteMaterial;
 };
 
+/** Where the monitor's screen sits on the stage, in CSS pixels. */
+export type ScreenRect = { x: number; y: number; w: number; h: number };
+
 export interface RackController {
   select(id: string | null): void;
+  /** The monitor's wallpaper, for the full-stage desktop on phones. */
+  wallpaper: HTMLCanvasElement;
   dispose(): void;
 }
 
 export async function initRack(
   stage: HTMLElement,
   canvas: HTMLCanvasElement,
-  on: { select(id: string | null): void; hover(label: string | null, x: number, y: number): void },
+  on: {
+    select(id: string | null): void;
+    hover(label: string | null, x: number, y: number): void;
+    /** Called every frame while the unlocked screen is in use; null when it is not. */
+    screen(rect: ScreenRect | null): void;
+  },
 ): Promise<RackController> {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -87,6 +100,11 @@ export async function initRack(
   const bgLight = new THREE.Color("#8d8377");
   scene.background = bgDark.clone();
   scene.fog = new THREE.Fog(scene.background as THREE.Color, 6, 14);
+  // The desk top and everything on it hang off `rig`, so the desk can rise.
+  // `root` is where the helpers below add things: the room, then the rig.
+  const rig = new THREE.Group();
+  scene.add(rig);
+  let root: THREE.Object3D = scene;
 
   const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 40);
 
@@ -110,19 +128,19 @@ export async function initRack(
   }
   const std = (color: string, rough = 0.7, metal = 0) =>
     track(new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal }));
-  function box(w: number, h: number, d: number, mat: THREE.Material | THREE.Material[], x = 0, y = 0, z = 0, parent: THREE.Object3D = scene) {
+  function box(w: number, h: number, d: number, mat: THREE.Material | THREE.Material[], x = 0, y = 0, z = 0, parent: THREE.Object3D = root) {
     const m = new THREE.Mesh(track(new THREE.BoxGeometry(w, h, d)), mat);
     m.position.set(x, y, z);
     parent.add(m);
     return m;
   }
-  function rbox(w: number, h: number, d: number, r: number, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = scene) {
+  function rbox(w: number, h: number, d: number, r: number, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = root) {
     const m = new THREE.Mesh(track(new RoundedBoxGeometry(w, h, d, 3, r)), mat);
     m.position.set(x, y, z);
     parent.add(m);
     return m;
   }
-  function cyl(rt: number, rb: number, h: number, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = scene, seg = 24, open = false) {
+  function cyl(rt: number, rb: number, h: number, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = root, seg = 24, open = false) {
     const m = new THREE.Mesh(track(new THREE.CylinderGeometry(rt, rb, h, seg, 1, open)), mat);
     m.position.set(x, y, z);
     parent.add(m);
@@ -157,7 +175,7 @@ export async function initRack(
 
   // Soft contact shadows and pools of lamplight are flat, blended discs: far
   // cheaper than shadow maps, and they sell the evening light.
-  function disc(w: number, d: number, x: number, y: number, z: number, color: string, opacity: number, additive: boolean, parent: THREE.Object3D = scene) {
+  function disc(w: number, d: number, x: number, y: number, z: number, color: string, opacity: number, additive: boolean, parent: THREE.Object3D = root) {
     const mat = track(
       new THREE.MeshBasicMaterial({
         map: glowTex,
@@ -186,7 +204,7 @@ export async function initRack(
   };
   /** An invisible, generous click target around small objects. */
   const hitMat = track(new THREE.MeshBasicMaterial({ visible: false }));
-  const hitBox = (w: number, h: number, d: number, x: number, y: number, z: number, id: string, parent: THREE.Object3D = scene) =>
+  const hitBox = (w: number, h: number, d: number, x: number, y: number, z: number, id: string, parent: THREE.Object3D = root) =>
     markHot(box(w, h, d, hitMat, x, y, z, parent), id);
 
   // Soft reflections on metal, glass and glazed surfaces, from a generated
@@ -242,18 +260,28 @@ export async function initRack(
   wall.position.set(0, 2.1, WALL_Z);
   scene.add(wall);
   box(16, 0.09, 0.015, std("#f1ede6", 0.7), 0, 0.045, WALL_Z + 0.008);
-  // Outlet under the desk, with the power lead hanging to it.
+  // Outlet under the desk. The power lead hangs to it and pays out as the
+  // desk rises.
   box(0.07, 0.11, 0.008, std("#f4f1ea", 0.6), 0.08, 0.42, WALL_Z + 0.005);
-  {
-    const lead = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.02, TOP - 0.03, -0.3),
-      new THREE.Vector3(-0.04, 0.5, -0.33),
-      new THREE.Vector3(0.0, 0.3, -0.36),
-      new THREE.Vector3(0.07, 0.36, WALL_Z + 0.02),
-      new THREE.Vector3(0.08, 0.42, WALL_Z + 0.012),
-    ]);
-    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(lead, 40, 0.004, 6)), std("#ecebe6", 0.6)));
+  const lead = new THREE.Mesh(new THREE.BufferGeometry(), std("#ecebe6", 0.6));
+  scene.add(lead);
+  track({ dispose: () => lead.geometry.dispose() });
+  function hangLead(y: number) {
+    lead.geometry.dispose();
+    lead.geometry = new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.02, TOP - 0.03 + y, -0.3),
+        new THREE.Vector3(-0.04, 0.5 + y * 0.45, -0.33),
+        new THREE.Vector3(0.0, 0.3 + y * 0.12, -0.36),
+        new THREE.Vector3(0.07, 0.36, WALL_Z + 0.02),
+        new THREE.Vector3(0.08, 0.42, WALL_Z + 0.012),
+      ]),
+      40,
+      0.004,
+      6,
+    );
   }
+  hangLead(0);
 
   // Curtain on the right: a pleated sheet from ceiling to floor. It sways.
   let curtain: THREE.PlaneGeometry | null = null;
@@ -262,29 +290,33 @@ export async function initRack(
     const p = geo.attributes.position;
     for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 46) * 0.028 + Math.sin(p.getX(i) * 13) * 0.02);
     geo.computeVertexNormals();
-    const m = new THREE.Mesh(geo, track(new THREE.MeshStandardMaterial({ color: "#7c8ba3", roughness: 0.95, side: THREE.DoubleSide })));
+    // A little dusk comes through the fabric from the window behind it.
+    const m = new THREE.Mesh(
+      geo,
+      track(new THREE.MeshStandardMaterial({ color: "#7c8ba3", roughness: 0.95, side: THREE.DoubleSide, emissive: "#22355c", emissiveIntensity: 0.3 })),
+    );
     m.position.set(1.56, 1.6, WALL_Z + 0.2);
     scene.add(m);
     curtain = geo;
   }
 
-  // Couch on the left: just the arm and seat that show in frame.
-  {
-    const fabric = std("#737982", 0.98);
-    box(1.2, 0.44, 0.95, fabric, -1.72, 0.22, 0.2);
-    box(0.2, 0.66, 0.95, fabric, -1.02, 0.33, 0.2);
-    box(1.2, 0.86, 0.22, fabric, -1.72, 0.43, -0.2);
-    box(0.5, 0.14, 0.5, std("#868c95", 0.98), -1.42, 0.51, 0.1);
-  }
-
   // ── desk ───────────────────────────────────────────────────────────────
+  // A standing desk. The feet and outer columns stay on the floor; the top,
+  // the inner columns and everything on the desk ride on the rig.
   const DW = 1.44;
   const DD = 0.74;
+  const RISE = 0.36; // sitting to standing
   const white = std("#f3f1ec", 0.55);
+  for (const sx of [-1, 1]) {
+    box(0.075, 0.024, 0.62, white, sx * 0.58, 0.012, 0);
+    rbox(0.082, 0.6, 0.056, 0.008, white, sx * 0.58, 0.32, -0.02);
+  }
+  disc(2.3, 1.5, 0, 0.004, 0.02, "#000000", 0.55, false);
+  disc(1.9, 0.5, 0, 0.5, WALL_Z + 0.012, "#000000", 0.28, false).mesh.rotation.x = 0;
+  root = rig;
   rbox(DW, 0.026, DD, 0.012, white, 0, TOP - 0.013, 0);
   for (const sx of [-1, 1]) {
-    cyl(0.03, 0.03, TOP - 0.05, white, sx * 0.58, (TOP - 0.05) / 2 + 0.02, -0.02);
-    box(0.075, 0.024, 0.62, white, sx * 0.58, 0.012, 0);
+    rbox(0.064, 0.62, 0.04, 0.006, std("#e2dfd8", 0.45), sx * 0.58, TOP - 0.36, -0.02);
     box(0.09, 0.03, 0.5, white, sx * 0.58, TOP - 0.041, -0.02);
   }
   box(1.1, 0.03, 0.06, white, 0, TOP - 0.041, -0.02);
@@ -319,11 +351,39 @@ export async function initRack(
     for (const sz of [-1, 1]) box(0.92, 0.0006, 0.0025, stitch, 0, TOP + 0.0044, 0.14 + sz * 0.176);
     for (const sx of [-1, 1]) box(0.0025, 0.0006, 0.352, stitch, sx * 0.461, TOP + 0.0044, 0.14);
   }
-  // Height controller under the front-right edge, and the desk's shadow.
-  box(0.11, 0.022, 0.05, std("#e9e6e0", 0.5), 0.56, TOP - 0.037, 0.33);
-  box(0.03, 0.004, 0.012, std("#9aa0a6", 0.5), 0.56, TOP - 0.037, 0.356);
-  disc(2.3, 1.5, 0, 0.004, 0.02, "#000000", 0.55, false);
-  disc(1.9, 0.5, 0, 0.5, WALL_Z + 0.012, "#000000", 0.28, false).mesh.rotation.x = 0;
+  // Height controller under the front-right edge. Its display shows the
+  // desk height, and a click on it raises or lowers the desk.
+  const ctrlScr = document.createElement("canvas");
+  ctrlScr.width = 128;
+  ctrlScr.height = 40;
+  const ctrlTex = track(new THREE.CanvasTexture(ctrlScr));
+  ctrlTex.colorSpace = THREE.SRGBColorSpace;
+  function drawCtrl(y: number) {
+    const g = ctrlScr.getContext("2d")!;
+    g.fillStyle = "#0d0f12";
+    g.fillRect(0, 0, 128, 40);
+    g.fillStyle = "#ffcf8a";
+    g.font = `700 28px ${MONO}`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(`${Math.round((TOP + y) * 100)} cm`, 64, 22);
+    ctrlTex.needsUpdate = true;
+  }
+  {
+    const ctrl = new THREE.Group();
+    ctrl.position.set(0.56, TOP - 0.037, 0.35);
+    rig.add(ctrl);
+    rbox(0.12, 0.022, 0.05, 0.004, std("#e9e6e0", 0.5), 0, 0, 0, ctrl);
+    const face = new THREE.Mesh(track(new THREE.PlaneGeometry(0.045, 0.014)), track(new THREE.MeshBasicMaterial({ map: ctrlTex, toneMapped: false })));
+    face.position.set(-0.03, 0, 0.0252);
+    ctrl.add(face);
+    const btn = std("#9aa0a6", 0.5);
+    for (const bx of [0.012, 0.03, 0.048]) box(0.012, 0.009, 0.003, btn, bx, 0, 0.026, ctrl);
+    const hit = box(0.18, 0.07, 0.1, hitMat, 0, 0, 0.012, ctrl);
+    hit.userData.toggle = "desk";
+    hitTargets.push(hit);
+    drawCtrl(0);
+  }
 
   const worldOf = (o: THREE.Object3D, x = 0, y = 0, z = 0) => o.localToWorld(new THREE.Vector3(x, y, z));
 
@@ -332,7 +392,7 @@ export async function initRack(
   const SH = 0.36;
   const mon = new THREE.Group();
   mon.position.set(0, TOP, -0.2);
-  scene.add(mon);
+  rig.add(mon);
   const dark = std("#17191c", 0.5, 0.3);
   rbox(0.34, 0.012, 0.24, 0.005, dark, 0, 0.006, 0.02, mon);
   cyl(0.02, 0.02, 0.3, std("#b9bdc2", 0.3, 0.9), 0, 0.16, -0.03, mon);
@@ -350,6 +410,30 @@ export async function initRack(
   mon.add(screen);
   markHot(monBody, "console");
   markHot(screen, "console");
+  {
+    // The screen is glass: a faint sheen across one corner, and a webcam dot.
+    const sheen = new THREE.Mesh(
+      track(new THREE.PlaneGeometry(SW, SH)),
+      track(
+        new THREE.MeshBasicMaterial({
+          map: tex(256, 256, (g, w, h) => {
+            const gr = g.createLinearGradient(0, 0, w * 0.8, h);
+            gr.addColorStop(0, "rgba(255,255,255,0.09)");
+            gr.addColorStop(0.3, "rgba(255,255,255,0.02)");
+            gr.addColorStop(0.45, "rgba(255,255,255,0)");
+            g.fillStyle = gr;
+            g.fillRect(0, 0, w, h);
+          }),
+          transparent: true,
+          depthWrite: false,
+          toneMapped: false,
+        }),
+      ),
+    );
+    sheen.position.set(0, SCY, 0.0149);
+    mon.add(sheen);
+    cyl(0.0022, 0.0022, 0.001, std("#05060a", 0.2, 0.6), 0, SCY + SH / 2 + 0.0045, 0.0142, mon, 12).rotation.x = Math.PI / 2;
+  }
   box(0.012, 0.0025, 0.002, track(new THREE.MeshBasicMaterial({ color: "#9fd0ff", toneMapped: false })), 0.1, 0.143, 0.0146, mon);
   box(0.05, 0.012, 0.012, dark, 0.1, 0.136, 0.006, mon);
   shadow(0.5, 0.36, 0, -0.18, TOP + 0.0006, 0.55);
@@ -362,8 +446,63 @@ export async function initRack(
       new THREE.Vector3(0.27, TOP + 0.008, -0.13),
       new THREE.Vector3(0.285, TOP + 0.008, -0.08),
     ]);
-    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.0022, 6)), std("#111214", 0.6)));
+    rig.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.0022, 6)), std("#111214", 0.6)));
   }
+
+  // Sticky notes along the monitor's chin → house rules.
+  const notes = new THREE.Group();
+  notes.position.set(0, 0.139, 0.0158);
+  mon.add(notes);
+  site.principles.forEach((rule, i) => {
+    const N = 0.076;
+    const geo = track(new THREE.PlaneGeometry(N, N, 1, 8));
+    const gp = geo.attributes.position;
+    // Stuck by the top edge; the free end curls toward the room.
+    for (let j = 0; j < gp.count; j++) {
+      const v = 0.5 - gp.getY(j) / N;
+      gp.setZ(j, v * v * (0.009 + (i % 2) * 0.005));
+    }
+    geo.computeVertexNormals();
+    const paperCol = ["#ffe066", "#ff9db0", "#8fdcff"][i % 3];
+    const m = new THREE.Mesh(
+      geo,
+      track(
+        new THREE.MeshStandardMaterial({
+          roughness: 0.92,
+          side: THREE.DoubleSide,
+          map: tex(384, 384, (g, w, h) => {
+            g.fillStyle = paperCol;
+            g.fillRect(0, 0, w, h);
+            const strip = g.createLinearGradient(0, 0, 0, 70);
+            strip.addColorStop(0, "rgba(0,0,0,0.1)");
+            strip.addColorStop(1, "rgba(0,0,0,0)");
+            g.fillStyle = strip;
+            g.fillRect(0, 0, w, 70);
+            g.fillStyle = "rgba(30,28,24,0.9)";
+            g.textBaseline = "alphabetic";
+            g.font = `700 22px ${MONO}`;
+            g.fillText(`rule ${i + 1}`, 34, 78);
+            g.font = `700 42px ${DISPLAY}`;
+            let line = "";
+            let y = 144;
+            for (const word of rule.split(" ")) {
+              const next = line ? `${line} ${word}` : word;
+              if (line && g.measureText(next).width > w - 68) {
+                g.fillText(line, 34, y);
+                y += 52;
+                line = word;
+              } else line = next;
+            }
+            g.fillText(line, 34, y);
+          }),
+        }),
+      ),
+    );
+    m.position.set((i - (site.principles.length - 1) / 2) * 0.088, -0.035, i * 0.0005);
+    m.rotation.z = [0.05, -0.035, 0.03][i % 3];
+    notes.add(m);
+    markHot(m, "principles");
+  });
 
   // The lock screen: mountains at sunrise, the visitor's local time on top.
   const paper = document.createElement("canvas");
@@ -416,9 +555,21 @@ export async function initRack(
     ridge([[250, 268], [282, 252], [306, 280], [350, 312], [300, 330], [276, 290]], "#a3bad9", "#557aa9", 345);
     ridge([[420, 366], [456, 334], [480, 298], [492, 268], [504, 292], [524, 324], [566, 360]], "#f6faff", "#6189ba", 380);
     ridge([[492, 268], [504, 292], [524, 324], [566, 360], [520, 366], [500, 320]], "#9db6d8", "#5b82b2", 372);
-    // haze + green hills
-    ridge([[0, 372], [140, 352], [300, 340], [420, 322], [520, 318], [640, 332], [760, 350], [900, 372], [W, 392]], "#4f8f76", "#a9cfc4", 470);
-    ridge([[0, 410], [200, 392], [420, 372], [620, 360], [800, 372], [W, 352]], "#6aa58a", "#cfe6dc", 520);
+    // Foothills: four ridgelines, bluer and paler with distance, with mist
+    // pooling in the valleys between them.
+    const hills = (base: number, amp: number, seed: number, top: string, bottom: string) => {
+      const pts: number[][] = [];
+      for (let x = 0; x <= W; x += 8) {
+        const u = x / W;
+        const n = Math.sin(u * 5.1 + seed) * 0.5 + Math.sin(u * 11.7 + seed * 2.3) * 0.28 + Math.sin(u * 27.3 + seed * 4.1) * 0.13 + Math.sin(u * 61 + seed * 7.7) * 0.06;
+        pts.push([x, base - n * amp]);
+      }
+      ridge(pts, top, bottom, base + 160);
+    };
+    hills(352, 24, 1.3, "#86a8c8", "#cfe3ea");
+    hills(386, 28, 4.1, "#5f8f93", "#c2dcd6");
+    hills(428, 32, 2.2, "#3d7a63", "#a3cbb5");
+    hills(484, 28, 5.6, "#22573f", "#5f9c7c");
     const haze = g.createLinearGradient(0, 380, 0, H);
     haze.addColorStop(0, "rgba(214,234,232,0)");
     haze.addColorStop(0.5, "rgba(214,234,232,0.3)");
@@ -455,7 +606,7 @@ export async function initRack(
     .slice(0, 2)
     .toUpperCase();
   const fmtDate = new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric" });
-  function drawLock(now: Date) {
+  function drawLock(now: Date, dots: number) {
     const W = scr.width;
     const H = scr.height;
     sg.drawImage(paper, 0, 0);
@@ -477,112 +628,178 @@ export async function initRack(
     sg.fillText(initials, W / 2, H - 105);
     sg.font = `500 15px ${DISPLAY}`;
     sg.fillText(site.name, W / 2, H - 70);
-    sg.fillStyle = "rgba(255,255,255,0.28)";
-    sg.fillRect(W / 2 - 70, H - 58, 140, 20);
+    // Password field: a hint until the visitor clicks, then the dots.
+    sg.fillStyle = "rgba(255,255,255,0.26)";
+    sg.beginPath();
+    sg.roundRect(W / 2 - 84, H - 60, 168, 26, 13);
+    sg.fill();
+    sg.fillStyle = "rgba(255,255,255,0.92)";
+    if (dots > 0) {
+      for (let i = 0; i < dots; i++) {
+        sg.beginPath();
+        sg.arc(W / 2 - 61 + i * 17.5, H - 47, 4, 0, Math.PI * 2);
+        sg.fill();
+      }
+    } else {
+      sg.font = `500 12.5px ${DISPLAY}`;
+      sg.fillText("click to unlock", W / 2, H - 42.5);
+    }
     sg.textAlign = "left";
   }
 
-  // Selecting the monitor wakes it into a terminal.
-  const age = `${new Date().getFullYear() - site.opsStart}y`;
-  const pad = (s: string, n: number) => s.padEnd(n, " ");
-  type TL = { t: "cmd" | "out" | "head" | "kv"; s: string; k?: string };
-  const term: TL[] = [
-    { t: "cmd", s: "kubectl get engineer" },
-    { t: "head", s: `${pad("NAME", 13)}${pad("READY", 7)}${pad("STATUS", 9)}AGE` },
-    { t: "out", s: `${pad(site.handle, 13)}${pad("1/1", 7)}${pad("Running", 9)}${age}` },
-    { t: "cmd", s: `kubectl describe engineer ${site.handle}` },
-    { t: "kv", k: "Location", s: site.location },
-    ...site.currently.map((c) => ({ t: "kv" as const, k: c.key, s: c.value })),
-    { t: "kv", k: "Status", s: site.available ? site.availableLabel : "heads-down" },
-  ];
-  const termChars = term.reduce((n, l) => n + (l.t === "cmd" ? l.s.length + 8 : 2), 0);
-  function drawTerm(t: number) {
-    const prog = reduced ? termChars : Math.max(0, (t - 0.5) * 34);
-    const caret = Math.floor(t * 2) % 2 === 0;
+  // The unlocked desktop as the camera sees it from across the room. Up
+  // close, DeskOS.astro lays the real, clickable one over the screen at the
+  // same coordinates, and the canvas keeps only the wallpaper.
+  const fmtBar = new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  function glyph(kind: string, x: number, y: number, w: number, h: number) {
+    const g = sg;
+    g.save();
+    g.translate(x, y);
+    g.scale(w / 44, h / 52);
+    g.shadowColor = "rgba(0,0,0,0.4)";
+    g.shadowBlur = 5;
+    g.shadowOffsetY = 2;
+    if (kind === "dir") {
+      g.fillStyle = "#5aa9f0";
+      g.beginPath();
+      g.roundRect(3, 11, 38, 33, 3);
+      g.fill();
+      g.shadowColor = "transparent";
+      g.fillStyle = "#7fc1ff";
+      g.beginPath();
+      g.roundRect(3, 21, 38, 23, 3);
+      g.fill();
+    } else if (kind === "term") {
+      g.fillStyle = "#15181c";
+      g.beginPath();
+      g.roundRect(3, 8, 38, 36, 7);
+      g.fill();
+      g.shadowColor = "transparent";
+      g.strokeStyle = C.ok;
+      g.lineWidth = 2.6;
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(11, 20);
+      g.lineTo(17, 26);
+      g.lineTo(11, 32);
+      g.moveTo(21, 33);
+      g.lineTo(32, 33);
+      g.stroke();
+    } else if (kind === "card") {
+      g.fillStyle = "#f4f4f1";
+      g.beginPath();
+      g.roundRect(4, 11, 36, 30, 4);
+      g.fill();
+      g.shadowColor = "transparent";
+      g.fillStyle = "#8c97a3";
+      g.beginPath();
+      g.arc(15, 23, 5, 0, Math.PI * 2);
+      g.fill();
+      g.fillRect(8, 31, 14, 6);
+      g.fillRect(26, 20, 10, 2);
+      g.fillRect(26, 26, 10, 2);
+    } else {
+      g.fillStyle = "#f4f4f1";
+      g.beginPath();
+      g.moveTo(7, 3);
+      g.lineTo(27, 3);
+      g.lineTo(37, 13);
+      g.lineTo(37, 49);
+      g.lineTo(7, 49);
+      g.closePath();
+      g.fill();
+      g.shadowColor = "transparent";
+      g.fillStyle = "#cfd3d8";
+      g.beginPath();
+      g.moveTo(27, 3);
+      g.lineTo(27, 13);
+      g.lineTo(37, 13);
+      g.closePath();
+      g.fill();
+      g.fillStyle = kind === "code" ? "#3f6fd0" : kind === "chart" ? "#2fae6d" : "#9aa3ad";
+      if (kind === "chart") for (const [bx, bh] of [[13, 10], [19, 16], [25, 7], [31, 19]]) g.fillRect(bx, 40 - bh, 3.2, bh);
+      else for (const ly of [22, 28, 34, 40]) g.fillRect(13, ly - 1, ly === 40 ? 11 : 18, 2);
+    }
+    g.restore();
+  }
+  function drawDesktop(now: Date) {
     const W = scr.width;
     const H = scr.height;
-    sg.fillStyle = "#050a0d";
-    sg.fillRect(0, 0, W, H);
-    sg.fillStyle = "#0e151c";
-    sg.fillRect(0, 0, W, 58);
+    sg.drawImage(paper, 0, 0);
+    // menu bar
+    sg.fillStyle = "rgba(18,18,22,0.42)";
+    sg.fillRect(0, 0, W, 26);
     sg.textBaseline = "middle";
     sg.textAlign = "left";
-    sg.font = `500 26px ${MONO}`;
-    sg.fillStyle = C.mut;
-    sg.fillText(`${site.handle}@prod: ~`, 28, 30);
-    sg.textAlign = "right";
     sg.fillStyle = C.ok;
-    sg.fillText(`● ${site.region}`, W - 28, 30);
+    sg.font = `700 11px ${DISPLAY}`;
+    sg.fillText("◆", 14, 14);
+    sg.fillStyle = "rgba(255,255,255,0.95)";
+    sg.font = `700 12.5px ${DISPLAY}`;
+    sg.fillText("Finder", 40, 14);
+    sg.font = `500 12.5px ${DISPLAY}`;
+    let mx = 96;
+    for (const item of ["File", "Edit", "View", "Go", "Window"]) {
+      sg.fillText(item, mx, 14);
+      mx += sg.measureText(item).width + 16;
+    }
+    sg.textAlign = "right";
+    sg.fillText(fmtBar.format(now).replace(/,/g, ""), W - 14, 14);
+    // files: a column down the right edge, wrapping leftward
+    sg.textAlign = "center";
+    sg.font = `500 11.5px ${DISPLAY}`;
+    [...deskFiles.map((f) => ({ name: f.name as string, kind: f.kind as string })), { name: "blog ↗", kind: "txt" }].forEach((f, i) => {
+      const cx = W - 58 - Math.floor(i / 6) * 96;
+      const y = 44 + (i % 6) * 82;
+      glyph(f.kind, cx - 19, y, 38, 45);
+      sg.fillStyle = "rgba(0,0,0,0.55)";
+      sg.fillText(f.name, cx + 0.5, y + 57.5);
+      sg.fillStyle = "#fff";
+      sg.fillText(f.name, cx, y + 56.5);
+    });
+    // dock
+    const dw = dockFiles.length * 42 + 14;
+    sg.fillStyle = "rgba(40,40,46,0.5)";
+    sg.strokeStyle = "rgba(255,255,255,0.16)";
+    sg.lineWidth = 1;
+    sg.beginPath();
+    sg.roundRect(W / 2 - dw / 2, H - 62, dw, 54, 16);
+    sg.fill();
+    sg.stroke();
+    dockFiles.forEach((id, i) => {
+      const f = deskFiles.find((x) => x.id === id)!;
+      glyph(f.kind, W / 2 - dw / 2 + 10 + i * 42, H - 56, 36, 42);
+    });
     sg.textAlign = "left";
-    const LH = 44;
-    let yy = 98;
-    let left = prog;
-    let done = true;
-    sg.font = `500 30px ${MONO}`;
-    for (const l of term) {
-      if (left <= 0) {
-        done = false;
-        break;
-      }
-      if (l.t === "cmd") {
-        const n = Math.min(l.s.length, Math.floor(left));
-        sg.fillStyle = C.ok;
-        sg.fillText("$", 28, yy);
-        sg.fillStyle = C.fg;
-        sg.fillText(l.s.slice(0, n), 64, yy);
-        if (n < l.s.length) {
-          if (caret) sg.fillRect(64 + sg.measureText(l.s.slice(0, n)).width + 3, yy - 18, 16, 36);
-          done = false;
-          break;
-        }
-        left -= l.s.length + 8;
-        if (left <= 0) {
-          done = false;
-          break;
-        }
-      } else {
-        if (l.t === "kv") {
-          sg.fillStyle = C.info;
-          sg.fillText(pad(`${l.k}:`, 12), 28, yy);
-          sg.fillStyle = l.k === "Status" ? C.ok : C.fg;
-          sg.fillText(l.s, 28 + sg.measureText(pad("", 12)).width, yy);
-        } else {
-          sg.fillStyle = l.t === "head" ? C.mut : C.fg;
-          sg.fillText(l.s, 28, yy);
-        }
-        left -= 2;
-      }
-      yy += LH;
-    }
-    if (done) {
-      sg.fillStyle = C.ok;
-      sg.fillText("$", 28, yy);
-      if (caret) {
-        sg.fillStyle = C.fg;
-        sg.fillRect(64, yy - 18, 16, 36);
-      }
-    }
     sg.textBaseline = "alphabetic";
   }
+
+  // The monitor starts locked. The first visit to it types a password and
+  // unlocks it; after that it stays a desktop.
+  let unlocked = false;
+  let unlockAt = -1;
+  let typed = 0;
+  /** True while the HTML desktop is laid over the screen. */
+  let osOn = false;
   let screenKey = "";
-  let termSince = 0;
-  function drawScreen(t: number, termOn: boolean) {
+  function drawScreen() {
     const now = new Date();
-    const key = termOn
-      ? `t${Math.min((reduced ? termChars : Math.max(0, (t - termSince - 0.5) * 34)) | 0, termChars)}:${Math.floor((t - termSince) * 2) % 2}`
-      : `l${now.getHours()}:${now.getMinutes()}`;
+    const stamp = `${now.getHours()}:${now.getMinutes()}`;
+    const key = !unlocked ? `l${stamp}:${typed}` : osOn ? "w" : `d${stamp}`;
     if (key === screenKey) return;
     screenKey = key;
-    if (termOn) drawTerm(t - termSince);
-    else drawLock(now);
+    if (!unlocked) drawLock(now, typed);
+    else if (osOn) sg.drawImage(paper, 0, 0);
+    else drawDesktop(now);
     scrTex.needsUpdate = true;
   }
-  drawScreen(0, false);
+  drawScreen();
 
-  // ── table lamp (left) → house rules ────────────────────────────────────
+  // ── table lamp (left) ──────────────────────────────────────────────────
   const lampL = new THREE.Group();
   lampL.position.set(-0.56, TOP, -0.18);
-  scene.add(lampL);
+  rig.add(lampL);
   cyl(0.05, 0.052, 0.022, std("#c9a06a", 0.6), 0, 0.011, 0, lampL, 32);
   cyl(0.005, 0.005, 0.12, white, 0, 0.082, 0, lampL, 10);
   const shadeTex = tex(512, 128, (g, w, h) => {
@@ -610,10 +827,15 @@ export async function initRack(
   shade.position.set(0, 0.2, 0);
   lampL.add(shade);
   const shadeGlow = glow(lampL, 0, 0.2, 0.02, "#ffae38", 0.4, 0.26);
-  hitBox(0.19, 0.28, 0.19, 0, 0.14, 0, "principles", lampL);
+  // Like the desk lamp, it is a real switch: click it to turn it off and on.
+  {
+    const hit = box(0.19, 0.28, 0.19, hitMat, 0, 0.14, 0, lampL);
+    hit.userData.toggle = "lampL";
+    hitTargets.push(hit);
+  }
   // Finial, bulb, and the pools of light the shade throws on wall and desk.
   cyl(0.004, 0.006, 0.012, std("#d9c08a", 0.4, 0.6), 0, 0.258, 0, lampL, 10);
-  glow(lampL, 0, 0.185, 0, "#fff0c8", 0.06, 0.9);
+  const bulbL = glow(lampL, 0, 0.185, 0, "#fff0c8", 0.06, 0.9);
   const poolWallL = disc(1.25, 1.25, -0.56, TOP + 0.24, WALL_Z + 0.006, "#ffab40", 0.3, true);
   poolWallL.mesh.rotation.x = 0;
   const poolDeskL = disc(0.62, 0.5, -0.54, TOP + 0.0008, -0.12, "#ffab40", 0.28, true);
@@ -622,7 +844,7 @@ export async function initRack(
   // ── succulent → AIOps, still growing ───────────────────────────────────
   const plant = new THREE.Group();
   plant.position.set(-0.385, TOP, -0.2);
-  scene.add(plant);
+  rig.add(plant);
   const potTex = tex(256, 64, (g, w, h) => {
     g.fillStyle = "#b9c8bd";
     g.fillRect(0, 0, w, h);
@@ -656,7 +878,7 @@ export async function initRack(
   // ── gooseneck lamp (right) ─────────────────────────────────────────────
   const lampR = new THREE.Group();
   lampR.position.set(0.6, TOP, -0.24);
-  scene.add(lampR);
+  rig.add(lampR);
   cyl(0.058, 0.062, 0.012, white, 0, 0.006, 0, lampR, 32);
   cyl(0.007, 0.007, 0.26, white, 0, 0.14, 0, lampR, 10);
   const neck = new THREE.CatmullRomCurve3([
@@ -680,7 +902,7 @@ export async function initRack(
       new THREE.Vector3(0.3, TOP + 0.005, -0.31),
       new THREE.Vector3(0.24, TOP + 0.005, -0.34),
     ]);
-    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.003, 6)), std("#e8b53a", 0.6)));
+    rig.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.003, 6)), std("#e8b53a", 0.6)));
     box(0.04, 0.012, 0.018, std("#f3f1ec", 0.5), 0.46, TOP + 0.007, -0.293);
   }
   const poolWallR = disc(1.0, 1.0, 0.52, TOP + 0.34, WALL_Z + 0.006, "#ffab40", 0.27, true);
@@ -695,53 +917,106 @@ export async function initRack(
   // ── keyboard + wrist rest → stack ──────────────────────────────────────
   const kb = new THREE.Group();
   kb.position.set(0, TOP + 0.004, 0.1);
-  scene.add(kb);
-  // A 75% board: translucent-white case, one real keycap per key.
+  rig.add(kb);
+  // A 75% board: translucent-white case, one real keycap per key. The caps
+  // dip when the visitor types on their own keyboard.
   const kbTilt = new THREE.Group();
   kbTilt.rotation.x = 0.07;
   kbTilt.position.y = 0.003;
   kb.add(kbTilt);
   const kbBody = rbox(0.318, 0.02, 0.128, 0.006, std("#dfe2e6", 0.35), 0, 0.01, 0, kbTilt);
-  {
-    const U = 0.0192;
-    const lightKey = "#f2f1eb";
-    const modKey = "#8c97a3";
-    const L = (n: number) => Array.from({ length: n }, () => [1, lightKey] as [number, string]);
-    const rows: [number, string][][] = [
-      [[1, "#58b76a"], ...L(13), [1, "#e0463c"]],
-      [...L(13), [2, modKey]],
-      [[1.5, modKey], ...L(12), [1.5, lightKey]],
-      [[1.75, modKey], ...L(11), [2.25, "#3f6fd0"]],
-      [[2.25, modKey], ...L(10), [1.75, modKey], [1, modKey]],
-      [[1.25, modKey], [1.25, modKey], [1.25, modKey], [6.25, "#f0c43c"], [1, modKey], [1, modKey], [1, modKey], [1, modKey], [1, modKey]],
-    ];
-    const keys = rows.flatMap((row, r) => {
-      let x = 0;
-      return row.map(([u, c]) => {
-        const k = { x: x + u / 2, r, u, c };
-        x += u;
-        return k;
-      });
+  const U = 0.0192;
+  const lightKey = "#f2f1eb";
+  const modKey = "#8c97a3";
+  const key = (u: number, c: string, t: string, code: string) => ({ u, c, t, code });
+  // "legend|KeyboardEvent.code"; letters, digits and F-keys name their own code.
+  const light = (spec: string) =>
+    spec.split(" ").map((p) => {
+      const [t, code] = p.split("|");
+      return key(1, lightKey, t, code ?? (/^[A-Z]$/.test(t) ? `Key${t}` : /^[0-9]$/.test(t) ? `Digit${t}` : t));
     });
-    const caps = new THREE.InstancedMesh(track(new RoundedBoxGeometry(1, 1, 1, 2, 0.16)), std("#ffffff", 0.55), keys.length);
-    const m4 = new THREE.Matrix4();
+  const rows = [
+    [key(1, "#58b76a", "esc", "Escape"), ...light("F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 ins|Insert"), key(1, "#e0463c", "del", "Delete")],
+    [...light("`|Backquote 1 2 3 4 5 6 7 8 9 0 -|Minus =|Equal"), key(2, modKey, "⌫", "Backspace")],
+    [key(1.5, modKey, "tab", "Tab"), ...light("Q W E R T Y U I O P [|BracketLeft ]|BracketRight"), key(1.5, lightKey, "\\", "Backslash")],
+    [key(1.75, modKey, "caps", "CapsLock"), ...light("A S D F G H J K L ;|Semicolon '|Quote"), key(2.25, "#3f6fd0", "enter", "Enter")],
+    [key(2.25, modKey, "shift", "ShiftLeft"), ...light("Z X C V B N M ,|Comma .|Period /|Slash"), key(1.75, modKey, "shift", "ShiftRight"), key(1, modKey, "↑", "ArrowUp")],
+    [
+      key(1.25, modKey, "ctrl", "ControlLeft"),
+      key(1.25, modKey, "opt", "AltLeft"),
+      key(1.25, modKey, "cmd", "MetaLeft"),
+      key(6.25, "#f0c43c", "", "Space"),
+      key(1, modKey, "cmd", "MetaRight"),
+      key(1, modKey, "opt", "AltRight"),
+      key(1, modKey, "←", "ArrowLeft"),
+      key(1, modKey, "↓", "ArrowDown"),
+      key(1, modKey, "→", "ArrowRight"),
+    ],
+  ];
+  const keys = rows.flatMap((row, r) => {
+    let x = 0;
+    return row.map((k) => {
+      const placed = { ...k, r, x: x + k.u / 2 };
+      x += k.u;
+      return placed;
+    });
+  });
+  const caps = new THREE.InstancedMesh(track(new RoundedBoxGeometry(1, 1, 1, 2, 0.16)), std("#ffffff", 0.55), keys.length);
+  const m4 = new THREE.Matrix4();
+  // How far down each key is (0..1), what is drawn, and which are held.
+  const keyDown = new Float32Array(keys.length);
+  const keySeat = new Float32Array(keys.length);
+  const held = new Map<number, number>();
+  const codeToKey = new Map(keys.map((k, i) => [k.code, i]));
+  const letterKeys = keys.flatMap((k, i) => (/^Key/.test(k.code) ? [i] : []));
+  function seatKey(i: number) {
+    const k = keys[i];
+    m4.makeScale(k.u * U - 0.0022, 0.0075, U - 0.0022);
+    m4.setPosition((k.x - 7.5) * U, 0.0225 - keyDown[i] * 0.0026, (k.r - 2.5) * U);
+    caps.setMatrixAt(i, m4);
+    keySeat[i] = keyDown[i];
+  }
+  {
     const col = new THREE.Color();
     keys.forEach((k, i) => {
-      m4.makeScale(k.u * U - 0.0022, 0.0075, U - 0.0022);
-      m4.setPosition((k.x - 7.5) * U, 0.0225, (k.r - 2.5) * U);
-      caps.setMatrixAt(i, m4);
+      seatKey(i);
       caps.setColorAt(i, col.set(k.c));
     });
     caps.instanceMatrix.needsUpdate = true;
     if (caps.instanceColor) caps.instanceColor.needsUpdate = true;
     kbTilt.add(caps);
     markHot(caps, "stack");
+    // The legends are printed on one clear sheet that lies on the keycaps.
+    const PX = 96;
+    const legend = new THREE.Mesh(
+      track(new THREE.PlaneGeometry(15 * U, 6 * U)),
+      track(
+        new THREE.MeshStandardMaterial({
+          roughness: 0.6,
+          transparent: true,
+          depthWrite: false,
+          map: tex(15 * PX, 6 * PX, (g) => {
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            for (const k of keys) {
+              if (!k.t) continue;
+              g.fillStyle = k.c === lightKey ? "rgba(44,50,58,0.92)" : "rgba(255,255,255,0.95)";
+              const long = k.t.length > 1;
+              g.font = `${long ? 500 : 600} ${k.t.length > 3 ? 20 : long ? 23 : 36}px ${long ? MONO : DISPLAY}`;
+              g.fillText(k.t, k.x * PX, (k.r + 0.5) * PX + 2);
+            }
+          }),
+        }),
+      ),
+    );
+    legend.rotation.x = -Math.PI / 2;
+    legend.position.set(0, 0.0225 + 0.00375 + 0.00025, 0);
+    kbTilt.add(legend);
   }
   const rest = rbox(0.33, 0.02, 0.082, 0.009, std("#8a9099", 0.95), 0, 0.01, 0.118, kb);
   markHot(kbBody, "stack");
   markHot(rest, "stack");
   shadow(0.42, 0.3, 0, 0.16, TOP + 0.0046, 0.5);
-  shadow(0.1, 0.13, 0.31, 0.172, TOP + 0.0046, 0.55);
   {
     // Coiled charging lead and the earbud case at the left of the mat.
     const c = new THREE.CatmullRomCurve3([
@@ -753,24 +1028,35 @@ export async function initRack(
       new THREE.Vector3(-0.3, TOP + 0.004, -0.06),
       new THREE.Vector3(-0.3, TOP + 0.004, -0.2),
     ]);
-    scene.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 40, 0.0025, 6)), std("#ecebe6", 0.6)));
+    rig.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 40, 0.0025, 6)), std("#ecebe6", 0.6)));
     box(0.05, 0.022, 0.045, std("#eeece7", 0.4), -0.215, TOP + 0.011, -0.045);
   }
 
-  // Mouse.
+  // Mouse. It follows the visitor's pointer a little, and dips on a click.
+  const MOUSE = { x: 0.31, y: TOP + 0.004, z: 0.17 };
+  const mouse = new THREE.Group();
+  mouse.position.set(MOUSE.x, MOUSE.y, MOUSE.z);
+  rig.add(mouse);
   {
-    const m = new THREE.Mesh(track(new THREE.SphereGeometry(0.03, 20, 14)), std("#1b1d20", 0.45));
-    m.scale.set(1, 0.55, 1.6);
-    m.position.set(0.31, TOP + 0.018, 0.17);
-    scene.add(m);
+    const body = new THREE.Mesh(track(new THREE.SphereGeometry(0.03, 24, 16)), std("#1b1d20", 0.42));
+    body.scale.set(1, 0.55, 1.6);
+    body.position.y = 0.014;
+    mouse.add(body);
+    cyl(0.0045, 0.0045, 0.006, std("#3a3d42", 0.5), 0, 0.0262, -0.02, mouse, 12).rotation.z = Math.PI / 2;
+    disc(0.1, 0.13, 0, 0.0007, 0.002, "#000000", 0.25, false, mouse);
   }
 
-  // Mug of something hot, with steam curling off it.
+  // Mug of something hot, with steam curling off it. Click it for a sip.
   const steam: { mat: THREE.SpriteMaterial; sprite: THREE.Sprite; phase: number }[] = [];
+  const MUG = { x: 0.215, y: TOP + 0.004, z: 0 };
+  const mug = new THREE.Group();
+  mug.position.set(MUG.x, MUG.y, MUG.z);
+  rig.add(mug);
+  let sipAt = -9;
   {
-    const mug = new THREE.Group();
-    mug.position.set(0.215, TOP + 0.004, 0.0);
-    scene.add(mug);
+    const hit = box(0.1, 0.11, 0.1, hitMat, 0.008, 0.05, 0, mug);
+    hit.userData.toggle = "mug";
+    hitTargets.push(hit);
     const glaze = std("#e9dfcf", 0.35);
     cyl(0.036, 0.032, 0.082, glaze, 0, 0.041, 0, mug, 28);
     cyl(0.031, 0.031, 0.002, std("#2a1a10", 0.3), 0, 0.0815, 0, mug, 24);
@@ -802,13 +1088,13 @@ export async function initRack(
   const dustMat = track(
     new THREE.PointsMaterial({ size: 0.011, map: glowTex, color: "#ffd9a0", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
   );
-  scene.add(new THREE.Points(dustGeo, dustMat));
+  rig.add(new THREE.Points(dustGeo, dustMat));
 
   // ── laptop + glasses → signals ─────────────────────────────────────────
   const lap = new THREE.Group();
   lap.position.set(0.43, TOP, -0.06);
   lap.rotation.y = -0.05;
-  scene.add(lap);
+  rig.add(lap);
   const lapBody = rbox(0.31, 0.013, 0.215, 0.006, std("#c9ccd0", 0.32, 0.9), 0, 0.0065, 0, lap);
   markHot(lapBody, "signals");
   {
@@ -842,7 +1128,7 @@ export async function initRack(
   const phone = new THREE.Group();
   phone.position.set(-0.3, TOP + 0.004, 0.13);
   phone.rotation.y = 0.3;
-  scene.add(phone);
+  rig.add(phone);
   const phoneTop = track(
     new THREE.MeshBasicMaterial({
       map: tex(256, 520, (g, w, h) => {
@@ -927,7 +1213,7 @@ export async function initRack(
     const BH = 0.03;
     grp.position.set(-0.565 + ((i % 2) - 0.5) * 0.008, TOP + (n - 1 - i) * (BH + 0.001) + BH / 2, 0.19);
     grp.rotation.y = 0.1 + (i % 2 ? -0.07 : 0.05) * (i + 1) * 0.5;
-    scene.add(grp);
+    rig.add(grp);
     const b = box(0.215, BH, 0.155, [pages, cover, top, cover, spine, pages], 0, 0, 0, grp);
     markHot(b, `role-${i}`);
     hots.push({
@@ -946,23 +1232,23 @@ export async function initRack(
   scene.updateMatrixWorld(true);
   const up = (y: number, z: number) => new THREE.Vector3(0, y, z).normalize();
   hots.push(
-    { id: "console", label: "monitor · about", pos: screen.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0, 1), dist: 1.2, w: 0.68 },
+    { id: "console", label: "monitor · unlock", pos: screen.getWorldPosition(new THREE.Vector3()), normal: new THREE.Vector3(0, 0, 1), dist: 1.2, w: 0.68 },
     { id: "aiops", label: "succulent · AIOps, still growing", pos: worldOf(plant, 0, 0.06, 0), normal: up(0.3, 0.95), dist: 0.5, lift: plant },
     { id: "stack", label: "keyboard · stack", pos: worldOf(kb, 0, 0.01, 0.04), normal: up(0.8, 0.6), dist: 0.66, w: 0.4, lift: kb },
     { id: "signals", label: "laptop · signals", pos: worldOf(lap, 0, 0.02, 0), normal: up(0.7, 0.72), dist: 0.8, w: 0.36, lift: lap },
-    { id: "principles", label: "lamp · house rules", pos: worldOf(lampL, 0, 0.15, 0), normal: new THREE.Vector3(0.38, 0.2, 0.9).normalize(), dist: 0.72 },
+    { id: "principles", label: "sticky notes · house rules", pos: worldOf(notes, 0, -0.035, 0), normal: up(0.12, 1), dist: 0.52, w: 0.3 },
     { id: "contact", label: "phone · contact", pos: worldOf(phone, 0, 0.01, 0), normal: up(0.86, 0.5), dist: 0.5, lift: phone },
   );
   for (const h of hots) if (h.lift) (h.liftBase = h.lift.position.y), (h.liftNow = 0);
   // A soft point of light above each thing that opens.
-  const beaconY: Record<string, number> = { console: 0.23, aiops: 0.1, stack: 0.07, signals: 0.09, principles: 0.19, contact: 0.07 };
+  const beaconY: Record<string, number> = { console: 0.23, aiops: 0.1, stack: 0.07, signals: 0.09, principles: -0.05, contact: 0.07 };
   for (const h of hots) {
     const isBook = h.id.startsWith("role-");
     if (isBook && h.id !== "role-0") continue; // one beacon for the stack of books
     const p = h.pos.clone();
     p.y += isBook ? 0.075 : (beaconY[h.id] ?? 0.08);
     if (isBook) p.z -= 0.08;
-    h.beacon = glow(scene, p.x, p.y, p.z + 0.02, "#ffd27a", 0.034, 0.9);
+    h.beacon = glow(rig, p.x, p.y, p.z + 0.02, "#ffd27a", 0.024, 0.9);
   }
 
   // Everything solid casts and receives the lamps' shadows; flat blended
@@ -992,17 +1278,17 @@ export async function initRack(
   scene.add(fill);
   const lampLLight = new THREE.PointLight("#ffb347", 1.05, 2.0, 1.9);
   lampLLight.position.copy(worldOf(lampL, 0, 0.19, 0.03));
-  scene.add(lampLLight);
+  rig.add(lampLLight);
   // The lamps also throw the scene's real shadows: the table lamp rakes
   // across the desk from the left, the desk lamp shines down on the right.
   const lampLDown = new THREE.SpotLight("#ffb955", 1.25, 3.2, 1.15, 0.9, 1.5);
   lampLDown.position.copy(worldOf(lampL, 0.02, 0.17, 0.02));
   lampLDown.target.position.set(0.25, TOP, 0.1);
-  scene.add(lampLDown, lampLDown.target);
+  rig.add(lampLDown, lampLDown.target);
   const lampRSpot = new THREE.SpotLight("#ffb955", 1.1, 2.4, 0.95, 0.85, 1.5);
   lampRSpot.position.copy(worldOf(lampR, -0.112, 0.305, 0.068));
   lampRSpot.target.position.set(0.2, TOP, 0.12);
-  scene.add(lampRSpot, lampRSpot.target);
+  rig.add(lampRSpot, lampRSpot.target);
   for (const l of [lampLDown, lampRSpot]) {
     l.castShadow = true;
     l.shadow.mapSize.set(small ? 512 : 1024, small ? 512 : 1024);
@@ -1014,14 +1300,14 @@ export async function initRack(
   }
   const lampRLight = new THREE.PointLight("#ffb347", 0.8, 1.7, 1.9);
   lampRLight.position.copy(worldOf(lampR, -0.12, 0.29, 0.09));
-  scene.add(lampRLight);
+  rig.add(lampRLight);
   const monLight = new THREE.PointLight("#a9cdfa", 0.3, 2.2, 1.6);
   monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, -0.05, 0.3));
-  scene.add(monLight);
+  rig.add(monLight);
   // The cool spill behind the monitor onto the wall.
   const backLight = new THREE.PointLight("#9dbdf5", 0.12, 1.2, 1.6);
   backLight.position.copy(worldOf(mon, 0, SCY, -0.12));
-  scene.add(backLight);
+  rig.add(backLight);
 
   // ── camera ─────────────────────────────────────────────────────────────
   const home = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -1031,29 +1317,42 @@ export async function initRack(
   let selected: Hot | null = null;
   const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
 
+  // How far the desk has risen above sitting height.
+  let rigY = 0;
+  let rigT = 0;
+  const consoleHot = hots.find((h) => h.id === "console")!;
+
   function place() {
     const portrait = aspect < 0.9;
     // The detail panel sits at the bottom up to 760px wide, else on the right.
     const sheetBottom = matchMedia("(max-width: 760px)").matches;
-    // Fit the desk and a little room either side (the desk alone on phones).
-    const dist = Math.max(1.5, (portrait ? 0.78 : 0.84) / (tanV * aspect));
-    // On wide screens the name sits bottom-left, so the desk is framed a
-    // little right of centre; on phones it sits above, so the desk is low.
-    const cx = portrait ? 0 : -0.2;
-    home.look.set(cx, portrait ? 1.03 : 0.78, 0);
-    home.pos.set(cx - 0.12, portrait ? 1.16 : 0.97, dist);
+    // The desk fills the frame, with a little room either side. The view
+    // follows it most of the way up when it is raised.
+    const dist = Math.max(1.4, (portrait ? 0.72 : 0.8) / (tanV * aspect));
+    const lift = rigY * 0.8;
+    home.look.set(0, (portrait ? 0.84 : 0.88) + lift, 0);
+    home.pos.set(-0.1, (portrait ? 1.06 : 1.12) + lift, dist);
     if (!selected) {
       want.pos.copy(home.pos);
       want.look.copy(home.look);
       return;
     }
     const h = selected;
+    const p = h.pos.clone();
+    p.y += rigY;
+    if (h === consoleHot) {
+      // Square on, with the screen filling most of the stage: the HTML
+      // desktop is laid over it, so there is no panel to make room for.
+      const d = Math.max(0.45, SW / (2 * tanV * aspect * 0.9), SH / (2 * tanV * 0.84));
+      want.look.copy(p);
+      want.pos.copy(p).addScaledVector(h.normal, d);
+      return;
+    }
     // Far enough back that the whole object fits in the part of the view the
     // panel leaves free (all of the width above a bottom sheet, about half
     // of it beside a side panel).
     const free = sheetBottom ? 0.9 : 0.52;
     const d = Math.max(h.dist * (sheetBottom ? 1.3 : 1), (h.w ?? 0.2) / (2 * tanV * aspect * free));
-    const p = h.pos.clone();
     const right = new THREE.Vector3(h.normal.z, 0, -h.normal.x).normalize();
     const shift = new THREE.Vector3();
     if (sheetBottom) shift.y = -0.22 * 2 * d * tanV; // sheet covers the bottom half
@@ -1064,17 +1363,66 @@ export async function initRack(
   }
 
   // ── lens ───────────────────────────────────────────────────────────────
-  // Bloom lets the lamps and screen glow the way a camera sees them; a last
-  // pass adds a soft vignette and a little film grain.
+  // A shallow depth of field keeps the eye on what the camera is looking at,
+  // bloom lets the lamps and screen glow the way a camera sees them, and a
+  // last pass adds a soft vignette and a little film grain.
   const target = track(new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: small ? 0 : 4 }));
+  // Depth of field reads the scene's depth. Phones skip it.
+  const dofOn = !small;
+  if (dofOn) target.depthTexture = new THREE.DepthTexture(4, 4);
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
+  const VERT = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }";
+  class DofPass extends ShaderPass {
+    // The composer swaps its two buffers; depth is in whichever was just drawn.
+    render(...args: Parameters<ShaderPass["render"]>) {
+      this.uniforms.tDepth.value = args[2].depthTexture;
+      super.render(...args);
+    }
+  }
+  const dof = new DofPass({
+    uniforms: {
+      tDiffuse: { value: null },
+      tDepth: { value: null },
+      uNear: { value: camera.near },
+      uFar: { value: camera.far },
+      uFocus: { value: 2 },
+      uAperture: { value: 0 },
+      uPx: { value: new THREE.Vector2(1, 1) },
+    },
+    vertexShader: VERT,
+    // Each pixel gathers from a disc as wide as it is out of focus. A sample
+    // only counts if it is at least that blurred itself, so sharp things do
+    // not smear into the soft background behind them.
+    fragmentShader: `uniform sampler2D tDiffuse; uniform sampler2D tDepth;
+      uniform float uNear; uniform float uFar; uniform float uFocus; uniform float uAperture; uniform vec2 uPx;
+      varying vec2 vUv;
+      float dist(vec2 uv){ float z = texture2D(tDepth, uv).x * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
+      float coc(float d){ return min(abs(d - uFocus) / d * uAperture, 9.0); }
+      void main(){
+        float c0 = coc(dist(vUv));
+        vec3 sum = texture2D(tDiffuse, vUv).rgb;
+        float n = 1.0;
+        for (int i = 1; i <= 22; i++){
+          float f = float(i);
+          float r = sqrt(f / 22.0) * c0;
+          vec2 uv = vUv + vec2(cos(f * 2.39996), sin(f * 2.39996)) * r * uPx;
+          float w = clamp(coc(dist(uv)) - r + 1.0, 0.0, 1.0);
+          sum += texture2D(tDiffuse, uv).rgb * w;
+          n += w;
+        }
+        gl_FragColor = vec4(sum / n, 1.0);
+      }`,
+  });
+  if (dofOn) composer.addPass(dof);
+  let focus = 2;
+  let aperture = 0;
   const bloom = new UnrealBloomPass(new THREE.Vector2(4, 4), 0.2, 0.6, 0.92);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const lens = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uGrain: { value: reduced ? 0.0 : 0.035 } },
-    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    vertexShader: VERT,
     fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uGrain; varying vec2 vUv;
       float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uTime) * 43758.5453); }
       void main(){
@@ -1087,14 +1435,21 @@ export async function initRack(
   });
   composer.addPass(lens);
 
+  let stageW = 1;
+  let stageH = 1;
   function resize() {
     const w = stage.clientWidth;
     const h = stage.clientHeight;
     if (!w || !h) return;
+    stageW = w;
+    stageH = h;
     aspect = w / h;
     renderer.setSize(w, h, false);
     composer.setPixelRatio(renderer.getPixelRatio());
     composer.setSize(w, h);
+    // Blur is set in pixels of a 900px-tall frame, so it looks the same at any size.
+    const ph = h * renderer.getPixelRatio();
+    dof.uniforms.uPx.value.set(ph / 900 / (w * renderer.getPixelRatio()), 1 / 900);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
     place();
@@ -1109,10 +1464,55 @@ export async function initRack(
   let dirty = true;
   const byId = (id: string | null) => hots.find((h) => h.id === id) ?? null;
 
-  // The desk lamp's switch, and how far the visitor has dragged the view.
+  // The things that work: both lamps, the desk's motor, the mug.
   let lampROn = true;
   let lampRLevel = 1;
-  let overToggle = false;
+  let lampLOn = true;
+  let lampLLevel = 1;
+  let deskUp = false;
+  let overToggle: string | null = null;
+  const toggleHint = (t: string) =>
+    t === "lampR"
+      ? `desk lamp · switch ${lampROn ? "off" : "on"}`
+      : t === "lampL"
+        ? `table lamp · switch ${lampLOn ? "off" : "on"}`
+        : t === "desk"
+          ? `standing desk · ${deskUp ? "lower it" : "raise it"}`
+          : "coffee · take a sip";
+  function toggle(t: string) {
+    if (t === "lampR") lampROn = !lampROn;
+    else if (t === "lampL") lampLOn = !lampLOn;
+    else if (t === "desk") deskUp = !deskUp;
+    else if (t === "mug" && time - sipAt > 1.7) sipAt = time;
+    dirty = true;
+  }
+  // The visitor's own keyboard works the one on the desk.
+  function onKeyDown(e: KeyboardEvent) {
+    const i = codeToKey.get(e.code);
+    if (i === undefined) return;
+    held.set(i, time);
+    keyDown[i] = 1;
+    dirty = true;
+  }
+  function onKeyUp(e: KeyboardEvent) {
+    const i = codeToKey.get(e.code);
+    // The OS swallows key-ups while Cmd is down; letting go of it frees all.
+    if (e.key === "Meta") held.clear();
+    else if (i !== undefined) held.delete(i);
+    dirty = true;
+  }
+  const onBlur = () => held.clear();
+  // Where the pointer is over the whole stage (-1..1), for the desk mouse.
+  const mp = new THREE.Vector2(0, 0);
+  let mouseDip = 0;
+  function onStageMove(e: PointerEvent) {
+    if (e.pointerType === "touch") return;
+    const r = stage.getBoundingClientRect();
+    mp.set(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1);
+  }
+  const onStageDown = () => {
+    mouseDip = 1;
+  };
   const orbit = { yaw: 0, pitch: 0, nowYaw: 0, nowPitch: 0 };
   let drag: { x: number; y: number; id: number; moved: boolean } | null = null;
   let dragged = false;
@@ -1138,7 +1538,8 @@ export async function initRack(
     dragged = false;
   }
   function onMove(e: PointerEvent) {
-    if (drag && e.pointerId === drag.id) {
+    // At the computer the view stays square on to the screen.
+    if (drag && e.pointerId === drag.id && selected !== consoleHot) {
       const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
       // A sideways drag looks around the desk. On touch, a mostly vertical
@@ -1162,11 +1563,11 @@ export async function initRack(
     if (e.pointerType === "touch") return;
     const o = pickRaw(e);
     const h = o?.userData.hot ? byId(o.userData.hot) : null;
-    overToggle = !!o?.userData.toggle;
+    overToggle = (o?.userData.toggle as string | undefined) ?? null;
     par.copy(ptr);
     hovered = h;
-    canvas.style.cursor = h || overToggle ? "pointer" : "grab";
-    on.hover(overToggle ? `desk lamp · switch ${lampROn ? "off" : "on"}` : h && h !== selected ? h.label : null, e.clientX, e.clientY);
+    canvas.style.cursor = h || overToggle ? "pointer" : selected === consoleHot ? "" : "grab";
+    on.hover(overToggle ? toggleHint(overToggle) : h && h !== selected ? h.label : null, e.clientX, e.clientY);
     dirty = true;
   }
   function onUp(e: PointerEvent) {
@@ -1174,7 +1575,7 @@ export async function initRack(
   }
   function onLeave() {
     clearHover();
-    overToggle = false;
+    overToggle = null;
     par.set(0, 0);
     dirty = true;
   }
@@ -1186,9 +1587,11 @@ export async function initRack(
     }
     const o = pickRaw(e);
     on.hover(null, 0, 0);
-    if (o?.userData.toggle) {
-      lampROn = !lampROn;
-      dirty = true;
+    const t = o?.userData.toggle as string | undefined;
+    if (t) {
+      toggle(t);
+      // Under a mouse the hint stays up and now says the opposite.
+      if (overToggle) on.hover(toggleHint(t), e.clientX, e.clientY);
       return;
     }
     const h = o?.userData.hot ? byId(o.userData.hot) : null;
@@ -1200,6 +1603,11 @@ export async function initRack(
   canvas.addEventListener("pointercancel", onUp);
   canvas.addEventListener("pointerleave", onLeave);
   canvas.addEventListener("click", onClick);
+  stage.addEventListener("pointermove", onStageMove);
+  stage.addEventListener("pointerdown", onStageDown);
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+  window.addEventListener("blur", onBlur);
   // After a lost GPU context comes back, the reduced-motion path (which only
   // draws on change) needs telling that the canvas is blank.
   const onRestore = () => {
@@ -1229,6 +1637,25 @@ export async function initRack(
   look.copy(home.look);
 
   const orbitOff = new THREE.Vector3();
+  const corner = new THREE.Vector3();
+  /** The screen's outline on the stage, from its four corners. */
+  function screenRect(): ScreenRect {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      corner.set((sx * SW) / 2, (sy * SH) / 2, 0);
+      screen.localToWorld(corner).project(camera);
+      const x = (corner.x * 0.5 + 0.5) * stageW;
+      const y = (-corner.y * 0.5 + 0.5) * stageH;
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
   const clock = new THREE.Clock();
   let time = 0;
   let raf = 0;
@@ -1249,13 +1676,42 @@ export async function initRack(
       dirty = false;
     }
     const k = reduced ? 1 : 1 - Math.exp(-dt * 3.2);
+    const using = selected === consoleHot;
+
+    // The desk motor: a steady climb, eased at both ends. The camera, the
+    // power lead and the controller's read-out all follow it.
+    const rigWant = deskUp ? 1 : 0;
+    if (rigT !== rigWant) {
+      rigT = reduced ? rigWant : THREE.MathUtils.clamp(rigT + (Math.sign(rigWant - rigT) * dt) / 2.8, 0, 1);
+      rigY = RISE * rigT * rigT * (3 - 2 * rigT);
+      rig.position.y = rigY;
+      hangLead(rigY);
+      drawCtrl(rigY);
+      place();
+    }
+
+    // First visit to the monitor: the password goes in a key at a time,
+    // then it unlocks.
+    if (using && !unlocked && unlockAt >= 0) {
+      const since = time - unlockAt;
+      const n = reduced ? 8 : THREE.MathUtils.clamp(Math.floor((since - 0.75) / 0.085), 0, 8);
+      if (n > typed) {
+        typed = n;
+        keyDown[letterKeys[(Math.random() * letterKeys.length) | 0]] = 1;
+      }
+      if (reduced || since > 1.6) {
+        unlocked = true;
+        consoleHot.label = "monitor · use the computer";
+      }
+    }
 
     // camera
     const px = selected || reduced ? 0 : par.x * 0.1;
     const py = selected || reduced ? 0 : par.y * 0.05;
-    // The dragged view eases back to centre once the visitor lets go.
-    if (!drag?.moved) {
-      const back = reduced ? 0 : Math.exp(-dt * 0.35);
+    // The dragged view eases back to centre once the visitor lets go, and
+    // snaps back when they sit down at the computer.
+    if (!drag?.moved || using) {
+      const back = reduced || using ? 0 : Math.exp(-dt * 0.35);
       orbit.yaw *= back;
       orbit.pitch *= back;
     }
@@ -1275,6 +1731,46 @@ export async function initRack(
     camera.position.z = Math.max(camera.position.z, WALL_Z + 0.3);
     look.lerp(want.look, k);
     camera.lookAt(look);
+
+    // Once the camera has arrived at the unlocked screen, the HTML desktop
+    // goes over it and is kept glued to it from then on.
+    const arrived = camera.position.distanceTo(want.pos) < 0.05 && Math.abs(orbit.nowYaw) + Math.abs(orbit.nowPitch) < 0.02;
+    const show = using && unlocked && (osOn || arrived);
+    if (show) {
+      camera.updateMatrixWorld();
+      on.screen(screenRect());
+    } else if (osOn) on.screen(null);
+    osOn = show;
+
+    // Keys spring back; the mouse trails the pointer; the mug takes its sip.
+    {
+      const kk = reduced ? 1 : 1 - Math.exp(-dt * 26);
+      let moved = false;
+      for (let i = 0; i < keyDown.length; i++) {
+        const since = held.get(i);
+        if (since !== undefined && time - since > 2.5) held.delete(i);
+        const to = held.has(i) ? 1 : 0;
+        if (keyDown[i] !== to) {
+          keyDown[i] += (to - keyDown[i]) * kk;
+          if (Math.abs(to - keyDown[i]) < 0.02) keyDown[i] = to;
+        }
+        if (keyDown[i] !== keySeat[i]) {
+          seatKey(i);
+          moved = true;
+        }
+      }
+      if (moved) caps.instanceMatrix.needsUpdate = true;
+    }
+    if (!reduced) {
+      const km = 1 - Math.exp(-dt * 8);
+      mouse.position.x += (MOUSE.x + mp.x * 0.035 - mouse.position.x) * km;
+      mouse.position.z += (MOUSE.z + mp.y * 0.03 - mouse.position.z) * km;
+      mouseDip *= Math.exp(-dt * 14);
+      mouse.position.y = MOUSE.y - mouseDip * 0.0012;
+    }
+    const sip = reduced ? 0 : Math.sin(THREE.MathUtils.clamp((time - sipAt) / 1.7, 0, 1) * Math.PI);
+    mug.position.set(MUG.x + sip * 0.01, MUG.y + sip * 0.085, MUG.z + sip * 0.07);
+    mug.rotation.x = sip * sip * 0.55;
 
     // books ease out of the stack on hover / select
     for (const h of hots) {
@@ -1301,11 +1797,12 @@ export async function initRack(
     hemi.intensity = 0.07 + day * 1.2;
     sun.intensity = day * 1.0;
     lampRLevel += ((lampROn && (reduced || time > 1.25) ? 1 : 0) - lampRLevel) * (reduced ? 1 : 1 - Math.exp(-dt * 12));
+    lampLLevel += ((lampLOn ? 1 : 0) - lampLLevel) * (reduced ? 1 : 1 - Math.exp(-dt * 12));
     // Opening beat: the room is dark, then the table lamp stutters on, the
     // desk lamp follows, and the monitor wakes.
     const ramp = (t0: number, dur: number) => (reduced ? 1 : THREE.MathUtils.clamp((time - t0) / dur, 0, 1));
     const flick = reduced || time > 1.15 ? 1 : Math.sin(time * 85) > -0.2 ? 1 : 0.3;
-    const L = ramp(0.55, 0.1) * flick;
+    const L = ramp(0.55, 0.1) * flick * lampLLevel;
     const S = ramp(1.9, 0.8);
     lampLLight.intensity = 0.5 * breathe * L;
     lampLDown.intensity = 1.25 * L;
@@ -1322,7 +1819,7 @@ export async function initRack(
       const u = reduced ? 0.35 : (time * 0.22 + p.phase) % 1;
       p.sprite.position.set(Math.sin(u * 5 + p.phase * 9) * 0.012 * (0.4 + u), 0.09 + u * 0.16, Math.cos(u * 4 + p.phase * 5) * 0.008);
       p.sprite.scale.setScalar(0.03 + u * 0.06);
-      p.mat.opacity = Math.sin(u * Math.PI) * 0.16;
+      p.mat.opacity = Math.sin(u * Math.PI) * 0.16 * (1 - sip);
     }
     if (!reduced) {
       for (let i = 0; i < DUST; i++) {
@@ -1347,6 +1844,7 @@ export async function initRack(
     const dim = 1 - day * 0.55;
     lampRLight.intensity = 0.4 * breathe * lampRLevel;
     shadeGlow.opacity = (0.26 - day * 0.14) * L;
+    bulbL.opacity = 0.9 * L;
     bulbGlow.opacity = (0.55 - day * 0.25) * lampRLevel;
     bulbCore.opacity = 0.15 + 0.85 * lampRLevel;
     poolWallL.mat.opacity = 0.34 * dim * L;
@@ -1356,16 +1854,31 @@ export async function initRack(
     (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
     (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
 
-    drawScreen(time, selected?.id === "console");
+    drawScreen();
+    if (dofOn) {
+      // Pull focus to whatever the camera is looking at; open the aperture
+      // for close-ups, where a real lens would blur the room behind.
+      const kf = reduced ? 1 : 1 - Math.exp(-dt * 5);
+      focus += (camera.position.distanceTo(look) - focus) * kf;
+      aperture += ((selected ? (using ? 8 : 16) : 7) - aperture) * kf;
+      dof.uniforms.uFocus.value = focus;
+      dof.uniforms.uAperture.value = aperture;
+    }
     lens.uniforms.uTime.value = reduced ? 0 : time % 10;
     composer.render();
   }
   frame();
 
   return {
+    wallpaper: paper,
     select(id) {
       const next = byId(id);
-      if (next?.id === "console" && selected?.id !== "console") termSince = time;
+      // Sitting down at a locked monitor starts the unlock; walking away
+      // before it finishes leaves it locked.
+      if (!unlocked) {
+        unlockAt = next === consoleHot ? (selected === consoleHot ? unlockAt : time) : -1;
+        if (next !== consoleHot) typed = 0;
+      }
       selected = next;
       clearHover();
       place();
@@ -1384,6 +1897,12 @@ export async function initRack(
       canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("click", onClick);
       canvas.removeEventListener("webglcontextrestored", onRestore);
+      stage.removeEventListener("pointermove", onStageMove);
+      stage.removeEventListener("pointerdown", onStageDown);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      if (osOn) on.screen(null);
       disposables.forEach((d) => d.dispose());
       composer.dispose();
       bloom.dispose();
