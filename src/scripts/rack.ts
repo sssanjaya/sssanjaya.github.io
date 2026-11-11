@@ -1502,6 +1502,9 @@ export async function initRack(
       return;
     }
     const h = o?.userData.hot ? byId(o.userData.hot) : null;
+    // A second click on the monitor (a double-click, or an impatient one
+    // while it unlocks) is not a request to leave it.
+    if (h === consoleHot && selected === consoleHot) return;
     on.select(h && h !== selected ? h.id : null);
   }
   canvas.addEventListener("pointerdown", onDown);

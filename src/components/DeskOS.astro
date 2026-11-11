@@ -297,14 +297,31 @@ const icon: Record<string, string> = {
     // Filling a small stage, windows are maximised and do not move.
     const small = matchMedia("(max-width: 900px)");
     const maxed = () => os.classList.contains("full") && small.matches;
+    const behind = [os.querySelector<HTMLElement>(".icons"), os.querySelector<HTMLElement>(".dock")];
     let z = 10;
     let placed = 0;
+    let top: HTMLElement | null = null;
 
     function front(w: HTMLElement | null) {
       if (w) w.style.zIndex = String(++z);
+      top = w;
       wins.forEach((x) => x.classList.toggle("active", x === w));
       if (app) app.textContent = w ? (w.dataset.win === "terminal" ? "Terminal" : "Finder") : "Finder";
+      cover();
     }
+    // A maximised window hides the icons, the dock and every other window.
+    // Keep keyboard focus and screen readers off what cannot be seen.
+    function cover() {
+      const on = maxed() && !!top;
+      behind.forEach((el) => el && (el.inert = on));
+      wins.forEach((x) => (x.inert = on && x !== top));
+    }
+    small.addEventListener("change", cover);
+    new MutationObserver(cover).observe(os, { attributes: true, attributeFilter: ["class"] });
+    const focusWin = (w: HTMLElement) =>
+      (w.dataset.win === "terminal" ? os.querySelector<HTMLElement>("[data-term-in]") : w.querySelector<HTMLElement>("[data-close]"))?.focus({
+        preventScroll: true,
+      });
     /** `quiet` opens without moving focus (the page opening a file by itself). */
     function open(id: string, quiet = false) {
       const [kind, arg] = id.split(":");
@@ -321,16 +338,17 @@ const icon: Record<string, string> = {
         }
       }
       front(w);
-      if (quiet) return true;
-      if (w.dataset.win === "terminal") os.querySelector<HTMLInputElement>("[data-term-in]")?.focus({ preventScroll: true });
-      else w.querySelector<HTMLElement>("[data-close]")?.focus({ preventScroll: true });
+      if (!quiet) focusWin(w);
       return true;
     }
     function close(w: HTMLElement) {
       w.hidden = true;
       const next = wins.filter((x) => !x.hidden).sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0] ?? null;
       front(next);
-      os.querySelector<HTMLElement>(`.icons [data-open="${w.dataset.win}"]`)?.focus({ preventScroll: true });
+      // Back to the file's icon, or to the window now in front when that
+      // one covers the icons.
+      if (next && maxed()) focusWin(next);
+      else os.querySelector<HTMLElement>(`.icons [data-open="${w.dataset.win}"]`)?.focus({ preventScroll: true });
     }
     function role(i: number) {
       os.querySelectorAll<HTMLElement>("[data-role]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.role) === i)));
@@ -346,10 +364,15 @@ const icon: Record<string, string> = {
       const r = t.closest<HTMLElement>("[data-role]");
       if (r) return void role(Number(r.dataset.role));
     });
-    os.addEventListener("pointerdown", (e) => {
+    // A window comes to the front when it is clicked or tabbed into.
+    const raise = (e: Event) => {
       const w = (e.target as HTMLElement).closest<HTMLElement>("[data-win]");
-      if (w) front(w);
-    });
+      if (w && w !== top) front(w);
+    };
+    os.addEventListener("pointerdown", raise);
+    os.addEventListener("focusin", raise);
+    // Rack.astro, once the desktop it opened a file on has become visible.
+    os.addEventListener("os:focus", () => top && focusWin(top));
     // Rack.astro asks for a file by name (nav links, deep links).
     os.addEventListener("os:open", (e) => {
       const d = (e as CustomEvent<string | { id: string; quiet?: boolean }>).detail;
@@ -503,15 +526,16 @@ const icon: Record<string, string> = {
       input.addEventListener("keydown", (e) => {
         if (e.key === "ArrowUp" && at > 0) input.value = history[--at] ?? "";
         else if (e.key === "ArrowDown") input.value = history[++at] ?? ((at = history.length), "");
-        else if (e.key === "Tab") {
-          // Complete the last word against the file names.
-          e.preventDefault();
+        else if (e.key === "Tab" && !e.shiftKey) {
+          // Complete the last word against the file names. With nothing
+          // typed to complete, Tab moves focus on as it does anywhere else.
           const parts = input.value.split(/\s+/);
           const last = parts.pop() ?? "";
+          if (!last) return;
+          e.preventDefault();
           const hit = Object.keys(T.fs).filter((n) => n.startsWith(last));
-          if (last && hit.length === 1) input.value = [...parts, hit[0]].join(" ");
-        } else return;
-        e.stopPropagation();
+          if (hit.length === 1) input.value = [...parts, hit[0]].join(" ");
+        }
       });
       termEl.addEventListener("click", () => {
         if (!getSelection()?.toString()) input.focus({ preventScroll: true });

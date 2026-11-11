@@ -138,7 +138,8 @@ function palette() {
     const { cmd, arg = "" } = el.dataset;
     dlg.close();
     if (cmd === "goto") {
-      location.href = arg;
+      // The home page opens its own sections (Rack.astro) and cancels this.
+      if (document.dispatchEvent(new CustomEvent("site:goto", { detail: arg, cancelable: true }))) location.href = arg;
     } else if (cmd === "open") {
       window.open(arg, "_blank", "noopener");
     } else if (cmd === "mail") {
