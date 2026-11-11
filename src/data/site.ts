@@ -22,7 +22,7 @@ export const site = {
   // Canonical production origin (no trailing slash). Used for OG/JSON-LD.
   url: "https://sanjayhona.com.np",
   // 1200×630 social share card under /public.
-  ogImage: "/og.png",
+  ogImage: "/og-desk.jpg",
   jobTitle: "Site Reliability Engineer",
 
   // Tight ≤160-char snippet for <meta name="description"> & social cards.

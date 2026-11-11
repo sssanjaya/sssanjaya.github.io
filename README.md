@@ -6,7 +6,7 @@ The home page is my desk. On a device that can run it, you get the desk in 3D in
 
 **Live:** https://sanjayhona.com.np
 
-![Social preview of the site](public/og.png)
+![The desk on the home page](public/og-desk.jpg)
 
 ## What's on the computer
 
@@ -41,6 +41,8 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
 - About 9 KB of client JavaScript: theme toggle, local clock, command palette, the desktop and its terminal, the 3D loader
 - The desk is a [three.js](https://threejs.org) scene (about 160 KB gzipped), loaded lazily and only on devices that can run it. Every object is built in code; there are no model files to download
+- Its light is not computed in the browser. It is path-traced offline with [Blender](https://www.blender.org) and stored as eight greyscale lightmaps (about 240 KB), one per light source, which the page adds up so the lamps still switch. Re-bake after changing the scene's geometry: [`tools/bake/README.md`](tools/bake/README.md)
+- To keep frames cheap: no live lights or shadow maps, at most about 3.5 million pixels a frame, resolution steps down if the device is slow, and the scene stops redrawing while the computer is in use
 - The photos are self-hosted WebP copies in [`public/photos/`](public/photos/) (1280 px, plus thumbnails), listed in [`src/data/photos.ts`](src/data/photos.ts). Nothing is fetched until the folder is opened, and nothing comes from Unsplash's servers, so the CSP stays `'self'`-only
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
@@ -56,6 +58,8 @@ All copy and data live in two files. Components read from them, so most edits ne
 | [`src/data/photos.ts`](src/data/photos.ts) | The photos folder: one line per picture (Unsplash id, caption, size) |
 
 The bio prose and the windows live in [`src/components/DeskOS.astro`](src/components/DeskOS.astro); the list of files is [`src/data/desktop.ts`](src/data/desktop.ts). The 3D scene is [`src/scripts/rack.ts`](src/scripts/rack.ts).
+
+**Share image and icons.** [`public/og-desk.jpg`](public/og-desk.jpg) (1200×630, set as `ogImage` in `site.ts`) is a screenshot of the desk; [`public/favicon.svg`](public/favicon.svg) is drawn by hand and `apple-touch-icon.png` is rendered from it. X, LinkedIn, Slack and browsers cache these by URL for days. When one changes, give it a new address: a new filename for the share image, or bump the `?v=` on the icon links in [`Base.astro`](src/layouts/Base.astro) and [`site.webmanifest`](public/site.webmanifest).
 
 ## Run it locally
 
@@ -78,9 +82,11 @@ src/
   pages/        index.astro and 404.astro
   scripts/      console.ts: theme, clock, nav highlight, palette, copy
                 rack.ts: the 3D desk (mounted by components/Rack.astro)
+                lightmap.ts: how the baked light is laid onto each surface
                 wallpaper.ts: the monitor's wallpaper
   styles/       global.css: design tokens and shared primitives
-public/         favicon, OG image, wallpaper, photos/, CNAME, robots.txt, web manifest
+public/         favicon, share image (og-desk.jpg), wallpaper, lightmap/, photos/, CNAME, robots.txt, web manifest
+tools/bake/     the Blender lighting bake
 ```
 
 ## Blog
