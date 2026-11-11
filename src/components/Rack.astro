@@ -446,7 +446,9 @@ const hots = [
       }
       // At the computer, keys are for the computer.
       if (current === "console" || (t && (t.closest("input, textarea") || t.isContentEditable))) return;
-      if (/^[0-9]$/.test(e.key)) {
+      // The number keys belong to the unit buttons, which show the numbers:
+      // they only act while keyboard focus is on that row.
+      if (/^[0-9]$/.test(e.key) && units?.contains(document.activeElement)) {
         const b = buttons[(Number(e.key) + 9) % 10];
         if (b) select(current === b.dataset.hot ? null : b.dataset.hot!);
       }
@@ -605,6 +607,18 @@ const hots = [
     transition-delay: 0s;
   }
 
+  /* Every object can be clicked in the scene itself, so the row of unit
+     buttons stays out of sight. It is still there for keyboards and screen
+     readers, and shows itself while one of its buttons has keyboard focus. */
+  .units:not(:has(:focus-visible)) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .units {
     display: flex;
     flex-wrap: wrap;
