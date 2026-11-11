@@ -217,6 +217,7 @@ const hots = [
   function showOs(rect: ScreenRect | null) {
     if (!os) return;
     if (!rect) {
+      focusOs = false;
       if (os.hidden) return;
       os.classList.remove("on");
       os.hidden = true;
@@ -234,6 +235,10 @@ const hots = [
     if (!os.hidden) return;
     os.hidden = false;
     requestAnimationFrame(() => os.classList.add("on"));
+    // A file opened from outside while the desktop was hidden could not take
+    // focus then; it does now.
+    if (focusOs) os.dispatchEvent(new CustomEvent("os:focus"));
+    focusOs = false;
   }
 
   /** No 3D: the desktop on its own, filling the stage. */
@@ -288,10 +293,12 @@ const hots = [
 
   /** Open one of the computer's files (see DeskOS.astro), sitting down at it first in 3D. */
   let toComputer = false;
+  let focusOs = false;
   function openFile(name: string) {
     if (ctl) select("console");
     // Asked for while the scene is still loading: go there once it is up.
     else if (starting) toComputer = true;
+    focusOs = !!os?.hidden;
     os?.dispatchEvent(new CustomEvent("os:open", { detail: name }));
   }
 
@@ -377,6 +384,13 @@ const hots = [
     window.scrollTo({ top: 0, behavior: "instant" });
     openFile(file);
   }
+  /** Open the file a same-page section link points at. False if it is some other link. */
+  function toSection(href: string) {
+    const u = new URL(href, location.href);
+    const file = u.origin === location.origin && u.pathname === location.pathname ? sectionFile[u.hash.slice(1)] : undefined;
+    if (file) openFile(file);
+    return !!file;
+  }
 
   if (stage && canvas) {
     buttons.forEach((b) => b.addEventListener("click", () => select(current === b.dataset.hot ? null : b.dataset.hot!)));
@@ -406,6 +420,18 @@ const hots = [
     });
     // A panel can hand over to the matching file on the computer.
     sheet?.querySelectorAll<HTMLElement>("[data-os-open]").forEach((b) => b.addEventListener("click", () => openFile(b.dataset.osOpen!)));
+    // Section links open their file directly rather than navigating: no
+    // history entry per click (Back would do nothing), and no reload when the
+    // address carries a ?query. The hash route stays for typed addresses.
+    document.addEventListener("click", (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
+      if (a && a.target !== "_blank" && toSection(a.href)) e.preventDefault();
+    });
+    // The command palette's "Go to …" (console.ts).
+    document.addEventListener("site:goto", (e) => {
+      if (toSection((e as CustomEvent<string>).detail)) e.preventDefault();
+    });
     window.addEventListener("hashchange", fromHash);
 
     window.addEventListener("keydown", (e) => {
