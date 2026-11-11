@@ -18,7 +18,6 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { GTAOPass } from "three/examples/jsm/postprocessing/GTAOPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
@@ -26,6 +25,8 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { site } from "../data/site.ts";
 import { deskFiles, dockFiles, DESK_W, DESK_H } from "../data/desktop.ts";
 import { paintWallpaper } from "./wallpaper.ts";
+import { LM } from "../data/lightmap.ts";
+import { PAD, chartsOf, chartSpans, pack, placeCharts, type Chart, type Rect } from "./lightmap.ts";
 
 const OK = "#39e58c";
 const DISPLAY = '"Space Grotesk", system-ui, sans-serif';
@@ -87,8 +88,6 @@ export async function initRack(
   // photograph on the screen is not washed out.
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new THREE.Scene();
@@ -110,6 +109,9 @@ export async function initRack(
   const DW = 1.2;
   const DD = 0.8;
   const RISE = 0.38; // sitting to standing
+
+  // Set when something has changed and a frame is owed (reduced motion only draws then).
+  let dirty = true;
 
   // ── helpers ────────────────────────────────────────────────────────────
   const disposables: { dispose(): void }[] = [];
@@ -171,12 +173,44 @@ export async function initRack(
     const geo = track(
       new THREE.ExtrudeGeometry(shape, { depth: h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 14 }),
     );
+    geo.userData.lm = "slab";
     geo.rotateX(-Math.PI / 2); // lie flat: the extrusion becomes +y
     geo.translate(0, b - h / 2, 0); // centre it on its height
     const m = new THREE.Mesh(geo, mat);
     m.position.set(x, y, z);
     parent.add(m);
     return m;
+  }
+  /**
+   * A flat sheet in the xy plane with vertices at the given xs and ys. `uv`
+   * places its texture; `pu` and `pv` (one per x, one per y) say where each
+   * column and row falls in its lightmap, so the middle of a big wall can
+   * have most of the detail.
+   */
+  function sheet(xs: number[], ys: number[], pu: number[], pv: number[], uv: (x: number, y: number) => [number, number]) {
+    const pos: number[] = [];
+    const uvs: number[] = [];
+    const par: number[] = [];
+    const idx: number[] = [];
+    ys.forEach((y, j) =>
+      xs.forEach((x, i) => {
+        pos.push(x, y, 0);
+        uvs.push(...uv(x, y));
+        par.push(pu[i], pv[j]);
+        if (i && j) {
+          const a = (j - 1) * xs.length + i - 1;
+          const b = j * xs.length + i - 1;
+          idx.push(a, a + 1, b, a + 1, b + 1, b);
+        }
+      }),
+    );
+    const geo = track(new THREE.BufferGeometry());
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    geo.userData.lmParam = new Float32Array(par);
+    return geo;
   }
   /** A turned shape: [radius, height] pairs from the bottom up. */
   function lathe(profile: [number, number][], mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = root, seg = 56) {
@@ -236,9 +270,15 @@ export async function initRack(
     g.strokeRect(0, 0, w, h);
   });
   floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-  floorTex.repeat.set(14 / 0.32, 14 / 0.32);
-  const floor = new THREE.Mesh(track(new THREE.PlaneGeometry(14, 14)), track(new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.42 })));
+  // Most of the lightmap goes to the part of the floor and wall near the desk.
+  const NEAR = 2.6;
+  const floor = new THREE.Mesh(
+    sheet([-7, -NEAR, NEAR, 7], [-7, -3.6, -WALL_Z], [0, 0.03, 0.97, 1], [1, 0.06, 0], (x, y) => [x / 0.32, y / 0.32]),
+    track(new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.42 })),
+  );
+  floor.material.userData.bake = "#c4c1ba";
   floor.rotation.x = -Math.PI / 2;
+  floor.userData.lmSize = [820, 660];
   scene.add(floor);
 
   // A plain painted wall.
@@ -252,11 +292,20 @@ export async function initRack(
     }
   });
   wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping;
-  wallTex.repeat.set(10, 3);
-  const wall = new THREE.Mesh(track(new THREE.PlaneGeometry(14, 4.2)), track(new THREE.MeshStandardMaterial({ color: "#cdc8c1", roughness: 0.96, map: wallTex })));
-  wall.position.set(0, 2.1, WALL_Z);
+  // The lamps and the monitor ride on the desk, so when it rises their light
+  // on the wall goes up with it: everything above `UNDER` slides in the
+  // lightmap, and the stretch is taken up below the desk, where it is dark.
+  const WALL_H = 4.2;
+  const UNDER = 0.55;
+  const wall = new THREE.Mesh(
+    sheet([-7, -NEAR, NEAR, 7], [0, UNDER, WALL_H], [0, 0.03, 0.97, 1], [1, 1 - UNDER / WALL_H, 0], (x, y) => [(x / 14) * 10, (y / WALL_H) * 3]),
+    track(new THREE.MeshStandardMaterial({ color: "#cdc8c1", roughness: 0.96, map: wallTex })),
+  );
+  wall.position.set(0, 0, WALL_Z);
+  wall.userData.lmSize = [1560, 1250];
+  wall.userData.lmRise = WALL_H;
   scene.add(wall);
-  rbox(14, 0.1, 0.016, 0.004, std("#eeece7", 0.6), 0, 0.05, WALL_Z + 0.008);
+  rbox(14, 0.1, 0.016, 0.004, std("#eeece7", 0.6), 0, 0.05, WALL_Z + 0.008).userData.lmDensity = 60;
 
   // Outlet under the desk, with the plug in it. The power lead hangs to it
   // and pays out as the desk rises.
@@ -279,16 +328,26 @@ export async function initRack(
       0.0035,
       8,
     );
+    // Same shape of tube every time, so the same place in the lightmap.
+    if (lead.userData.lmUv) lead.geometry.setAttribute("uv1", lead.userData.lmUv);
   }
   hangLead(0);
 
   // The curtain on the right: heavy blue-grey fabric from ceiling to floor,
   // coming in behind the end of the desk. It sways a little.
-  let curtain: THREE.PlaneGeometry | null = null;
+  let curtain: THREE.BufferGeometry | null = null;
   const CURTAIN_X = 1.39;
+  const CURTAIN_H = 3.2;
   const fold = (x: number) => Math.sin(x * 34) * 0.016 + Math.sin(x * 11 + 1) * 0.012;
   {
-    const geo = track(new THREE.PlaneGeometry(1.7, 3.2, 120, 1));
+    const cols = Array.from({ length: 121 }, (_, i) => -0.85 + (i / 120) * 1.7);
+    const geo = sheet(
+      cols,
+      [0, UNDER, CURTAIN_H],
+      cols.map((_, i) => i / 120),
+      [1, 1 - UNDER / CURTAIN_H, 0],
+      (x, y) => [(x / 1.7 + 0.5) * 9, (y / CURTAIN_H) * 16],
+    );
     const p = geo.attributes.position;
     for (let i = 0; i < p.count; i++) p.setZ(i, fold(p.getX(i)));
     geo.computeVertexNormals();
@@ -301,47 +360,14 @@ export async function initRack(
       }
     });
     weave.wrapS = weave.wrapT = THREE.RepeatWrapping;
-    weave.repeat.set(9, 16);
-    // A little dusk comes through the fabric from the window behind it.
-    const m = new THREE.Mesh(
-      geo,
-      track(new THREE.MeshStandardMaterial({ color: "#687079", map: weave, roughness: 0.97, side: THREE.DoubleSide, emissive: "#161b24", emissiveIntensity: 0.22 })),
-    );
-    m.position.set(CURTAIN_X, 1.6, WALL_Z + 0.035);
+    const m = new THREE.Mesh(geo, track(new THREE.MeshStandardMaterial({ color: "#687079", map: weave, roughness: 0.97, side: THREE.DoubleSide })));
+    m.position.set(CURTAIN_X, 0, WALL_Z + 0.035);
+    m.userData.lmSize = [430, 820];
+    m.userData.lmRise = CURTAIN_H;
+    m.userData.bakeRole = "curtain";
     scene.add(m);
     curtain = geo;
   }
-  // Daylight leaking past the curtain's edge onto the wall.
-  const leak = new THREE.Mesh(
-    track(new THREE.PlaneGeometry(0.34, 2.6)),
-    track(
-      new THREE.MeshBasicMaterial({
-        map: tex(64, 256, (g, w, h) => {
-          const across = g.createLinearGradient(0, 0, w, 0);
-          across.addColorStop(0, "rgba(255,255,255,0)");
-          across.addColorStop(0.55, "rgba(255,255,255,0.9)");
-          across.addColorStop(1, "rgba(255,255,255,0)");
-          g.fillStyle = across;
-          g.fillRect(0, 0, w, h);
-          g.globalCompositeOperation = "destination-in";
-          const along = g.createLinearGradient(0, 0, 0, h);
-          along.addColorStop(0, "rgba(0,0,0,0.7)");
-          along.addColorStop(0.45, "rgba(0,0,0,1)");
-          along.addColorStop(1, "rgba(0,0,0,0)");
-          g.fillStyle = along;
-          g.fillRect(0, 0, w, h);
-        }),
-        color: "#c9d4ee",
-        transparent: true,
-        opacity: 0.1,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        toneMapped: false,
-      }),
-    ),
-  );
-  leak.position.set(0.46, 1.7, WALL_Z + 0.004);
-  scene.add(leak);
 
   // ── desk ───────────────────────────────────────────────────────────────
   // IKEA sit/stand desk: a white top with rounded corners on two round
@@ -355,18 +381,25 @@ export async function initRack(
   // speed between them.
   const legMid = new THREE.Group();
   scene.add(legMid);
+  // At sitting height the two lower tubes are mostly inside the top one, so
+  // they cannot be given their own baked light. They borrow it from a stand-in
+  // the full height of the leg, which is never drawn.
+  const PROBE_H = 1.1;
   for (const sx of [-1, 1]) {
     slab(0.09, 0.64, 0.02, 0.045, white, sx * LEG_X, 0.01, 0);
-    cyl(0.0275, 0.0275, 0.58, white, sx * LEG_X, 0.31, 0);
-    cyl(0.031, 0.031, 0.56, white, sx * LEG_X, 0.424, 0, legMid);
+    const probe = cyl(0.0362, 0.0362, PROBE_H, white, sx * LEG_X, PROBE_H / 2, 0, scene, 24, true);
+    probe.visible = false;
+    probe.userData.lmDensity = 420;
+    cyl(0.0275, 0.0275, 0.58, white, sx * LEG_X, 0.31, 0).userData.lmFrom = probe;
+    cyl(0.031, 0.031, 0.56, white, sx * LEG_X, 0.424, 0, legMid).userData.lmFrom = probe;
   }
   root = rig;
-  slab(DW, DD, TOP_T, 0.06, white, 0, TOP - TOP_T / 2, 0, rig, 0.004);
+  slab(DW, DD, TOP_T, 0.06, white, 0, TOP - TOP_T / 2, 0, rig, 0.004).userData.lmDensity = 1000;
   for (const sx of [-1, 1]) {
-    cyl(0.035, 0.035, 0.56, white, sx * LEG_X, TOP - TOP_T - 0.28, 0);
-    rbox(0.1, 0.028, 0.6, 0.008, white, sx * LEG_X, TOP - TOP_T - 0.014, 0);
+    cyl(0.035, 0.035, 0.56, white, sx * LEG_X, TOP - TOP_T - 0.28, 0).userData.lmDensity = 420;
+    rbox(0.1, 0.028, 0.6, 0.008, white, sx * LEG_X, TOP - TOP_T - 0.014, 0).userData.lmDensity = 300;
   }
-  rbox(2 * LEG_X, 0.028, 0.06, 0.008, white, 0, TOP - TOP_T - 0.014, -0.03);
+  rbox(2 * LEG_X, 0.028, 0.06, 0.008, white, 0, TOP - TOP_T - 0.014, -0.03).userData.lmDensity = 300;
   // A black lead looped under the top.
   tube(
     [
@@ -413,7 +446,7 @@ export async function initRack(
     });
     grain.wrapS = grain.wrapT = THREE.RepeatWrapping;
     grain.repeat.set(26, 26);
-    slab(0.8, 0.4, MAT_T, 0.025, track(new THREE.MeshStandardMaterial({ color: "#19221e", roughness: 0.8, bumpMap: grain, bumpScale: 0.5 })), 0, TOP + MAT_T / 2, MAT_Z, rig, 0.0008);
+    slab(0.8, 0.4, MAT_T, 0.025, track(new THREE.MeshStandardMaterial({ color: "#19221e", roughness: 0.8, bumpMap: grain, bumpScale: 0.5 })), 0, TOP + MAT_T / 2, MAT_Z, rig, 0.0008).userData.lmDensity = 1000;
   }
   const ON_MAT = TOP + MAT_T;
 
@@ -449,11 +482,13 @@ export async function initRack(
     back.scale.set(PW * 0.47, 0.034, PH * 0.47);
     back.rotation.x = -Math.PI / 2;
     back.position.set(0, PANEL_Y + PH / 2, PANEL_Z - 0.019);
+    back.userData.lmDensity = 300;
     mon.add(back);
   }
   const monBody = rbox(PW, PH, 0.019, 0.004, charcoal, 0, PANEL_Y + PH / 2, PANEL_Z - 0.0095, mon);
+  monBody.userData.lmDensity = 500;
   // Thin black border round the glass; the chin under it stays charcoal.
-  box(PW - 0.003, SH + BEZEL + 0.002, 0.0006, std("#08090a", 0.35), 0, SCY + (BEZEL - 0.002) / 2, PANEL_Z + 0.0001, mon);
+  box(PW - 0.003, SH + BEZEL + 0.002, 0.0006, std("#08090a", 0.35), 0, SCY + (BEZEL - 0.002) / 2, PANEL_Z + 0.0001, mon).userData.lmDensity = 250;
   // Under the chin: the joystick, the power button (lit) and a dongle.
   rbox(0.009, 0.005, 0.009, 0.002, std("#141517", 0.5), 0, PANEL_Y - 0.0025, PANEL_Z - 0.008, mon);
   cyl(0.004, 0.004, 0.003, track(new THREE.MeshBasicMaterial({ color: "#eef4ff", toneMapped: false })), 0.035, PANEL_Y - 0.0015, PANEL_Z - 0.008, mon, 16);
@@ -472,6 +507,7 @@ export async function initRack(
   const screen = new THREE.Mesh(track(new THREE.PlaneGeometry(SW, SH)), track(new THREE.MeshBasicMaterial({ map: scrTex, toneMapped: false })));
   screen.position.set(0, SCY, PANEL_Z + 0.0006);
   mon.add(screen);
+  screen.userData.emit = "M";
   markHot(monBody, "console");
   markHot(screen, "console");
   {
@@ -763,6 +799,7 @@ export async function initRack(
   {
     const wood = track(
       new THREE.MeshStandardMaterial({
+        userData: { bake: "#c9a878" },
         roughness: 0.62,
         map: tex(256, 256, (g, w, h) => {
           g.fillStyle = "#d6b382";
@@ -846,10 +883,12 @@ export async function initRack(
   // Turned so the texture's seam is at the back.
   shade.rotation.y = Math.PI;
   shade.position.set(0, 0.2045, 0);
+  shade.userData.emit = "L";
   lampL.add(shade);
   const bulbLMat = track(new THREE.MeshBasicMaterial({ color: "#fff3d6", toneMapped: false }));
   const bulbL = new THREE.Mesh(track(new THREE.SphereGeometry(0.019, 20, 14)), bulbLMat);
   bulbL.position.set(0, 0.2, 0);
+  bulbL.userData.emit = "Lbulb";
   lampL.add(bulbL);
   switchBox(0.18, 0.3, 0.18, 0, 0.15, 0, "lampL", lampL);
 
@@ -903,6 +942,7 @@ export async function initRack(
       track(new THREE.CircleGeometry(POT.r1 - 0.0045, 40)),
       track(
         new THREE.MeshStandardMaterial({
+          userData: { bake: "#2a211b" },
           roughness: 1,
           map: tex(128, 128, (g, w, h) => {
             g.fillStyle = "#2a211b";
@@ -1047,6 +1087,7 @@ export async function initRack(
       return k.c ? [placed] : [];
     });
   });
+  let legendMat: THREE.MeshBasicMaterial | null = null;
   const caps = new THREE.InstancedMesh(track(new RoundedBoxGeometry(1, 1, 1, 3, 0.2)), std("#ffffff", 0.5), keys.length);
   const m4 = new THREE.Matrix4();
   // How far down each key is (0..1), what is drawn, and which are held.
@@ -1077,8 +1118,7 @@ export async function initRack(
     const legend = new THREE.Mesh(
       track(new THREE.PlaneGeometry(KEYS_W * U, 6 * U)),
       track(
-        new THREE.MeshStandardMaterial({
-          roughness: 0.6,
+        new THREE.MeshBasicMaterial({
           transparent: true,
           depthWrite: false,
           map: tex(KEYS_W * PX, 6 * PX, (g) => {
@@ -1095,6 +1135,7 @@ export async function initRack(
         }),
       ),
     );
+    legendMat = legend.material;
     legend.rotation.x = -Math.PI / 2;
     legend.position.set(0, CAP_Y + CAP_H / 2 + 0.00025, 0);
     kbTilt.add(legend);
@@ -1197,6 +1238,7 @@ export async function initRack(
     const rimShape = roundRect(new THREE.Shape(), LENS.w, LENS.h, 0.0142);
     rimShape.holes.push(roundRect(new THREE.Path(), LENS.w - 0.0026, LENS.h - 0.0026, 0.0118));
     const rimGeo = track(new THREE.ExtrudeGeometry(rimShape, { depth: 0.0026, bevelEnabled: true, bevelThickness: 0.0004, bevelSize: 0.0004, bevelSegments: 2, curveSegments: 16 }));
+    rimGeo.userData.lm = "slab";
     const lensGeo = track(new THREE.ShapeGeometry(roundRect(new THREE.Shape(), LENS.w - 0.002, LENS.h - 0.002, 0.0122), 16));
     const lensMat = track(new THREE.MeshStandardMaterial({ color: "#eaf2fb", roughness: 0.04, transparent: true, opacity: 0.1, depthWrite: false }));
     [-1, 1].forEach((sx, k) => {
@@ -1362,6 +1404,7 @@ export async function initRack(
     const bulb = new THREE.Mesh(track(new THREE.CircleGeometry(0.0235, 32)), bulbRMat);
     bulb.rotation.x = -Math.PI / 2;
     bulb.position.y = HEAD - 0.01;
+    bulb.userData.emit = "R";
     head.add(bulb);
   }
   {
@@ -1392,65 +1435,296 @@ export async function initRack(
     { id: "contact", label: "phone · contact", pos: worldOf(phone, 0, 0.01, 0), normal: up(0.86, 0.5), dist: 0.5 },
   );
 
-  // Everything solid casts and receives the lamps' shadows; glass, glowing
-  // parts and the lamps' own shades do not.
-  scene.traverse((o) => {
-    const m = o as THREE.Mesh;
-    if (!m.isMesh) return;
-    const mat = m.material as THREE.Material;
-    if (Array.isArray(m.material) || (mat.visible && !mat.transparent && !(mat as THREE.MeshBasicMaterial).isMeshBasicMaterial)) {
-      m.castShadow = true;
-      m.receiveShadow = true;
-    }
-  });
-  lampL.traverse((o) => (o.castShadow = false));
-  lampR.getObjectByName("head")?.traverse((o) => (o.castShadow = false));
-  wall.castShadow = floor.castShadow = false;
-
   // ── light ──────────────────────────────────────────────────────────────
-  // The evening in the photographs: a dim, cool room, two warm lamps and the
-  // glow of the screen.
-  const hemi = new THREE.HemisphereLight("#c9d3e6", "#2c2824", 0.12);
-  scene.add(hemi);
-  // Daylight through the curtain, only when the light theme is on.
-  const sun = new THREE.DirectionalLight("#dfe9ff", 0);
-  sun.position.set(2.6, 2.6, 2.4);
-  scene.add(sun);
-  // The table lamp: light in all directions through the shade, and a cone
-  // downward that throws the shadows across the desk.
-  const WARM = "#ffd3a4";
-  const lampLLight = new THREE.PointLight(WARM, 1, 3, 2);
-  lampLLight.position.copy(worldOf(lampL, 0, 0.21, 0.01));
-  rig.add(lampLLight);
-  const lampLDown = new THREE.SpotLight(WARM, 1, 3.2, 1.12, 1, 1.6);
-  lampLDown.position.copy(worldOf(lampL, 0.005, 0.2, 0.005));
-  lampLDown.target.position.set(-0.2, TOP, 0.05);
-  rig.add(lampLDown, lampLDown.target);
-  // The desk lamp: a cone out of the head, starting just outside its mouth.
-  const lampRSpot = new THREE.SpotLight(WARM, 1, 2.4, 0.82, 0.9, 1.6);
-  const mouth = (d: number) => worldOf(lampR, headAt.x + headDir.x * d, headAt.y + headDir.y * d, headAt.z + headDir.z * d);
-  lampRSpot.position.copy(mouth(HEAD + 0.004));
-  lampRSpot.target.position.copy(lampRSpot.position).addScaledVector(headDir, 0.4);
-  rig.add(lampRSpot, lampRSpot.target);
-  for (const l of [lampLDown, lampRSpot]) {
-    l.castShadow = true;
-    l.shadow.mapSize.set(small ? 512 : 2048, small ? 512 : 2048);
-    l.shadow.camera.near = 0.04;
-    l.shadow.camera.far = 3;
-    l.shadow.bias = -0.0012;
-    l.shadow.normalBias = 0.008;
-    l.shadow.radius = 7;
+  // Baked: see lightmap.ts. Four greyscale lightmaps for the room and four
+  // for the desk and what is on it, one per source: the table lamp, the desk
+  // lamp, the monitor and the window. The shader adds them up, each times a
+  // colour that says how bright that source is now.
+  const SOURCES = ["l", "r", "m", "a"] as const;
+  const grey = document.createElement("canvas");
+  grey.width = grey.height = 1;
+  const lmTex = [0, 1].map(() =>
+    SOURCES.map(() => {
+      const t = track(new THREE.Texture(grey));
+      t.format = THREE.RedFormat;
+      t.flipY = false;
+      t.generateMipmaps = false;
+      t.minFilter = t.magFilter = THREE.LinearFilter;
+      t.channel = 1;
+      return t;
+    }),
+  );
+  const lmSlots = lmTex.map((set) => set.map((t) => ({ value: t })));
+  const lmLevel = SOURCES.map(() => ({ value: new THREE.Color(0, 0, 0) }));
+  const LM_CHUNK = THREE.ShaderChunk.lights_fragment_maps.replace(
+    "vec3 lightMapIrradiance = lightMapTexel.rgb * lightMapIntensity;",
+    // Stored as a square root, so the dark end keeps its detail.
+    `float lmL = texture2D( tLmL, vLightMapUv ).r; float lmR = texture2D( tLmR, vLightMapUv ).r; float lmM = texture2D( tLmM, vLightMapUv ).r;
+		vec3 lightMapIrradiance = lmL * lmL * uLmL + lmR * lmR * uLmR + lmM * lmM * uLmM + lightMapTexel.r * lightMapTexel.r * uLmA;`,
+  );
+  function bakedLight(mat: THREE.MeshStandardMaterial, atlas: number) {
+    mat.lightMap = lmTex[atlas][3];
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.tLmL = lmSlots[atlas][0];
+      shader.uniforms.tLmR = lmSlots[atlas][1];
+      shader.uniforms.tLmM = lmSlots[atlas][2];
+      shader.uniforms.uLmL = lmLevel[0];
+      shader.uniforms.uLmR = lmLevel[1];
+      shader.uniforms.uLmM = lmLevel[2];
+      shader.uniforms.uLmA = lmLevel[3];
+      shader.fragmentShader =
+        "uniform sampler2D tLmL; uniform sampler2D tLmR; uniform sampler2D tLmM; uniform vec3 uLmL; uniform vec3 uLmR; uniform vec3 uLmM; uniform vec3 uLmA;\n" +
+        shader.fragmentShader.replace("#include <lights_fragment_maps>", LM_CHUNK);
+    };
+    mat.customProgramCacheKey = () => "baked";
   }
-  const lampRLight = new THREE.PointLight(WARM, 1, 1.6, 2);
-  lampRLight.position.copy(mouth(HEAD + 0.02));
-  rig.add(lampRLight);
-  // The screen lights the desk in front of it and, faintly, the wall behind.
-  const monLight = new THREE.PointLight("#bfdbe6", 1, 2.2, 1.7);
-  monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, -0.04, 0.28));
-  rig.add(monLight);
-  const backLight = new THREE.PointLight("#a9c4ea", 1, 1.3, 1.7);
-  backLight.position.copy(worldOf(mon, 0, SCY, PANEL_Z - 0.12));
-  rig.add(backLight);
+  // A material used in the room and on the desk needs a copy for each lightmap.
+  const lmOwner = new Map<THREE.Material, number>();
+  const lmCopy = new Map<THREE.Material, THREE.MeshStandardMaterial>();
+  function litMaterial(mat: THREE.MeshStandardMaterial, atlas: number) {
+    const owner = lmOwner.get(mat);
+    if (owner === undefined) {
+      lmOwner.set(mat, atlas);
+      bakedLight(mat, atlas);
+      return mat;
+    }
+    if (owner === atlas) return mat;
+    let copy = lmCopy.get(mat);
+    if (!copy) {
+      copy = track(mat.clone());
+      bakedLight(copy, atlas);
+      lmCopy.set(mat, copy);
+    }
+    return copy;
+  }
+  // Keycaps and leaves are instanced, so they cannot each have a place in the
+  // lightmap. Each one is tinted with the light that reaches it instead.
+  const white1 = track(new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1));
+  white1.needsUpdate = true;
+
+  // Every lit mesh, in scene order: the order the lightmap data is stored in.
+  type Lit = { mesh: THREE.Mesh; atlas: number; charts: Chart[]; from?: THREE.Mesh; each: number; base?: Float32Array };
+  const lit: Lit[] = [];
+  {
+    const taken = new Set<THREE.BufferGeometry>();
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      const mat = m.material as THREE.MeshStandardMaterial;
+      if (!m.isMesh || !mat.isMeshStandardMaterial || mat.transparent) return;
+      let atlas = 0;
+      for (let p = m.parent; p; p = p.parent) if (p === rig) atlas = 1;
+      const inst = m as THREE.InstancedMesh;
+      const from = m.userData.lmFrom as THREE.Mesh | undefined;
+      const charts = from ? [] : chartsOf(m.geometry);
+      if (inst.isInstancedMesh) {
+        mat.lightMap = white1;
+        mat.lightMapIntensity = Math.PI;
+        lit.push({ mesh: m, atlas, charts, each: inst.count, base: inst.instanceColor ? Float32Array.from(inst.instanceColor.array as Float32Array) : undefined });
+        return;
+      }
+      // Two meshes sharing a geometry each need their own place in the lightmap.
+      if (taken.has(m.geometry)) m.geometry = track(m.geometry.clone());
+      taken.add(m.geometry);
+      m.material = litMaterial(mat, atlas);
+      lit.push({ mesh: m, atlas, charts, from, each: 0 });
+    });
+  }
+  const baking = import.meta.env.DEV && new URLSearchParams(location.search).has("bake");
+  let layout = LM.rects;
+  if (baking) {
+    // Bake time: size each chart from the surface it covers and pack them.
+    const sizes: [number, number][][] = [[], []];
+    const where: [number, number, number][] = []; // lit index, first slot, slots
+    lit.forEach((e, i) => {
+      const list = sizes[e.atlas];
+      const first = list.length;
+      if (e.each) for (let k = 0; k < e.each * e.charts.length; k++) list.push([8, 8]);
+      else if (!e.from) {
+        const fixed = e.mesh.userData.lmSize as [number, number] | undefined;
+        const density = (e.mesh.userData.lmDensity as number | undefined) ?? (e.atlas ? 950 : 280);
+        const slabby = e.mesh.geometry.userData.lm === "slab";
+        chartSpans(e.mesh.geometry, e.charts, e.mesh.matrixWorld).forEach(([su, sv], k) => {
+          // The underside of a slab is rarely seen; its edge is long and plain.
+          const d = density * (slabby && k === 0 ? 0.3 : 1);
+          const w = fixed ? fixed[0] : Math.min(slabby && k === 2 ? 900 : 1300, Math.max(2, Math.ceil(su * d)));
+          const h = fixed ? fixed[1] : Math.min(1300, Math.max(2, Math.ceil(sv * d)));
+          list.push([w + 2 * PAD, h + 2 * PAD]);
+        });
+      }
+      where.push([i, first, list.length - first]);
+    });
+    sizes.forEach((list, a) => {
+      const big = list.map(([w, h], k) => [w * h, w, h, k]).sort((p, q) => q[0] - p[0]).slice(0, 14);
+      console.info(`lightmap ${a}: ${list.length} charts, ${(list.reduce((t, [w, h]) => t + w * h, 0) / LM.size ** 2 * 100).toFixed(0)}% of the area; largest ${big.map(([, w, h]) => `${w}x${h}`).join(" ")}`);
+    });
+    const packed = sizes.map((list) => pack(list, LM.size));
+    layout = where.map(([i, first, n]) => packed[lit[i].atlas].slice(first, first + n).flat());
+  }
+  const stale = !baking && (layout.length !== lit.length || lit.some((e, i) => LM.verts[i] !== e.mesh.geometry.attributes.position.count));
+  if (stale) console.warn("The lightmaps do not match the scene. Re-bake (tools/bake).");
+  const rectsOf = (i: number): Rect[] => {
+    const flat = layout[i] ?? [];
+    return Array.from({ length: flat.length / 4 }, (_, k) => flat.slice(4 * k, 4 * k + 4) as Rect);
+  };
+  // Lightmap coordinates that slide as the desk rises (the wall, the curtain).
+  const sliding: { attr: THREE.BufferAttribute; base: Float32Array; perMetre: number; rows: THREE.BufferAttribute }[] = [];
+  if (!stale) {
+    lit.forEach((e, i) => {
+      if (e.each) return;
+      const geo = e.mesh.geometry;
+      const n = geo.attributes.position.count;
+      let uv1: Float32Array;
+      if (e.from) {
+        // Round the stand-in's side at the same height above the floor.
+        const [x, y, w, h] = rectsOf(lit.findIndex((o) => o.mesh === e.from))[0];
+        const y0 = e.mesh.getWorldPosition(new THREE.Vector3()).y;
+        uv1 = new Float32Array(n * 2);
+        for (let v = 0; v < n; v++) {
+          uv1[2 * v] = (x + PAD + geo.attributes.uv.getX(v) * (w - 2 * PAD)) / LM.size;
+          uv1[2 * v + 1] = (y + PAD + THREE.MathUtils.clamp((y0 + geo.attributes.position.getY(v)) / PROBE_H, 0, 1) * (h - 2 * PAD)) / LM.size;
+        }
+      } else uv1 = placeCharts(n, e.charts, rectsOf(i), LM.size);
+      const attr = new THREE.BufferAttribute(uv1, 2);
+      geo.setAttribute("uv1", attr);
+      e.mesh.userData.lmUv = attr;
+      const rise = e.mesh.userData.lmRise as number | undefined;
+      if (rise) sliding.push({ attr, base: uv1.slice(), perMetre: (rectsOf(i)[0][3] - 2 * PAD) / LM.size / rise, rows: geo.attributes.position as THREE.BufferAttribute });
+    });
+  }
+  /** Move the wall's and curtain's light up with the desk. */
+  function slideLight(y: number) {
+    for (const s of sliding) {
+      for (let v = 0; v < s.attr.count; v++) if (s.rows.getY(v) > 0.01) s.attr.setY(v, s.base[2 * v + 1] + y * s.perMetre);
+      s.attr.needsUpdate = true;
+    }
+  }
+  // The lightmaps themselves. Until they arrive, and if they never do, the
+  // scene is lit flat.
+  const lightmapsIn = Promise.all(
+    ["room", "desk"].flatMap((name, a) =>
+      SOURCES.map(
+        (src, k) =>
+          new Promise<void>((done) => {
+            const img = new Image();
+            img.onload = () => {
+              lmTex[a][k].image = img;
+              lmTex[a][k].needsUpdate = true;
+              done();
+            };
+            img.onerror = () => done();
+            img.src = `/lightmap/${name}-${src}.webp`;
+          }),
+      ),
+    ),
+  );
+  {
+    const g = grey.getContext("2d")!;
+    g.fillStyle = "#555";
+    g.fillRect(0, 0, 1, 1);
+    for (const t of lmTex.flat()) t.needsUpdate = true;
+  }
+  // How bright each source is at full, and its colour.
+  const GAIN = [5, 170, 9, 5];
+  const TINT = [new THREE.Color(1, 0.8, 0.58), new THREE.Color(1, 0.82, 0.6), new THREE.Color(0.62, 0.8, 0.86), new THREE.Color(0.72, 0.8, 1)];
+  const DAYLIGHT = new THREE.Color(1, 0.97, 0.92);
+  const lightNow = [0, 0, 0, 0];
+  let lightSig = "";
+  const instTint = new THREE.Color();
+  /** Set the four sources' levels (0..1; the window's is the daylight). */
+  function setLight(L: number, R: number, S: number, day: number) {
+    const amount = [L, R, S, 0.16 + day * 1.6];
+    const key = amount.map((a) => a.toFixed(3)).join();
+    if (key === lightSig) return;
+    lightSig = key;
+    amount.forEach((a, k) => {
+      lightNow[k] = a * GAIN[k] * LM.k[k];
+      lmLevel[k].value.copy(k === 3 ? instTint.copy(TINT[3]).lerp(DAYLIGHT, day) : TINT[k]).multiplyScalar(lightNow[k] * Math.PI);
+    });
+    // The instanced meshes: each instance's own colour times its light.
+    let keysLit = 0;
+    lit.forEach((e, i) => {
+      if (!e.each || !e.base) return;
+      const inst = e.mesh as THREE.InstancedMesh;
+      const got = LM.inst[i];
+      const out = inst.instanceColor!.array as Float32Array;
+      for (let n = 0; n < e.each; n++) {
+        instTint.setRGB(0, 0, 0);
+        for (let k = 0; k < 4; k++) {
+          const c = lmLevel[k].value;
+          const amt = (got ? got[4 * n + k] : 0.1) / (LM.k[k] * Math.PI);
+          instTint.r += c.r * amt;
+          instTint.g += c.g * amt;
+          instTint.b += c.b * amt;
+        }
+        out[3 * n] = e.base[3 * n] * instTint.r;
+        out[3 * n + 1] = e.base[3 * n + 1] * instTint.g;
+        out[3 * n + 2] = e.base[3 * n + 2] * instTint.b;
+        if (inst === caps) keysLit += (instTint.r + instTint.g + instTint.b) / 3 / e.each;
+      }
+      inst.instanceColor!.needsUpdate = true;
+    });
+    legendMat?.color.setScalar(Math.min(1, keysLit * 1.6));
+  }
+
+  if (baking) {
+    // tools/bake reads the whole scene through this: every lit mesh in world
+    // space with its lightmap coordinates, and the things that give light.
+    const b64 = (a: ArrayBufferView) => {
+      const bytes = new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+      let out = "";
+      for (let i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return btoa(out);
+    };
+    const shape = (mesh: THREE.Mesh, world: THREE.Matrix4, uv1: Float32Array | null) => {
+      const geo = mesh.geometry;
+      const n = geo.attributes.position.count;
+      const pos = new Float32Array(n * 3);
+      const nrm = new Float32Array(n * 3);
+      const v = new THREE.Vector3();
+      const nm = new THREE.Matrix3().getNormalMatrix(world);
+      for (let i = 0; i < n; i++) {
+        v.fromBufferAttribute(geo.attributes.position, i).applyMatrix4(world).toArray(pos, 3 * i);
+        v.fromBufferAttribute(geo.attributes.normal, i).applyMatrix3(nm).normalize().toArray(nrm, 3 * i);
+      }
+      const idx = geo.index ? Uint32Array.from(geo.index.array) : Uint32Array.from({ length: n }, (_, i) => i);
+      return { pos: b64(pos), nrm: b64(nrm), idx: b64(idx), uv: uv1 ? b64(uv1) : null };
+    };
+    (window as unknown as { __bake: () => unknown }).__bake = () => {
+      scene.updateMatrixWorld(true);
+      const meshes: unknown[] = [];
+      const m4b = new THREE.Matrix4();
+      lit.forEach((e, i) => {
+        const mat = e.mesh.material as THREE.MeshStandardMaterial;
+        const color = (mat.userData.bake as string | undefined) ?? `#${mat.color.getHexString()}`;
+        const common = { i, atlas: e.atlas, color, role: (e.mesh.userData.bakeRole as string | undefined) ?? "" };
+        if (e.each) {
+          const inst = e.mesh as THREE.InstancedMesh;
+          const per = e.charts.length;
+          for (let n = 0; n < e.each; n++) {
+            inst.getMatrixAt(n, m4b);
+            m4b.premultiply(inst.matrixWorld);
+            const rects = rectsOf(i).slice(n * per, (n + 1) * per);
+            meshes.push({ ...common, kind: "target", inst: n, ...shape(inst, m4b, placeCharts(inst.geometry.attributes.position.count, e.charts, rects, LM.size)) });
+          }
+        } else {
+          const kind = e.from ? "solid" : e.mesh.visible ? "target" : "probe";
+          meshes.push({ ...common, kind, ...shape(e.mesh, e.mesh.matrixWorld, e.from ? null : (e.mesh.geometry.attributes.uv1.array as Float32Array)) });
+        }
+      });
+      scene.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh && m.userData.emit) meshes.push({ i: -1, atlas: -1, color: "#ffffff", role: "", kind: `emit:${m.userData.emit}`, ...shape(m, m.matrixWorld, null) });
+      });
+      return {
+        size: LM.size,
+        pad: PAD,
+        rects: layout,
+        verts: lit.map((e) => e.mesh.geometry.attributes.position.count),
+        each: lit.map((e) => [e.each, e.charts.length]),
+        meshes,
+      };
+    };
+  }
 
   // ── camera ─────────────────────────────────────────────────────────────
   const home = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -1513,15 +1787,19 @@ export async function initRack(
   // lamps and the screen glow; a last pass darkens the corners slightly.
   const fine = !small;
   const target = track(new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: small ? 0 : 4 }));
+  if (fine) target.depthTexture = new THREE.DepthTexture(4, 4);
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
-  // The occlusion pass draws its own depth buffer; the blur reads the same one.
-  const gtao = new GTAOPass(scene, camera, 4, 4);
-  gtao.blendIntensity = 0.9;
-  gtao.updateGtaoMaterial({ radius: 0.16, distanceExponent: 1.2, thickness: 1, distanceFallOff: 1, scale: 1.15, samples: 16, screenSpaceRadius: false });
-  gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, rings: 2, samples: 16 });
+  // The blur needs the depth of the frame it is blurring: that is in whichever
+  // buffer the composer hands the pass to read.
+  class DofPass extends ShaderPass {
+    render(...args: Parameters<ShaderPass["render"]>) {
+      this.uniforms.tDepth.value = args[2].depthTexture;
+      super.render(...args);
+    }
+  }
   const VERT = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }";
-  const dof = new ShaderPass({
+  const dof = new DofPass({
     uniforms: {
       tDiffuse: { value: null },
       tDepth: { value: null },
@@ -1555,11 +1833,7 @@ export async function initRack(
         gl_FragColor = vec4(sum / n, 1.0);
       }`,
   });
-  if (fine) {
-    dof.uniforms.tDepth.value = gtao.depthTexture;
-    composer.addPass(gtao);
-    composer.addPass(dof);
-  }
+  if (fine) composer.addPass(dof);
   let focus = 2;
   let aperture = 0;
   // Only the bulbs are brighter than white, so only they glow.
@@ -1581,6 +1855,12 @@ export async function initRack(
 
   let stageW = 1;
   let stageH = 1;
+  // Lowered, a step at a time, if the device cannot keep up.
+  let quality = 1;
+  let stillSig = "";
+  let stillAt = 0;
+  let slow = 0;
+  let timed = 0;
   function resize() {
     const w = stage.clientWidth;
     const h = stage.clientHeight;
@@ -1588,13 +1868,16 @@ export async function initRack(
     stageW = w;
     stageH = h;
     aspect = w / h;
+    // A big, dense screen (4K at 2x) would mean eight million pixels a frame.
+    // Past about three and a half million the extra is not visible in a scene
+    // this soft, so the pixel ratio comes down to fit, and further if frames
+    // are slow (see `quality`).
+    const budget = Math.sqrt(3.5e6 / (w * h));
+    renderer.setPixelRatio(Math.max(0.75, Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2, budget) * quality));
     renderer.setSize(w, h, false);
     const pr = renderer.getPixelRatio();
     composer.setPixelRatio(pr);
     composer.setSize(w, h);
-    // On dense screens the occlusion is worked out at half size: it is a soft
-    // effect, and that is a quarter of the work.
-    if (fine && pr > 1.25) gtao.setSize(Math.round((w * pr) / 2), Math.round((h * pr) / 2));
     // Blur is set in pixels of a 900px-tall frame, so it looks the same at any size.
     const ph = h * renderer.getPixelRatio();
     dof.uniforms.uPx.value.set(ph / 900 / (w * renderer.getPixelRatio()), 1 / 900);
@@ -1602,13 +1885,13 @@ export async function initRack(
     camera.updateProjectionMatrix();
     place();
     dirty = true;
+    stillSig = "";
   }
 
   // ── interaction ────────────────────────────────────────────────────────
   const ray = new THREE.Raycaster();
   const ptr = new THREE.Vector2(0, 0);
   const par = new THREE.Vector2(0, 0);
-  let dirty = true;
   const byId = (id: string | null) => hots.find((h) => h.id === id) ?? null;
 
   // The things that switch: both lamps and the desk's motor.
@@ -1740,6 +2023,7 @@ export async function initRack(
   // draws on change) needs telling that the canvas is blank.
   const onRestore = () => {
     dirty = true;
+    stillSig = "";
   };
   canvas.addEventListener("webglcontextrestored", onRestore);
 
@@ -1786,7 +2070,6 @@ export async function initRack(
   }
   const shadeMat = shade.material as THREE.MeshBasicMaterial;
   const screenMat = screen.material as THREE.MeshBasicMaterial;
-  const leakMat = leak.material as THREE.MeshBasicMaterial;
   const clock = new THREE.Clock();
   let time = 0;
   let raf = 0;
@@ -1818,6 +2101,7 @@ export async function initRack(
       rig.position.y = rigY;
       hangLead(rigY);
       legMid.position.y = rigY / 2;
+      slideLight(rigY);
       place();
     }
 
@@ -1905,19 +2189,11 @@ export async function initRack(
     const L = ramp(0.55, 0.1) * flick * lampLLevel;
     const R = lampRLevel;
     const S = ramp(1.9, 0.8);
-    hemi.intensity = 0.12 + day * 1.1;
-    sun.intensity = day * 1.0;
-    lampLLight.intensity = 0.34 * L;
-    lampLDown.intensity = 0.6 * L;
-    lampRSpot.intensity = 0.85 * R;
-    lampRLight.intensity = 0.1 * R;
-    monLight.intensity = 0.4 * S;
-    backLight.intensity = 0.2 * S;
+    setLight(L, R, S, day);
     shadeMat.color.setRGB(0.2 + 0.8 * L, 0.19 + 0.77 * L, 0.17 + 0.68 * L);
     bulbLMat.color.setRGB(0.16 + 1.5 * L, 0.14 + 1.3 * L, 0.1 + 0.95 * L);
     bulbRMat.color.setRGB(0.2 + 1.7 * R, 0.18 + 1.45 * R, 0.14 + 1.0 * R);
     screenMat.color.setScalar(S);
-    leakMat.opacity = 0.1 + day * 0.25;
     (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
     (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
 
@@ -1926,7 +2202,7 @@ export async function initRack(
       const cp = curtain.attributes.position;
       for (let i = 0; i < cp.count; i++) {
         const x = cp.getX(i);
-        const free = cp.getY(i) < 0 ? 1 : 0.25; // the hem moves more than the top
+        const free = 1 - 0.75 * (cp.getY(i) / CURTAIN_H); // the hem moves more than the top
         cp.setZ(i, fold(x) + Math.sin(time * 0.7 + x * 3.2) * 0.008 * free);
       }
       cp.needsUpdate = true;
@@ -1934,6 +2210,15 @@ export async function initRack(
 
     drawScreen();
     drawPhone();
+    // At the computer the desktop covers the scene and nothing in it moves:
+    // once the picture has stopped changing, stop drawing it.
+    const sig = osOn ? `${screenKey}|${lightSig}|${rigY.toFixed(4)}|${camera.position.toArray().map((v) => v.toFixed(4))}` : "";
+    if (sig && sig === stillSig) {
+      if (time - stillAt > 0.5) return;
+    } else {
+      stillSig = sig;
+      stillAt = time;
+    }
     if (fine) {
       // Pull focus to whatever the camera is looking at. The lens is only
       // opened for close-ups; the wide view stays sharp throughout.
@@ -1945,7 +2230,20 @@ export async function initRack(
       dof.uniforms.uAperture.value = aperture;
     }
     composer.render();
+    // If frames are slow once things have settled, give up some sharpness.
+    if (!reduced && time > 4 && quality > 0.55) {
+      slow += dt;
+      if (++timed === 45) {
+        if (slow / timed > 1 / 40) {
+          quality *= 0.8;
+          resize();
+        }
+        slow = timed = 0;
+      }
+    }
   }
+  // Wait for the baked light, but not for ever.
+  await Promise.race([lightmapsIn, new Promise((done) => setTimeout(done, 6000))]);
   frame();
 
   return {
@@ -1981,7 +2279,6 @@ export async function initRack(
       if (osOn) on.screen(null);
       disposables.forEach((d) => d.dispose());
       composer.dispose();
-      gtao.dispose();
       bloom.dispose();
       renderer.dispose();
     },
