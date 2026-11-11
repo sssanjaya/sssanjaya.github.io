@@ -28,7 +28,7 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
 - About 8 KB of client JavaScript: theme toggle, local clock, command palette, 3D loader
-- The home page hero is an interactive [three.js](https://threejs.org) scene of a desk in the evening (monitor, two warm lamps, books for each role) (about 145 KB gzipped), loaded lazily and only on capable devices. The "plain view" button, or `localStorage.rack = "off"`, turns it off
+- On capable devices the home page is an interactive [three.js](https://threejs.org) scene of a desk in the evening, loaded lazily (about 150 KB gzipped). The things on it work: the monitor unlocks to a desktop with the site's content as files and a terminal, both lamps switch, the standing desk rises, the keys dip as you type. While it runs, the sections below are hidden. The "plain view" button, or `localStorage.rack = "off"`, brings the regular page back, and devices without a capable GPU get the regular page
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 
