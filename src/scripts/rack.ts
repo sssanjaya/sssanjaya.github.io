@@ -1180,12 +1180,20 @@ export async function initRack(
 
   // ── notebook, pen and pencil cup ───────────────────────────────────────
   // Only as models: a bare desk does not need stand-ins for these.
+  // The two files load separately. The pen rests on the notebook's cover
+  // once both are here, and on the desk until then, or for good if the
+  // notebook never arrives.
+  let notebookHere = false;
+  let pen: THREE.Group | null = null;
+  const layPen = () => pen?.position.set(0.59, TOP + (notebookHere ? 0.0242 : 0.0045), 0.21);
   withModel("notebook", (m) => {
     const nb = part(m, "closed");
     nb.position.set(0.505, TOP + 0.002, 0.225);
     nb.rotation.y = -0.22;
     rig.add(nb);
     shadow(0.26, 0.28, 0.58, 0.22, TOP + 0.0012, 0.4);
+    notebookHere = true;
+    layPen();
   });
   withModel("stationery", (m) => {
     const cup = part(m, "pencilcup");
@@ -1212,12 +1220,13 @@ export async function initRack(
       spin.add(pivot);
       cup.add(spin);
     });
-    // A pen on the notebook, and an eraser beside it.
-    const pen = part(m, "pen_red");
-    pen.position.set(0.59, TOP + 0.031, 0.21);
+    // A pen on the notebook, and an eraser on the mat beside it. Heights
+    // come from the cover and mat surfaces, not the bounding boxes.
+    pen = part(m, "pen_red");
     pen.rotation.y = 0.35;
+    layPen();
     const eraser = part(m, "eraser");
-    eraser.position.set(0.47, TOP + 0.009, 0.33);
+    eraser.position.set(0.44, TOP + 0.009, 0.3);
     eraser.rotation.y = 0.5;
     rig.add(pen, eraser);
   });
@@ -1955,10 +1964,13 @@ export async function initRack(
     if (bulbMat) bulbMat.emissiveIntensity = 3 * lampRLevel;
     if (hands.length) {
       // The wall clock keeps the visitor's time; the second hand sweeps.
+      // Under reduced motion frames are only drawn now and then, so the
+      // second hand would sit on a stale second and then jump: it is parked
+      // at 12 and the clock reads hours and minutes.
       const now = new Date();
-      const sec = now.getSeconds() + (reduced ? 0 : now.getMilliseconds() / 1000);
+      const sec = now.getSeconds() + now.getMilliseconds() / 1000;
       const min = now.getMinutes() + sec / 60;
-      const turns = [(now.getHours() % 12) / 12 + min / 720, min / 60, sec / 60];
+      const turns = [(now.getHours() % 12) / 12 + min / 720, min / 60, reduced ? 0 : sec / 60];
       hands.forEach((h, i) => (h.g.rotation.z = Math.PI / 2 - turns[i] * Math.PI * 2 - h.zero));
     }
     shadeGlow.opacity = (0.26 - day * 0.14) * L;
