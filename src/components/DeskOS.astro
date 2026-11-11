@@ -3,13 +3,14 @@
 // part of the site is a file here. Once the monitor is unlocked, this is laid
 // exactly over the screen (see Rack.astro), so its windows, links and the
 // terminal are ordinary HTML: selectable, focusable and crawlable.
-// On the monitor it is drawn at a fixed 1024×595 and scaled to the screen,
+// On the monitor it is drawn at a fixed 1024×576 (16:9) and scaled to the screen,
 // like a real display. Where there is no 3D (small screens, weak devices,
 // "turn off 3D") it fills the stage instead ("full"), and with scripts off
 // index.astro lays the same windows out as a plain page.
 import { site } from "../data/site.ts";
 import { experience } from "../data/experience.ts";
 import { deskFiles as files, dockFiles } from "../data/desktop.ts";
+import { photos, unsplashProfile } from "../data/photos.ts";
 
 const linkedin = site.socials.find((s) => s.label === "LinkedIn");
 const blog = site.nav.find((n) => n.label === "blog");
@@ -66,6 +67,7 @@ const fs: Record<string, string> = {
   "status.log": statusLog,
   "house-rules.md": rulesMd,
   "contact.vcf": contactVcf,
+  "photos/README.md": `${photos.length} photographs of mine, as published on Unsplash.\n${unsplashProfile}\n\nThey are pictures, so cat is no use here. Try: open photos`,
   ...Object.fromEntries(
     roles.map((r) => [
       `experience/${r.file}`,
@@ -90,6 +92,8 @@ const icon: Record<string, string> = {
   chart: '<svg viewBox="0 0 44 52"><path d="M7 3h20l10 10v36H7z" fill="#f4f4f1"/><path d="M27 3v10h10z" fill="#cfd3d8"/><path d="M14 40V30M20 40V24M26 40V33M32 40V21" stroke="#2fae6d" stroke-width="3.2" stroke-linecap="round"/></svg>',
   card: '<svg viewBox="0 0 44 52"><rect x="4" y="11" width="36" height="30" rx="4" fill="#f4f4f1"/><circle cx="15" cy="23" r="5" fill="#8c97a3"/><path d="M8 37c1-6 13-6 14 0z" fill="#8c97a3"/><path d="M26 21h10M26 27h10M26 33h7" stroke="#9aa3ad" stroke-width="2" stroke-linecap="round"/></svg>',
   dir: '<svg viewBox="0 0 44 52"><path d="M3 14a3 3 0 013-3h10l4 5h18a3 3 0 013 3v22a3 3 0 01-3 3H6a3 3 0 01-3-3z" fill="#5aa9f0"/><path d="M3 21h38v20a3 3 0 01-3 3H6a3 3 0 01-3-3z" fill="#7fc1ff"/></svg>',
+  album:
+    '<svg viewBox="0 0 44 52"><path d="M3 14a3 3 0 013-3h10l4 5h18a3 3 0 013 3v22a3 3 0 01-3 3H6a3 3 0 01-3-3z" fill="#5aa9f0"/><path d="M3 21h38v20a3 3 0 01-3 3H6a3 3 0 01-3-3z" fill="#7fc1ff"/><path d="M10 39l8-10 5 6 4-4 7 8z" fill="#fff" opacity=".92"/><circle cx="30" cy="27" r="2.6" fill="#fff" opacity=".92"/></svg>',
   term: '<svg viewBox="0 0 44 52"><rect x="3" y="8" width="38" height="36" rx="7" fill="#15181c" stroke="#3a4048" stroke-width="1.5"/><path d="M11 20l6 6-6 6M21 33h11" fill="none" stroke="#39e58c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   link: '<svg viewBox="0 0 44 52"><circle cx="22" cy="26" r="17" fill="#f4f4f1"/><path d="M5 26h34M22 9c-9 9-9 25 0 34M22 9c9 9 9 25 0 34" fill="none" stroke="#3f6fd0" stroke-width="2"/></svg>',
 };
@@ -193,6 +197,27 @@ const icon: Record<string, string> = {
           ))
         }
       </div>
+    </div>
+  </section>
+
+  <section class="win big" data-win="photos" data-title="photos" hidden aria-label="photos">
+    <div class="tb"><button class="x" type="button" data-close aria-label="Close photos"></button><i></i><i></i><span>photos — {photos.length} items</span></div>
+    <div class="body gal" data-gal>
+      <p class="galbar">
+        <button class="b" type="button" data-gal-all hidden><span aria-hidden="true">‹</span> all photos</button>
+        <span data-gal-note>My photography, {photos.length} pictures. Pick one to look at it.</span>
+        <a class="b" href={unsplashProfile} target="_blank" rel="noopener">Unsplash ↗</a>
+      </p>
+      <ul class="thumbs" data-gal-grid></ul>
+      <figure class="view" data-gal-view hidden>
+        <button class="nav" type="button" data-gal-step="-1" aria-label="Previous photo">‹</button>
+        <img data-gal-img alt="" />
+        <button class="nav" type="button" data-gal-step="1" aria-label="Next photo">›</button>
+        <figcaption>
+          <span data-gal-cap></span>
+          <a data-gal-link target="_blank" rel="noopener">on Unsplash ↗</a>
+        </figcaption>
+      </figure>
     </div>
   </section>
 
@@ -328,11 +353,12 @@ const icon: Record<string, string> = {
       const w = byId(kind === "role" ? "experience" : id);
       if (!w) return false;
       if (kind === "role") role(Number(arg));
+      if (id === "photos") void album();
       if (w.hidden) {
         w.hidden = false;
         if (!w.dataset.placed) {
           w.dataset.placed = "1";
-          w.style.left = `${70 + (placed % 5) * 34}px`;
+          w.style.left = `${(w.classList.contains("big") ? 34 : 70) + (placed % 5) * 34}px`;
           w.style.top = `${44 + (placed % 5) * 26}px`;
           placed++;
         }
@@ -355,8 +381,90 @@ const icon: Record<string, string> = {
       os.querySelectorAll<HTMLElement>("[data-role-pane]").forEach((p) => (p.hidden = Number(p.dataset.rolePane) !== i));
     }
 
+    // ── photos ───────────────────────────────────────────────────────────
+    // The folder's contents are built the first time it is opened, so the
+    // pictures cost nothing until someone looks.
+    const gal = os.querySelector<HTMLElement>("[data-gal]");
+    const grid = gal?.querySelector<HTMLElement>("[data-gal-grid]");
+    const view = gal?.querySelector<HTMLElement>("[data-gal-view]");
+    const galImg = gal?.querySelector<HTMLImageElement>("[data-gal-img]");
+    const galCap = gal?.querySelector<HTMLElement>("[data-gal-cap]");
+    const galLink = gal?.querySelector<HTMLAnchorElement>("[data-gal-link]");
+    const galAll = gal?.querySelector<HTMLElement>("[data-gal-all]");
+    const galNote = gal?.querySelector<HTMLElement>("[data-gal-note]");
+    let pics: typeof import("../data/photos.ts") | null = null;
+    let loadingPics: Promise<void> | null = null;
+    let shown = -1;
+    function album() {
+      loadingPics ??= import("../data/photos.ts").then((m) => {
+        pics = m;
+        if (!grid) return;
+        const items = m.photos.map((p, i) => {
+          const li = document.createElement("li");
+          const b = document.createElement("button");
+          b.type = "button";
+          b.dataset.photo = String(i);
+          b.style.backgroundColor = p.color;
+          const img = document.createElement("img");
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.width = 320;
+          img.height = 240;
+          img.alt = p.alt;
+          img.src = `/photos/t/${p.id}.webp`;
+          b.append(img);
+          li.append(b);
+          return li;
+        });
+        grid.replaceChildren(...items);
+      });
+      return loadingPics;
+    }
+    /** Show one photo large, or the grid again with -1. */
+    function show(i: number, focus = true) {
+      if (!pics || !grid || !view || !galImg) return;
+      const n = pics.photos.length;
+      const was = shown;
+      shown = i < 0 ? -1 : (i + n) % n;
+      const one = shown >= 0;
+      grid.hidden = one;
+      view.hidden = !one;
+      if (galAll) galAll.hidden = !one;
+      if (!one) {
+        if (galNote) galNote.textContent = `My photography, ${n} pictures. Pick one to look at it.`;
+        galImg.removeAttribute("src");
+        const b = grid.querySelector<HTMLElement>(`[data-photo="${was}"]`);
+        b?.scrollIntoView({ block: "nearest" });
+        if (focus) b?.focus({ preventScroll: true });
+        return;
+      }
+      const p = pics.photos[shown];
+      galImg.style.backgroundColor = p.color;
+      galImg.width = p.w;
+      galImg.height = p.h;
+      galImg.alt = p.alt;
+      galImg.src = `/photos/${p.id}.webp`;
+      if (galCap) galCap.textContent = p.alt;
+      if (galLink) galLink.href = pics.photoPage(p.id);
+      if (galNote) galNote.textContent = `${shown + 1} of ${n}${p.year ? ` · ${p.year}` : ""}`;
+      if (focus && was < 0) view.querySelector<HTMLElement>('[data-gal-step="1"]')?.focus({ preventScroll: true });
+    }
+    // Left and right arrows page through the photos while one is open.
+    gal?.addEventListener("keydown", (e) => {
+      if (shown < 0 || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowRight") show(shown + 1, false);
+      else if (e.key === "ArrowLeft") show(shown - 1, false);
+      else return;
+      e.preventDefault();
+    });
+
     os.addEventListener("click", (e) => {
       const t = e.target as HTMLElement;
+      const ph = t.closest<HTMLElement>("[data-photo]");
+      if (ph) return void show(Number(ph.dataset.photo));
+      const st = t.closest<HTMLElement>("[data-gal-step]");
+      if (st) return void show(shown + Number(st.dataset.galStep), false);
+      if (t.closest("[data-gal-all]")) return void show(-1);
       const o = t.closest<HTMLElement>("[data-open]");
       if (o) return void open(o.dataset.open!);
       const c = t.closest<HTMLElement>("[data-close]");
@@ -551,7 +659,7 @@ const icon: Record<string, string> = {
     left: 0;
     top: 0;
     width: 1024px;
-    height: 595px;
+    height: 576px;
     transform-origin: 0 0;
     overflow: hidden;
     font-family: var(--sans, system-ui, sans-serif);
@@ -725,6 +833,9 @@ const icon: Record<string, string> = {
   }
   .win.wide {
     width: 600px;
+  }
+  .win.big {
+    width: 730px;
   }
   .win:not(.active) {
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4);
@@ -1077,6 +1188,133 @@ const icon: Record<string, string> = {
     caret-color: var(--accent);
   }
 
+  /* photos */
+  .gal {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    height: 438px;
+    overflow: hidden;
+  }
+  .galbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .galbar > span {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .galbar .b {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .galbar .b[hidden] {
+    display: none;
+  }
+  .thumbs {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    align-content: start;
+    gap: 6px;
+    padding: 10px 12px 12px;
+  }
+  .thumbs[hidden],
+  .view[hidden] {
+    display: none;
+  }
+  .thumbs :global(button) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .thumbs :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+  }
+  .thumbs :global(button:hover img) {
+    transform: scale(1.05);
+  }
+  .thumbs :global(button:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .view {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-items: center;
+    background: #0d0e10;
+  }
+  .view img {
+    grid-column: 2;
+    justify-self: center;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  .view .nav {
+    height: 100%;
+    border: 0;
+    background: none;
+    color: #cfd2d6;
+    font: inherit;
+    font-size: 26px;
+    cursor: pointer;
+  }
+  .view .nav:hover,
+  .view .nav:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    outline: none;
+  }
+  .view figcaption {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    padding: 8px 12px;
+    border-top: 1px solid var(--rule);
+    background: var(--win);
+    font-size: 12px;
+    color: #d3d6da;
+  }
+  .view figcaption span {
+    flex: 1;
+  }
+  .view figcaption a {
+    flex: none;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .view figcaption a:hover {
+    text-decoration: underline;
+  }
+
   /* No 3D behind it: the desktop fills the stage and carries the wallpaper. */
   .os.full {
     width: 100%;
@@ -1099,6 +1337,12 @@ const icon: Record<string, string> = {
   .os.full .win.wide {
     width: 680px;
   }
+  .os.full .win.big {
+    width: min(860px, calc(100% - 140px));
+  }
+  .os.full .gal {
+    height: min(560px, calc(100vh - 260px));
+  }
   /* On a small stage its windows open maximised, with a strip left under
      them for the stage's own button. */
   @media (max-width: 900px) {
@@ -1118,7 +1362,8 @@ const icon: Record<string, string> = {
       width: 84px;
     }
     .os.full .win,
-    .os.full .win.wide {
+    .os.full .win.wide,
+    .os.full .win.big {
       inset: 26px 0 52px 0 !important;
       width: auto;
       max-height: none;
@@ -1129,7 +1374,8 @@ const icon: Record<string, string> = {
       height: 40px;
       cursor: default;
     }
-    .os.full .term {
+    .os.full .term,
+    .os.full .gal {
       height: auto;
     }
     .os.full .split {
