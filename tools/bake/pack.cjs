@@ -48,7 +48,8 @@ const sharp = require(path.join(root, "node_modules/sharp"));
     return out;
   };
   const raw = ATLAS.map((_, a) => SRC.map((s) => read(a, s)));
-  const maps = raw.map((set) => set.map((m) => soften(despeckle(despeckle(m)))));
+  // The room's light is broad and soft, so it can take a second pass of blur.
+  const maps = raw.map((set, a) => set.map((m) => (a ? soften(despeckle(despeckle(m))) : soften(soften(soften(despeckle(despeckle(m))))))));
   // "1.0" in a stored lightmap: nearly the brightest texel of that source.
   const k = SRC.map((_, s) => {
     const lit = [...maps[0][s], ...maps[1][s]].filter((v) => v > 0).sort((p, q) => p - q);

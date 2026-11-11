@@ -1207,9 +1207,9 @@ export async function initRack(
     }
     geo.setAttribute("color", new THREE.BufferAttribute(shade, 3));
     geo.computeVertexNormals();
-    const body = new THREE.Mesh(geo, track(new THREE.MeshStandardMaterial({ color: "#2b2c30", roughness: 0.56, vertexColors: true })));
+    const body = new THREE.Mesh(geo, track(new THREE.MeshStandardMaterial({ color: "#6b6f77", roughness: 0.42, vertexColors: true })));
     mouse.add(body);
-    cyl(0.0078, 0.0078, 0.0062, std("#3d3f45", 0.4, 0.6), 0, 0.0262, -0.026, mouse, 24).rotation.z = Math.PI / 2;
+    cyl(0.0078, 0.0078, 0.0062, std("#8a8e96", 0.4, 0.3), 0, 0.0262, -0.026, mouse, 24).rotation.z = Math.PI / 2;
   }
 
   // ── laptop + glasses → signals ─────────────────────────────────────────
