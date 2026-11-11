@@ -1,5 +1,5 @@
 # Step 2 of the bake: path-trace the light onto the lightmaps with Blender.
-# usage: python tools/bake/bake.py <dir with scene.json> <samples> [passes, e.g. lrma]
+# usage: python tools/bake/bake.py <dir with scene.json> <samples> [passes, e.g. lrma] [room|desk]
 # Needs the `bpy` module (pip install bpy) or run it with Blender's own Python.
 # Writes <dir>/<room|desk>-<l|r|m|a>.f32: one float per texel, rows top-down,
 # the light arriving from that source (table lamp, desk lamp, monitor, window).
@@ -9,6 +9,7 @@ import numpy as np
 
 out, samples = sys.argv[1], int(sys.argv[2])
 passes = sys.argv[3] if len(sys.argv) > 3 else "lrma"
+only = sys.argv[4] if len(sys.argv) > 4 else ""  # "room" or "desk" to bake just that lightmap
 data = json.load(open(os.path.join(out, "scene.json")))
 SIZE = data["size"]
 
@@ -169,6 +170,8 @@ buf = np.empty(SIZE * SIZE * 4, dtype="f4")
 for source in passes.upper():
     light(source)
     for a, names in enumerate((["room"] + (["probe"] if "probe" in objs else []), ["desk"])):
+        if only and only != ["room", "desk"][a]:
+            continue
         t = time.time()
         bake(names)
         images[a].pixels.foreach_get(buf)
