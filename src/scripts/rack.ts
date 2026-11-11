@@ -1624,8 +1624,8 @@ export async function initRack(
     for (const t of lmTex.flat()) t.needsUpdate = true;
   }
   // How bright each source is at full, and its colour.
-  const GAIN = [5, 170, 9, 5];
-  const TINT = [new THREE.Color(1, 0.8, 0.58), new THREE.Color(1, 0.82, 0.6), new THREE.Color(0.62, 0.8, 0.86), new THREE.Color(0.72, 0.8, 1)];
+  const GAIN = [6.2, 520, 9, 5];
+  const TINT = [new THREE.Color(1, 0.7, 0.34), new THREE.Color(1, 0.71, 0.35), new THREE.Color(0.62, 0.8, 0.86), new THREE.Color(0.72, 0.8, 1)];
   const DAYLIGHT = new THREE.Color(1, 0.97, 0.92);
   const lightNow = [0, 0, 0, 0];
   let lightSig = "";
@@ -2190,9 +2190,9 @@ export async function initRack(
     const R = lampRLevel;
     const S = ramp(1.9, 0.8);
     setLight(L, R, S, day);
-    shadeMat.color.setRGB(0.2 + 0.8 * L, 0.19 + 0.77 * L, 0.17 + 0.68 * L);
-    bulbLMat.color.setRGB(0.16 + 1.5 * L, 0.14 + 1.3 * L, 0.1 + 0.95 * L);
-    bulbRMat.color.setRGB(0.2 + 1.7 * R, 0.18 + 1.45 * R, 0.14 + 1.0 * R);
+    shadeMat.color.setRGB(0.2 + 0.8 * L, 0.19 + 0.66 * L, 0.17 + 0.36 * L);
+    bulbLMat.color.setRGB(0.16 + 1.7 * L, 0.14 + 1.2 * L, 0.1 + 0.5 * L);
+    bulbRMat.color.setRGB(0.2 + 1.9 * R, 0.18 + 1.3 * R, 0.14 + 0.5 * R);
     screenMat.color.setScalar(S);
     (scene.background as THREE.Color).copy(bgDark).lerp(bgLight, day);
     (scene.fog as THREE.Fog).color.copy(scene.background as THREE.Color);
