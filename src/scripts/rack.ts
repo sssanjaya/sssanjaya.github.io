@@ -3,9 +3,11 @@
 // desktop of files, both lamps switch, the standing desk rises, the keys dip
 // as you type. Objects with a soft glow above them open a piece of the site.
 // Most geometry and every texture on it is generated here. Six objects are
-// real model files instead (public/models, see CREDITS.md there): each one
-// replaces a simple stand-in built here, and the stand-in stays if its file
-// does not load. Everything is same-origin, so the CSP stays 'self'-only.
+// real model files instead (public/models, see CREDITS.md there). The plant,
+// the desk lamp and the spectacles replace simple stand-ins built here, which
+// stay if a file does not load; the notebook, the pencil cup and the wall
+// clock exist only as models and are just absent then. Everything is
+// same-origin, so the CSP stays 'self'-only.
 // Loaded lazily by Rack.astro, only on devices that can run it.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -234,8 +236,16 @@ export async function initRack(
               track(t);
               t.anisotropy = maxAniso;
             }
-            if (/_glass$/i.test(mat.name)) m.material = glassMat;
-            else m.castShadow = m.receiveShadow = true;
+            if (/_glass$/i.test(mat.name)) {
+              m.material = glassMat;
+              return;
+            }
+            // The loader shrugs off a texture that fails to download and
+            // returns a blank white or bare-metal model. Every material in
+            // these files has all three maps, so a missing one means a
+            // failed load: reject it and keep the stand-in.
+            if (!mat.map || !mat.normalMap || !mat.roughnessMap) throw new Error(`a texture of "${mat.name}" did not load`);
+            m.castShadow = m.receiveShadow = true;
           });
           if (disposed) return;
           place(file.scene);
