@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" width="960" height="580" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">europe-west2-b outage timeline, 20 Oct 2026 (BST)</title>
+<desc id="d">Feed A failed at 06:53 BST. UPS batteries ran out and the zone went dark at 07:00. Standby utility power came back at 07:54 and reached the data halls at 08:20. Storage recovery after unclean shutdowns ran until traffic re-admission at 11:45. Core platform disruption ended at 12:29 and 99.5 percent of Compute Engine VMs were healthy at 13:08, 6 hours 8 minutes after impact began.</desc>
+<rect width="960" height="580" fill="#0d1218"/>
+<text x="40" y="38" fill="#e6ebf2" font-size="20" font-weight="600">20 Oct 2026, London time (BST): 6 h 8 min of impact</text>
+<rect x="40.0" y="64" width="16.4" height="34" fill="#f5b14c" opacity="0.85"/>
+<rect x="56.4" y="64" width="187.7" height="34" fill="#ff6b6b" opacity="0.85"/>
+<text x="150.3" y="87" fill="#0d1218" font-size="14" font-weight="600" text-anchor="middle">zone dark, 80 min</text>
+<rect x="244.2" y="64" width="481.1" height="34" fill="#f5b14c" opacity="0.85"/>
+<text x="484.7" y="87" fill="#0d1218" font-size="14" font-weight="600" text-anchor="middle">storage recovery, 205 min</text>
+<rect x="725.2" y="64" width="103.3" height="34" fill="#6cb6ff" opacity="0.85"/>
+<text x="776.9" y="87" fill="#0d1218" font-size="14" font-weight="600" text-anchor="middle">re-admit</text>
+<rect x="828.5" y="64" width="91.5" height="34" fill="#5fd38d" opacity="0.85"/>
+<text x="874.2" y="87" fill="#0d1218" font-size="14" font-weight="600" text-anchor="middle">VM tail</text>
+<line x1="56.4" y1="98" x2="56.4" y2="106" stroke="#8b98a8"/>
+<text x="56.4" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">07:00</text>
+<line x1="197.2" y1="98" x2="197.2" y2="106" stroke="#8b98a8"/>
+<text x="197.2" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">08:00</text>
+<line x1="338.0" y1="98" x2="338.0" y2="106" stroke="#8b98a8"/>
+<text x="338.0" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">09:00</text>
+<line x1="478.8" y1="98" x2="478.8" y2="106" stroke="#8b98a8"/>
+<text x="478.8" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">10:00</text>
+<line x1="619.6" y1="98" x2="619.6" y2="106" stroke="#8b98a8"/>
+<text x="619.6" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">11:00</text>
+<line x1="760.4" y1="98" x2="760.4" y2="106" stroke="#8b98a8"/>
+<text x="760.4" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">12:00</text>
+<line x1="901.2" y1="98" x2="901.2" y2="106" stroke="#8b98a8"/>
+<text x="901.2" y="124" fill="#8b98a8" font-size="14" text-anchor="middle">13:00</text>
+<line x1="122" y1="162" x2="122" y2="542" stroke="#2a3441" stroke-width="2"/>
+<text x="100" y="181" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">06:53</text>
+<circle cx="122" cy="176" r="7" fill="#ff6b6b"/>
+<text x="144" y="181" fill="#e6ebf2" font-size="15">Feed A cable fault. PLC sends no generator start.</text>
+<text x="100" y="221" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">07:00</text>
+<circle cx="122" cy="216" r="7" fill="#ff6b6b"/>
+<text x="144" y="221" fill="#e6ebf2" font-size="15">UPS batteries run out. Zone -b loses power: impact starts.</text>
+<text x="100" y="261" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">07:04</text>
+<circle cx="122" cy="256" r="7" fill="#6cb6ff"/>
+<text x="144" y="261" fill="#e6ebf2" font-size="15">Probers and monitoring alert engineers.</text>
+<text x="100" y="301" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">07:09</text>
+<circle cx="122" cy="296" r="7" fill="#f5b14c"/>
+<text x="144" y="301" fill="#e6ebf2" font-size="15">Failover to zones a and c. Spare capacity saturates.</text>
+<text x="100" y="341" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">07:54</text>
+<circle cx="122" cy="336" r="7" fill="#5fd38d"/>
+<text x="144" y="341" fill="#e6ebf2" font-size="15">Power from the standby utility source restored.</text>
+<text x="100" y="381" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">08:20</text>
+<circle cx="122" cy="376" r="7" fill="#5fd38d"/>
+<text x="144" y="381" fill="#e6ebf2" font-size="15">Utility power back in the data halls.</text>
+<text x="100" y="421" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">08:50</text>
+<circle cx="122" cy="416" r="7" fill="#f5b14c"/>
+<text x="144" y="421" fill="#e6ebf2" font-size="15">Storage with unclean shutdowns starts a long recovery.</text>
+<text x="100" y="461" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">11:45</text>
+<circle cx="122" cy="456" r="7" fill="#6cb6ff"/>
+<text x="144" y="461" fill="#e6ebf2" font-size="15">Controlled traffic re-admission to zone -b.</text>
+<text x="100" y="501" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">12:29</text>
+<circle cx="122" cy="496" r="7" fill="#5fd38d"/>
+<text x="144" y="501" fill="#e6ebf2" font-size="15">Regional services fully undrained: core disruption ends.</text>
+<text x="100" y="541" fill="#8b98a8" font-size="15" text-anchor="end" font-family="ui-monospace, monospace">13:08</text>
+<circle cx="122" cy="536" r="7" fill="#5fd38d"/>
+<text x="144" y="541" fill="#e6ebf2" font-size="15">99.5% of Compute Engine VMs healthy.</text>
+</svg>

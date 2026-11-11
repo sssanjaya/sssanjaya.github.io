@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title id="t">Why the europe-west2-b generators never started</title>
+  <desc id="d">Feed A failed from a cable fault while feed B's breaker was open for repairs. The PLC voltage sensor sat upstream of the open breaker, read live voltage on feed B, concluded utility power was healthy and never sent a start signal to the generators. UPS batteries carried the load for about five minutes, then the data halls lost power. The fix checks undervoltage and breaker position for both feeds.</desc>
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .pulse { animation: pulse 4s ease-in-out infinite; }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    }
+  </style>
+  <rect width="960" height="560" fill="#0d1218"/>
+  <text x="40" y="38" fill="#e6ebf2" font-size="20" font-weight="600">Why the generators never started (20 Oct, 06:53 BST)</text>
+
+  <!-- Feed A -->
+  <rect x="40" y="66" width="220" height="64" rx="8" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="56" y="93" fill="#e6ebf2" font-size="16" font-weight="600">Utility feed A</text>
+  <text x="56" y="116" fill="#ff6b6b" font-size="14">cable fault outside site</text>
+  <line x1="150" y1="130" x2="150" y2="330" stroke="#ff6b6b" stroke-width="3" stroke-dasharray="8 6"/>
+  <g class="pulse" stroke="#ff6b6b" stroke-width="4">
+    <line x1="136" y1="186" x2="164" y2="214"/><line x1="164" y1="186" x2="136" y2="214"/>
+  </g>
+  <text x="172" y="205" fill="#ff6b6b" font-size="14">no power</text>
+
+  <!-- Feed B -->
+  <rect x="300" y="66" width="220" height="64" rx="8" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text x="316" y="93" fill="#e6ebf2" font-size="16" font-weight="600">Utility feed B</text>
+  <text x="316" y="116" fill="#6cb6ff" font-size="14">live on the line side</text>
+  <line x1="410" y1="130" x2="410" y2="236" stroke="#6cb6ff" stroke-width="3"/>
+  <circle cx="410" cy="182" r="9" fill="#0d1218" stroke="#f5b14c" stroke-width="3"/>
+  <text x="300" y="168" fill="#f5b14c" font-size="14" text-anchor="end">PLC voltage</text>
+  <text x="300" y="186" fill="#f5b14c" font-size="14" text-anchor="end">sensor here</text>
+  <rect x="340" y="236" width="140" height="48" rx="6" fill="#0d1218" stroke="#f5b14c" stroke-width="2"/>
+  <text x="410" y="257" fill="#e6ebf2" font-size="14" text-anchor="middle">Breaker B</text>
+  <text x="410" y="275" fill="#f5b14c" font-size="14" text-anchor="middle" font-weight="600">OPEN for repairs</text>
+  <line x1="410" y1="284" x2="410" y2="330" stroke="#2a3441" stroke-width="3" stroke-dasharray="8 6"/>
+
+  <!-- sensor to PLC -->
+  <line x1="419" y1="182" x2="590" y2="182" stroke="#f5b14c" stroke-width="2" marker-end="url(#am)"/>
+  <text x="430" y="172" fill="#f5b14c" font-size="14">"voltage present"</text>
+  <defs>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f5b14c"/></marker>
+    <marker id="rm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff6b6b"/></marker>
+    <marker id="bm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b98a8"/></marker>
+  </defs>
+
+  <!-- PLC -->
+  <rect x="596" y="140" width="324" height="112" rx="8" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text x="612" y="166" fill="#e6ebf2" font-size="16" font-weight="600">Active + standby PLC</text>
+  <text x="612" y="188" fill="#8b98a8" font-size="14">identical logic in both controllers</text>
+  <text x="612" y="214" fill="#e6ebf2" font-size="14" font-family="ui-monospace, monospace">voltage on B line side</text>
+  <text x="612" y="236" fill="#e6ebf2" font-size="14" font-family="ui-monospace, monospace">=&gt; utility healthy</text>
+
+  <line x1="758" y1="252" x2="758" y2="326" stroke="#ff6b6b" stroke-width="2" marker-end="url(#rm)"/>
+  <text x="770" y="295" fill="#ff6b6b" font-size="14" font-weight="600">no start signal</text>
+
+  <!-- Generators -->
+  <rect x="640" y="330" width="280" height="60" rx="8" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="656" y="356" fill="#e6ebf2" font-size="16" font-weight="600">Diesel generator bank</text>
+  <text x="656" y="378" fill="#ff6b6b" font-size="14">idle, never took the load</text>
+  <path d="M640 360 H590 V330" fill="none" stroke="#2a3441" stroke-width="3" stroke-dasharray="8 6"/>
+
+  <!-- Bus -->
+  <line x1="60" y1="330" x2="590" y2="330" stroke="#8b98a8" stroke-width="4"/>
+  <text x="200" y="320" fill="#8b98a8" font-size="14">critical load bus</text>
+
+  <!-- UPS and halls -->
+  <line x1="250" y1="332" x2="250" y2="398" stroke="#8b98a8" stroke-width="2" marker-end="url(#bm)"/>
+  <rect x="150" y="402" width="200" height="60" rx="8" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text x="166" y="428" fill="#e6ebf2" font-size="16" font-weight="600">UPS batteries</text>
+  <text x="166" y="450" fill="#f5b14c" font-size="14">about 5 min runtime</text>
+  <line x1="350" y1="432" x2="412" y2="432" stroke="#8b98a8" stroke-width="2" marker-end="url(#bm)"/>
+  <rect x="416" y="402" width="240" height="60" rx="8" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="432" y="428" fill="#e6ebf2" font-size="16" font-weight="600">europe-west2-b halls</text>
+  <text x="432" y="450" fill="#ff6b6b" font-size="14">dark at 07:00 BST</text>
+
+  <!-- Fix -->
+  <rect x="40" y="486" width="880" height="54" rx="8" fill="none" stroke="#5fd38d" stroke-width="2"/>
+  <text x="58" y="519" fill="#5fd38d" font-size="15" font-weight="600">Fix:</text>
+  <text x="96" y="519" fill="#e6ebf2" font-size="15">start generators on undervoltage, and check breaker position for both feeds</text>
+</svg>

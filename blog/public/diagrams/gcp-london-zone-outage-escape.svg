@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title id="t">Four ways the zone -b failure reached zones a and c</title>
+  <desc id="d">Only europe-west2-b lost power, but regional services still failed in four ways: failover demand exhausted capacity in zones a and c, regional control planes timed out on calls into zone b, Apigee X had two of three datastore replicas in zone b and lost quorum, and AlloyDB failover notifications arrived up to 95 minutes late.</desc>
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .flow { stroke-dasharray: 10 8; animation: flow 5s linear infinite; }
+      @keyframes flow { to { stroke-dashoffset: -90; } }
+    }
+  </style>
+  <defs>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f5b14c"/></marker>
+  </defs>
+  <rect width="960" height="560" fill="#0d1218"/>
+  <text x="40" y="38" fill="#e6ebf2" font-size="20" font-weight="600">One zone lost power. Four paths carried the failure out.</text>
+
+  <rect x="40" y="62" width="880" height="140" rx="10" fill="none" stroke="#2a3441" stroke-width="2"/>
+  <text x="56" y="86" fill="#8b98a8" font-size="14">region europe-west2</text>
+
+  <rect x="70" y="100" width="230" height="84" rx="8" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text x="185" y="134" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="middle">zone a</text>
+  <text x="185" y="158" fill="#f5b14c" font-size="14" text-anchor="middle">absorbs failover load</text>
+
+  <rect x="365" y="100" width="230" height="84" rx="8" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="480" y="134" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="middle">zone b</text>
+  <text x="480" y="158" fill="#ff6b6b" font-size="14" text-anchor="middle">no power</text>
+
+  <rect x="660" y="100" width="230" height="84" rx="8" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text x="775" y="134" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="middle">zone c</text>
+  <text x="775" y="158" fill="#f5b14c" font-size="14" text-anchor="middle">absorbs failover load</text>
+
+  <line class="flow" x1="365" y1="142" x2="306" y2="142" stroke="#f5b14c" stroke-width="3" marker-end="url(#am)"/>
+  <line class="flow" x1="595" y1="142" x2="654" y2="142" stroke="#f5b14c" stroke-width="3" marker-end="url(#am)"/>
+
+  <!-- 2x2 cards -->
+  <rect x="40" y="226" width="430" height="144" rx="8" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text x="58" y="254" fill="#f5b14c" font-size="16" font-weight="600">1. Capacity surge</text>
+  <text x="58" y="282" fill="#e6ebf2" font-size="15">Some Compute Engine failovers failed on</text>
+  <text x="58" y="304" fill="#e6ebf2" font-size="15">capacity. GKE scale-ups in a and c slowed.</text>
+  <text x="58" y="326" fill="#e6ebf2" font-size="15">A BigQuery data plane job could not</text>
+  <text x="58" y="348" fill="#e6ebf2" font-size="15">autoscale during the failover.</text>
+
+  <rect x="490" y="226" width="430" height="144" rx="8" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="508" y="254" fill="#ff6b6b" font-size="16" font-weight="600">2. Control plane calls into zone b</text>
+  <text x="508" y="282" fill="#e6ebf2" font-size="15">Regional control planes made cross-zone</text>
+  <text x="508" y="304" fill="#e6ebf2" font-size="15">calls to metadata and catalog parts in b.</text>
+  <text x="508" y="326" fill="#e6ebf2" font-size="15">They timed out: job stalls, API latency,</text>
+  <text x="508" y="348" fill="#e6ebf2" font-size="15">intermittent 500 and 503 errors.</text>
+
+  <rect x="40" y="390" width="430" height="144" rx="8" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="58" y="418" fill="#ff6b6b" font-size="16" font-weight="600">3. Replicas not spread</text>
+  <text x="58" y="446" fill="#e6ebf2" font-size="15">Apigee X had 2 of 3 datastore replicas</text>
+  <text x="58" y="468" fill="#e6ebf2" font-size="15">in zone b. Quorum lost, so the runtime</text>
+  <text x="58" y="490" fill="#e6ebf2" font-size="15">failed requests instead of failing over:</text>
+  <text x="58" y="512" fill="#e6ebf2" font-size="15">7 h 19 min of 5xx errors.</text>
+
+  <rect x="490" y="390" width="430" height="144" rx="8" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text x="508" y="418" fill="#6cb6ff" font-size="16" font-weight="600">4. Late failure detection</text>
+  <text x="508" y="446" fill="#e6ebf2" font-size="15">AlloyDB regional primaries waited up to</text>
+  <text x="508" y="468" fill="#e6ebf2" font-size="15">95 min for a failover notification. About</text>
+  <text x="508" y="490" fill="#e6ebf2" font-size="15">4% stalled on Persistent Disk issues and</text>
+  <text x="508" y="512" fill="#e6ebf2" font-size="15">needed manual recovery.</text>
+</svg>

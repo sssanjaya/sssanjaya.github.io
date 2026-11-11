@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, sans-serif">
+<title id="t">How long each part of the europe-west2 outage lasted</title>
+<desc id="d">Bar chart in minutes. GKE incident 454 minutes, Apigee X 5xx errors 439, region-wide impact 368, zone-scoped resources down 329, BigQuery disruption 309.</desc>
+<rect width="960" height="400" fill="#0d1218"/>
+<text x="40" y="38" fill="#e6ebf2" font-size="20" font-weight="600">Impact duration in minutes, from the Google Cloud incident report</text>
+<line x1="340.0" y1="72" x2="340.0" y2="328" stroke="#2a3441"/>
+<text x="340.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">0</text>
+<line x1="410.0" y1="72" x2="410.0" y2="328" stroke="#2a3441"/>
+<text x="410.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">60</text>
+<line x1="480.0" y1="72" x2="480.0" y2="328" stroke="#2a3441"/>
+<text x="480.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">120</text>
+<line x1="550.0" y1="72" x2="550.0" y2="328" stroke="#2a3441"/>
+<text x="550.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">180</text>
+<line x1="620.0" y1="72" x2="620.0" y2="328" stroke="#2a3441"/>
+<text x="620.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">240</text>
+<line x1="690.0" y1="72" x2="690.0" y2="328" stroke="#2a3441"/>
+<text x="690.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">300</text>
+<line x1="760.0" y1="72" x2="760.0" y2="328" stroke="#2a3441"/>
+<text x="760.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">360</text>
+<line x1="830.0" y1="72" x2="830.0" y2="328" stroke="#2a3441"/>
+<text x="830.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">420</text>
+<line x1="900.0" y1="72" x2="900.0" y2="328" stroke="#2a3441"/>
+<text x="900.0" y="350" fill="#8b98a8" font-size="14" text-anchor="middle">480</text>
+<text x="620" y="374" fill="#8b98a8" font-size="14" text-anchor="middle">minutes (gridline every 60 min = 1 hour)</text>
+<text x="330" y="102.0" fill="#e6ebf2" font-size="15" text-anchor="end">GKE (product incident)</text>
+<rect x="340" y="80" width="529.7" height="34" fill="#6cb6ff"/>
+<text x="861.7" y="102.0" fill="#0d1218" font-size="14" font-weight="600" text-anchor="end">454 (7 h 34 min)</text>
+<text x="330" y="154.0" fill="#e6ebf2" font-size="15" text-anchor="end">Apigee X runtime 5xx errors</text>
+<rect x="340" y="132" width="512.2" height="34" fill="#6cb6ff"/>
+<text x="844.2" y="154.0" fill="#0d1218" font-size="14" font-weight="600" text-anchor="end">439 (7 h 19 min)</text>
+<text x="330" y="206.0" fill="#e6ebf2" font-size="15" text-anchor="end">Region-wide impact (headline)</text>
+<rect x="340" y="184" width="429.3" height="34" fill="#6cb6ff"/>
+<text x="761.3" y="206.0" fill="#0d1218" font-size="14" font-weight="600" text-anchor="end">368 (6 h 8 min)</text>
+<text x="330" y="258.0" fill="#e6ebf2" font-size="15" text-anchor="end">Zone-scoped resources down</text>
+<rect x="340" y="236" width="383.8" height="34" fill="#6cb6ff"/>
+<text x="715.8" y="258.0" fill="#0d1218" font-size="14" font-weight="600" text-anchor="end">329 (5 h 29 min)</text>
+<text x="330" y="310.0" fill="#e6ebf2" font-size="15" text-anchor="end">BigQuery disruption</text>
+<rect x="340" y="288" width="360.5" height="34" fill="#6cb6ff"/>
+<text x="692.5" y="310.0" fill="#0d1218" font-size="14" font-weight="600" text-anchor="end">309 (5 h 9 min)</text>
+</svg>
