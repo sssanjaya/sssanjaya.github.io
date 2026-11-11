@@ -2,28 +2,31 @@
 import Base from "../layouts/Base.astro";
 import TopBar from "../components/TopBar.astro";
 import Rack from "../components/Rack.astro";
-import Hero from "../components/Hero.astro";
-import Signals from "../components/Signals.astro";
-import Status from "../components/Status.astro";
-import Experience from "../components/Experience.astro";
-import Stack from "../components/Stack.astro";
-import About from "../components/About.astro";
-import Contact from "../components/Contact.astro";
-import SiteFooter from "../components/SiteFooter.astro";
 ---
 
 <Base>
+  <!-- Scripts off: no desk and no windows to open, so the computer's files
+       are laid out one under another as a plain page. -->
+  <noscript slot="head">
+    <style is:inline>
+      [data-rack] { height: auto !important; min-height: 0 !important; overflow: visible !important; padding: 28px 16px 64px; }
+      [data-rack] > canvas, [data-rack] > .veil, [data-rack] > .foot, [data-rack] > .hud,
+      [data-rack] > .loading, [data-rack] > .tip, [data-rack] > .sheet { display: none !important; }
+      [data-rack] > .ident { position: static !important; opacity: 1 !important; max-width: 760px; margin: 0 auto 4px; }
+      [data-os] { display: block !important; position: static !important; width: auto !important; height: auto !important;
+        opacity: 1 !important; overflow: visible !important; transform: none !important; }
+      [data-os] > header, [data-os] > ul, [data-os] > nav, [data-os] > canvas,
+      [data-win] [data-close], [data-win] [data-copy], [data-win] .tb i, [data-win] .side { display: none !important; }
+      [data-win]:not([data-win="terminal"]) { display: flex !important; position: static !important; width: auto !important; max-width: 760px;
+        max-height: none !important; margin: 16px auto 0 !important; animation: none !important; }
+      [data-win] .tb span { margin: 0 !important; text-align: left !important; }
+      [data-win] .split { display: block !important; }
+      [data-role-pane] { display: block !important; padding-bottom: 20px; }
+    </style>
+  </noscript>
   <div id="top"></div>
   <TopBar />
   <main id="main">
     <Rack />
-    <Hero />
-    <Signals />
-    <Status />
-    <Experience />
-    <Stack />
-    <About />
-    <Contact />
   </main>
-  <SiteFooter />
 </Base>

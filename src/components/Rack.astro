@@ -1,9 +1,10 @@
 ---
-// The 3D desk. While it runs it is the whole page: the sections below it and
-// the footer are hidden, and the desk's own computer holds their content
-// (DeskOS.astro). It is progressive enhancement over the plain page: the stage
-// stays hidden until WebGL is confirmed and the first frame is ready, and
-// "plain view" (or a weak device, or no WebGL) leaves the regular page as is.
+// The home page: a stage that fills the window. On devices that can run it,
+// the stage is a 3D desk, and the computer on that desk holds the site's
+// content as files (DeskOS.astro). Everywhere else (a weak device, no WebGL,
+// "turn off 3D") the stage is that computer's desktop on its own, so the
+// content is the same either way. With scripts off, index.astro lays the
+// desktop's windows out as a plain page.
 // The panels and the desktop's windows are ordinary HTML, so their text is
 // crawlable.
 import { site } from "../data/site.ts";
@@ -26,14 +27,15 @@ const hots = [
 ];
 ---
 
-<section class="rack" data-rack hidden aria-label="Interactive desk">
+<section class="rack" data-rack aria-label={`${site.name}'s desk`}>
   <canvas data-rack-canvas aria-hidden="true"></canvas>
   <div class="veil" aria-hidden="true"></div>
 
   <div class="ident">
-    <p class="nm" role="heading" aria-level="1">{site.name}</p>
+    <h1 class="nm">{site.name}</h1>
     <p class="rl">{site.currentTitle} <span>@ {site.currentCompany}</span></p>
   </div>
+  <p class="loading mono" aria-hidden="true">setting up the desk…</p>
 
   <div class="foot">
     <p class="how">Everything on this desk works. Click the monitor to unlock it, or try a lamp.</p>
@@ -53,7 +55,8 @@ const hots = [
     <button class="hbtn back" type="button" data-rack-back hidden>
       <kbd aria-hidden="true">esc</kbd> back to the desk
     </button>
-    <button class="hbtn" type="button" data-rack-off>plain view</button>
+    <button class="hbtn" type="button" data-rack-off>turn off 3D</button>
+    <button class="hbtn" type="button" data-rack-on>turn on 3D <span aria-hidden="true">◈</span></button>
   </div>
 
   <DeskOS />
@@ -145,7 +148,6 @@ const hots = [
   import type { RackController, ScreenRect } from "../scripts/rack.ts";
   import { DESK_W } from "../data/desktop.ts";
 
-  const root = document.documentElement;
   const stage = document.querySelector<HTMLElement>("[data-rack]");
   const canvas = stage?.querySelector<HTMLCanvasElement>("[data-rack-canvas]");
   const sheet = stage?.querySelector<HTMLElement>("[data-rack-sheet]");
@@ -198,6 +200,17 @@ const hots = [
     return true;
   }
 
+  // The wallpaper behind the desktop when it fills the stage. In 3D on a
+  // wide screen the monitor's own screen shows through instead.
+  let painted = false;
+  async function paintWall() {
+    const wall = os?.querySelector<HTMLCanvasElement>("[data-os-wall]");
+    if (!wall || painted) return;
+    painted = true;
+    const { paintWallpaper } = await import("../scripts/wallpaper.ts");
+    paintWallpaper(wall);
+  }
+
   // The scene reports where the monitor's screen is, every frame, while the
   // unlocked computer is in use. The HTML desktop is laid exactly over it.
   let osAt = "";
@@ -216,18 +229,28 @@ const hots = [
       osAt = at;
       os.classList.toggle("full", full);
       os.style.transform = full ? "" : at;
+      if (full) void paintWall();
     }
     if (!os.hidden) return;
-    // Phones have no screen behind the desktop, so it carries the wallpaper.
-    const wall = os.querySelector<HTMLCanvasElement>("[data-os-wall]");
-    const paper = ctl?.wallpaper;
-    if (full && wall && paper && wall.width !== paper.width) {
-      wall.width = paper.width;
-      wall.height = paper.height;
-      wall.getContext("2d")?.drawImage(paper, 0, 0);
-    }
     os.hidden = false;
     requestAnimationFrame(() => os.classList.add("on"));
+  }
+
+  /** No 3D: the desktop on its own, filling the stage. */
+  function flat() {
+    if (!stage || !os) return;
+    stage.classList.add("flat");
+    stage.classList.remove("pending", "ready");
+    osAt = "full";
+    os.classList.add("full");
+    os.style.transform = "";
+    os.hidden = false;
+    requestAnimationFrame(() => os.classList.add("on"));
+    void paintWall();
+    // Something to read straight away, without taking focus.
+    if (!os.querySelector("[data-win]:not([hidden])")) {
+      os.dispatchEvent(new CustomEvent("os:open", { detail: { id: "about", quiet: true } }));
+    }
   }
 
   function select(id: string | null, returnFocus = true) {
@@ -263,9 +286,12 @@ const hots = [
     else if (toBack) back?.focus({ preventScroll: true });
   }
 
-  /** Go to the computer and open one of its files (see DeskOS.astro). */
+  /** Open one of the computer's files (see DeskOS.astro), sitting down at it first in 3D. */
+  let toComputer = false;
   function openFile(name: string) {
-    select("console");
+    if (ctl) select("console");
+    // Asked for while the scene is still loading: go there once it is up.
+    else if (starting) toComputer = true;
     os?.dispatchEvent(new CustomEvent("os:open", { detail: name }));
   }
 
@@ -281,52 +307,47 @@ const hots = [
 
   // `wanted` is the latest request (start or stop); `starting` marks the one
   // load in flight. Together they make start() single-flight and cancellable:
-  // a stop during loading disposes the scene instead of swapping it in.
+  // a stop during loading disposes the scene instead of showing it.
   let wanted = false;
   let starting = false;
   // The control that asked for the scene from the keyboard, if any. It is
   // hidden once the scene is up, so focus is handed into the scene then.
   let focusTrigger: Element | null = null;
 
-  async function start(focusAfter = false, auto = false) {
+  async function start(focusAfter = false) {
     if (!stage || !canvas) return;
     wanted = true;
     if (ctl) return;
     if (focusAfter) focusTrigger = document.activeElement;
-    // While loading, the stage is laid out (the scene sizes itself from it)
-    // but invisible and out of flow, so the plain page stays put until the
-    // scene is ready to replace it.
     stage.classList.add("pending");
-    stage.hidden = false;
     if (starting) return;
     starting = true;
     try {
       const { initRack } = await import("../scripts/rack.ts");
       const c = await initRack(stage, canvas, { select, hover: showTip, screen: showOs });
-      // The scene replaces the whole page. A visitor who did not ask for it
-      // and is already reading further down keeps the page they have.
-      if (!wanted || (auto && window.scrollY > 80)) {
+      if (!wanted) {
         c.dispose();
-        stage.hidden = true;
         return;
       }
       ctl = c;
       // Only take focus if the visitor has not moved it elsewhere meanwhile.
       const active = document.activeElement;
-      const takeFocus = !!focusTrigger && (active === focusTrigger || active === document.body || !active);
-      stage.hidden = false;
-      stage.classList.remove("pending");
-      root.classList.add("rack-on");
-      window.scrollTo({ top: 0, behavior: "instant" });
+      const takeFocus = !!focusTrigger && (active === focusTrigger || active === document.body || !active || !!os?.contains(active));
+      // The desktop goes back onto the monitor, behind its lock screen.
+      stage.classList.remove("flat");
+      showOs(null);
       requestAnimationFrame(() => stage.classList.add("ready"));
       if (takeFocus) buttons[0]?.focus({ preventScroll: true });
+      if (toComputer) select("console");
     } catch (err) {
-      console.warn("3D view unavailable, staying on the plain page.", err);
-      stage.hidden = true;
+      console.warn("3D view unavailable, showing the desktop on its own.", err);
+      wanted = false;
+      flat();
     } finally {
       stage.classList.remove("pending");
       starting = false;
       focusTrigger = null;
+      toComputer = false;
     }
   }
 
@@ -335,13 +356,12 @@ const hots = [
     select(null);
     ctl?.dispose();
     ctl = null;
-    root.classList.remove("rack-on");
-    stage?.classList.remove("ready", "touched");
-    if (stage) stage.hidden = true;
+    stage?.classList.remove("touched");
+    flat();
   }
 
-  // The top bar and the command palette link to page sections (/#stack).
-  // While the desk is the page, each one is a file on the computer instead.
+  // The top bar and the command palette link to sections (/#stack). Each one
+  // is a file on the computer.
   const sectionFile: Record<string, string> = {
     signals: "signals",
     status: "terminal",
@@ -352,7 +372,7 @@ const hots = [
   };
   function fromHash() {
     const file = sectionFile[location.hash.slice(1)];
-    if (!ctl || !file) return;
+    if (!file) return;
     history.replaceState(null, "", location.pathname + location.search);
     window.scrollTo({ top: 0, behavior: "instant" });
     openFile(file);
@@ -373,18 +393,17 @@ const hots = [
     );
     stage.querySelector("[data-rack-close]")?.addEventListener("click", () => select(null));
     back?.addEventListener("click", () => select(null));
+    const onBtn = stage.querySelector<HTMLElement>("[data-rack-on]");
     stage.querySelector("[data-rack-off]")?.addEventListener("click", () => {
       remember("off");
       stop();
-      document.querySelector<HTMLElement>("[data-rack-on]")?.focus();
+      onBtn?.focus();
     });
-    document.querySelectorAll("[data-rack-on]").forEach((b) =>
-      b.addEventListener("click", () => {
-        remember("on");
-        // The trigger is hidden once the scene is up; move focus into it.
-        void start(document.activeElement === b);
-      }),
-    );
+    onBtn?.addEventListener("click", () => {
+      remember("on");
+      // The button is hidden once the scene is up; move focus into the scene.
+      void start(document.activeElement === onBtn);
+    });
     // A panel can hand over to the matching file on the computer.
     sheet?.querySelectorAll<HTMLElement>("[data-os-open]").forEach((b) => b.addEventListener("click", () => openFile(b.dataset.osOpen!)));
     window.addEventListener("hashchange", fromHash);
@@ -407,11 +426,13 @@ const hots = [
       }
     });
 
-    // A deep link (/#experience) is scrolling to its section right now, and
-    // that section only exists on the plain page.
-    const deep = location.hash.length > 1 && location.hash !== "#top";
+    // 3D where the device can run it (or the visitor asked for it before),
+    // the desktop on its own everywhere else. A link to a section
+    // (/#experience) opens that file either way.
     const p = pref();
-    if (!deep && p !== "off" && (p === "on" || capable())) void start(false, true);
+    if (p !== "off" && (p === "on" || capable())) void start();
+    else flat();
+    fromHash();
   }
 </script>
 
@@ -439,15 +460,27 @@ const hots = [
     --ok-line: rgba(57, 229, 140, 0.32);
     color: var(--fg);
   }
-  .rack[hidden] {
-    display: none;
-  }
-  .rack.pending {
+  /* Shown while the scene downloads and builds, on the empty stage. */
+  .loading {
     position: absolute;
-    left: 0;
-    right: 0;
-    visibility: hidden;
+    inset: 0;
+    display: none;
+    place-items: center;
+    font-size: 12.5px;
+    color: var(--mut);
     pointer-events: none;
+  }
+  .pending:not(.flat) .loading {
+    display: grid;
+  }
+  /* No 3D: the desktop fills the stage, and the scene's own controls go. */
+  .flat canvas,
+  .flat .veil,
+  .flat .foot,
+  .flat .tip,
+  .flat [data-rack-off],
+  .rack:not(.flat) [data-rack-on] {
+    display: none;
   }
   canvas {
     position: absolute;
@@ -501,9 +534,9 @@ const hots = [
     pointer-events: none;
     transition: opacity 0.3s ease;
   }
+  .pending .ident,
   .ready .ident {
     opacity: 1;
-    transition-delay: 0.5s;
   }
   /* At the computer there is only the computer. */
   .using .ident,
@@ -843,8 +876,9 @@ const hots = [
       bottom: auto;
       top: 14px;
     }
-    /* The desktop fills the stage here; the way back sits under its dock. */
-    .using .hud {
+    /* The desktop fills the stage here; the stage's button sits under its dock. */
+    .using .hud,
+    .flat .hud {
       top: auto;
       bottom: 10px;
       right: 50%;
@@ -897,13 +931,6 @@ const hots = [
 </style>
 
 <style is:global>
-  /* While the 3D desk runs it is the whole page: every other section and
-     the footer are hidden, and come back with "plain view". */
-  /* html. prefix: must outrank the sections' own scoped display rules. */
-  html.rack-on main > :not(.rack),
-  html.rack-on footer.site {
-    display: none;
-  }
   /* The room is dark in both themes, so keep the dark-theme button text. */
   :root[data-theme="light"] .rack .btn.primary {
     color: #04130b;

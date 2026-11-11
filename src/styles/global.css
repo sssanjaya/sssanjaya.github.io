@@ -278,55 +278,10 @@ kbd {
   background: color-mix(in srgb, var(--ok) 88%, #fff);
 }
 
-/* ── section scaffolding ──────────────────────────────────────────────── */
-.section {
-  padding-top: 104px;
-}
-.shead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--dim);
-  margin-bottom: 18px;
-}
-.shead .idx {
-  color: var(--ok);
-}
-.shead .rule {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, var(--line-2), transparent);
-}
-.stitle {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: clamp(28px, 4vw, 40px);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-}
-.ssub {
-  margin-top: 12px;
-  color: var(--mut);
-  font-size: 16px;
-  max-width: 62ch;
-}
-.sbody {
-  margin-top: 40px;
-}
-
 /* ── responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   :root {
     --gutter: 16px;
-  }
-  .section {
-    padding-top: 80px;
-  }
-  .sbody {
-    margin-top: 28px;
   }
 }
 

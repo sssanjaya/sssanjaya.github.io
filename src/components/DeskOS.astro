@@ -1,9 +1,12 @@
 ---
-// The desktop on the 3D monitor. Once the monitor is unlocked, this is laid
+// The desktop on the 3D monitor, and the home page's whole content: every
+// part of the site is a file here. Once the monitor is unlocked, this is laid
 // exactly over the screen (see Rack.astro), so its windows, links and the
 // terminal are ordinary HTML: selectable, focusable and crawlable.
-// It is drawn at a fixed 1024×595 and scaled to the screen, like a real
-// display; on phones it fills the stage instead ("full").
+// On the monitor it is drawn at a fixed 1024×595 and scaled to the screen,
+// like a real display. Where there is no 3D (small screens, weak devices,
+// "turn off 3D") it fills the stage instead ("full"), and with scripts off
+// index.astro lays the same windows out as a plain page.
 import { site } from "../data/site.ts";
 import { experience } from "../data/experience.ts";
 import { deskFiles as files, dockFiles } from "../data/desktop.ts";
@@ -29,7 +32,18 @@ const aboutTxt = [
   "Seven years across Kubernetes, Terraform, and hardened CI/CD, plus the",
   "observability and automation that keep production reliable.",
   "",
+  "My path started in Kathmandu and runs through seven years of production",
+  "systems: Java services first, then containers, then whole platforms on",
+  "AWS and Azure. Off the clock I run a three-node Kubernetes homelab,",
+  "practice Vim, and work through AIOps.",
+  "",
   ...site.currently.map((c) => `${`${c.key}:`.padEnd(12)}${c.value}`),
+].join("\n");
+const year = new Date().getFullYear();
+const age = (since: number) => (year - since > 0 ? `${year - since}y` : "new");
+const statusLog = [
+  `${"SERVICE".padEnd(22)}${"STATE".padEnd(13)}${"SINCE".padEnd(7)}AGE`,
+  ...site.status.map((s) => `${s.name.padEnd(22)}${s.state.padEnd(13)}${String(s.since).padEnd(7)}${age(s.since)}`),
 ].join("\n");
 const rulesMd = `# House rules\n\n${site.principles.map((p, i) => `${i + 1}. ${p}`).join("\n")}`;
 const contactVcf = [
@@ -49,6 +63,7 @@ const fs: Record<string, string> = {
   "about.txt": aboutTxt,
   "stack.yaml": stackYaml,
   "signals.json": signalsJson,
+  "status.log": statusLog,
   "house-rules.md": rulesMd,
   "contact.vcf": contactVcf,
   ...Object.fromEntries(
@@ -125,9 +140,23 @@ const icon: Record<string, string> = {
     <div class="body doc">
       <h2>{site.name}</h2>
       <p class="sub">{site.currentTitle} <span>@ {site.currentCompany}</span> · {site.location}</p>
+      <ul class="tags">
+        {site.disciplines.map((d) => <li>{d}</li>)}
+        <li class="warn">{site.learning} · learning</li>
+      </ul>
       <p>
         I build and secure cloud platforms that <b>ship fast and stay up</b>. Seven years across Kubernetes, Terraform, and
-        hardened CI/CD, plus the observability and automation that keep production reliable.
+        hardened CI/CD, plus the observability and automation that keep production reliable. Reliability and security, I
+        treat as <b>the same job</b>.
+      </p>
+      <p>
+        My path started in Kathmandu and runs through seven years of production systems: Java services first, then
+        containers, then whole platforms on AWS and Azure. The thread: <b>the best infrastructure is the kind nobody
+        notices, and the most secure is the kind an attacker never gets a foothold in.</b>
+      </p>
+      <p>
+        Off the clock I run a three-node Kubernetes homelab, practice Vim, and I'm working through <b>AIOps</b>: anomaly
+        detection and automated remediation on top of the observability I already run.
       </p>
       <dl class="kv">
         {site.currently.map((c) => <div><dt>{c.key}</dt><dd>{c.value}</dd></div>)}
@@ -189,6 +218,25 @@ const icon: Record<string, string> = {
     </div>
   </section>
 
+  <section class="win" data-win="status" data-title="status.log" hidden aria-label="status.log">
+    <div class="tb"><button class="x" type="button" data-close aria-label="Close status.log"></button><i></i><i></i><span>status.log</span></div>
+    <div class="body doc">
+      <h2>Service status</h2>
+      <p class="sub">Every discipline I run, tracked like a service.</p>
+      <ul class="status">
+        {
+          site.status.map((s) => (
+            <li>
+              <b>{s.name}</b>
+              <span>since {s.since} · {age(s.since)}</span>
+              <em class={s.state === "canary" ? "warn" : ""}>{s.state}</em>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
   <section class="win" data-win="rules" data-title="house-rules.md" hidden aria-label="house-rules.md">
     <div class="tb"><button class="x" type="button" data-close aria-label="Close house-rules.md"></button><i></i><i></i><span>house-rules.md</span></div>
     <div class="body doc">
@@ -202,7 +250,10 @@ const icon: Record<string, string> = {
     <div class="body doc">
       <h2>{site.name}</h2>
       <p class="sub">{site.currentTitle} · {site.location}</p>
-      <p>{site.available ? `Currently ${site.availableLabel}.` : "Heads-down right now."} Email is the fastest way to reach me.</p>
+      <p>
+        {site.available ? `Currently ${site.availableLabel}.` : "Heads-down right now."} Open to platform engineering,
+        reliability, and security work. The fastest way to reach me is email.
+      </p>
       <p class="cta">
         <a class="b primary" href={`mailto:${site.email}`}>{site.email}</a>
         <button class="b" type="button" data-copy={site.email}>Copy address</button>
@@ -243,6 +294,9 @@ const icon: Record<string, string> = {
     const app = os.querySelector<HTMLElement>("[data-os-app]");
     const byId = (id: string) => wins.find((w) => w.dataset.win === id);
     const scale = () => os.getBoundingClientRect().width / (os.offsetWidth || 1) || 1;
+    // Filling a small stage, windows are maximised and do not move.
+    const small = matchMedia("(max-width: 900px)");
+    const maxed = () => os.classList.contains("full") && small.matches;
     let z = 10;
     let placed = 0;
 
@@ -251,7 +305,8 @@ const icon: Record<string, string> = {
       wins.forEach((x) => x.classList.toggle("active", x === w));
       if (app) app.textContent = w ? (w.dataset.win === "terminal" ? "Terminal" : "Finder") : "Finder";
     }
-    function open(id: string) {
+    /** `quiet` opens without moving focus (the page opening a file by itself). */
+    function open(id: string, quiet = false) {
       const [kind, arg] = id.split(":");
       const w = byId(kind === "role" ? "experience" : id);
       if (!w) return false;
@@ -266,6 +321,7 @@ const icon: Record<string, string> = {
         }
       }
       front(w);
+      if (quiet) return true;
       if (w.dataset.win === "terminal") os.querySelector<HTMLInputElement>("[data-term-in]")?.focus({ preventScroll: true });
       else w.querySelector<HTMLElement>("[data-close]")?.focus({ preventScroll: true });
       return true;
@@ -295,7 +351,11 @@ const icon: Record<string, string> = {
       if (w) front(w);
     });
     // Rack.astro asks for a file by name (nav links, deep links).
-    os.addEventListener("os:open", (e) => void open((e as CustomEvent<string>).detail));
+    os.addEventListener("os:open", (e) => {
+      const d = (e as CustomEvent<string | { id: string; quiet?: boolean }>).detail;
+      if (typeof d === "string") open(d);
+      else open(d.id, !!d.quiet);
+    });
 
     // Drag a window by its title bar. Movement is divided by the display scale.
     wins.forEach((w) => {
@@ -303,7 +363,7 @@ const icon: Record<string, string> = {
       if (!bar) return;
       let from: { x: number; y: number; l: number; t: number; id: number } | null = null;
       bar.addEventListener("pointerdown", (e) => {
-        if ((e.target as HTMLElement).closest("button") || os.classList.contains("full")) return;
+        if ((e.target as HTMLElement).closest("button") || maxed()) return;
         from = { x: e.clientX, y: e.clientY, l: w.offsetLeft, t: w.offsetTop, id: e.pointerId };
         bar.setPointerCapture(e.pointerId);
       });
@@ -369,6 +429,7 @@ const icon: Record<string, string> = {
         "ls [dir]            list files",
         "cat <file>          print a file",
         "open <file>         open a file in a window",
+        "status              service status",
         "kubectl get engineer",
         "whoami · date · uptime · clear · exit",
       ].join("\n");
@@ -401,6 +462,8 @@ const icon: Record<string, string> = {
             if (/^get\s+engineers?/.test(arg)) return print(engineer);
             if (/^describe\s+engineer/.test(arg)) return print(T.fs["about.txt"]);
             return print(`kubectl: try "kubectl get engineer"`, "err");
+          case "status":
+            return print(T.fs["status.log"]);
           case "whoami":
             return print(`${T.user} (${T.status})`);
           case "pwd":
@@ -756,6 +819,39 @@ const icon: Record<string, string> = {
   .kv dt {
     color: #62b6ff;
   }
+  .tags .warn,
+  .status .warn {
+    color: #ffb02e;
+    border-color: rgba(255, 176, 46, 0.4);
+  }
+  .status {
+    list-style: none;
+    margin-top: 14px;
+    display: grid;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .status li {
+    display: grid;
+    grid-template-columns: 1fr auto 96px;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .status b {
+    font-family: var(--sans, system-ui, sans-serif);
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+  }
+  .status span {
+    color: var(--dim);
+  }
+  .status em {
+    font-style: normal;
+    text-align: right;
+    color: var(--accent);
+  }
   .rules {
     margin: 14px 0 0 20px;
     display: grid;
@@ -957,7 +1053,7 @@ const icon: Record<string, string> = {
     caret-color: var(--accent);
   }
 
-  /* Phones: the desktop fills the stage; windows open maximised. */
+  /* No 3D behind it: the desktop fills the stage and carries the wallpaper. */
   .os.full {
     width: 100%;
     height: 100%;
@@ -972,54 +1068,65 @@ const icon: Record<string, string> = {
     height: 100%;
     object-fit: cover;
   }
-  .os.full .mb .mi,
-  .os.full .mb .st {
-    display: none;
+  .os.full .win {
+    width: 500px;
+    max-height: min(640px, calc(100% - 110px));
   }
-  .os.full .icons {
-    inset: 40px 10px auto 10px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 10px 2px;
-  }
-  .os.full .icons button,
-  .os.full .icons a {
-    width: 84px;
-  }
-  .os.full .win,
   .os.full .win.wide {
-    inset: 26px 0 52px 0 !important;
-    width: auto;
-    max-height: none;
-    border-radius: 0;
-    border-width: 1px 0 0;
+    width: 680px;
   }
-  .os.full .tb {
-    height: 40px;
-    cursor: default;
-  }
-  .os.full .term {
-    height: auto;
-  }
-  .os.full .split {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-  }
-  .os.full .side {
-    display: flex;
-    gap: 4px;
-    border-right: 0;
-    border-bottom: 1px solid var(--rule);
-  }
-  .os.full .side li {
-    flex: none;
-  }
-  .os.full .sig {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .os.full .dock {
-    bottom: 64px;
+  /* On a small stage its windows open maximised, with a strip left under
+     them for the stage's own button. */
+  @media (max-width: 900px) {
+    .os.full .mb .mi,
+    .os.full .mb .st {
+      display: none;
+    }
+    .os.full .icons {
+      inset: 40px 10px auto 10px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 10px 2px;
+    }
+    .os.full .icons button,
+    .os.full .icons a {
+      width: 84px;
+    }
+    .os.full .win,
+    .os.full .win.wide {
+      inset: 26px 0 52px 0 !important;
+      width: auto;
+      max-height: none;
+      border-radius: 0;
+      border-width: 1px 0 0;
+    }
+    .os.full .tb {
+      height: 40px;
+      cursor: default;
+    }
+    .os.full .term {
+      height: auto;
+    }
+    .os.full .split {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+    }
+    .os.full .side {
+      display: flex;
+      gap: 4px;
+      border-right: 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .os.full .side li {
+      flex: none;
+    }
+    .os.full .sig {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .os.full .dock {
+      bottom: 64px;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .os,
