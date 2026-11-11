@@ -21,7 +21,7 @@ The home page is a desk. On a device that can run it, you get a 3D desk in the e
 | `contact.vcf` | Email first, LinkedIn second |
 | Terminal | `ls`, `cat`, `open`, `status`, `kubectl get engineer` |
 
-The rest of the desk works too: both lamps switch, the standing desk rises, the keys dip as you type, and the books, plant, laptop, phone and sticky notes each open a panel.
+The rest of the desk works too: both lamps switch, the standing desk rises, the keys dip as you type, the wall clock keeps time, and the books, plant, laptop, phone and sticky notes each open a panel.
 
 Three ways the page shows up:
 
@@ -37,7 +37,8 @@ Press `/` or `⌘K` (`Ctrl K` on Windows/Linux) anywhere to open the command pal
 - Plain CSS with design tokens; dark theme by default, light theme on toggle
 - Self-hosted fonts via [Fontsource](https://fontsource.org): Space Grotesk, IBM Plex Sans, JetBrains Mono
 - About 9 KB of client JavaScript: theme toggle, local clock, command palette, the desktop and its terminal, the 3D loader
-- The desk is a [three.js](https://threejs.org) scene (about 150 KB gzipped), loaded lazily and only on devices that can run it. Everything in it is generated in code, so there are no model or image downloads
+- The desk is a [three.js](https://threejs.org) scene (about 165 KB gzipped), loaded lazily and only on devices that can run it
+- Six objects on it are real 3D models from [Poly Haven](https://polyhaven.com) (CC0): the succulent, the architect lamp, the spectacles, the notebook, the pencil cup and the wall clock, which shows your local time. About 1.3 MB in all, fetched only with the 3D scene. Sources and how they were prepared: [`public/models/CREDITS.md`](public/models/CREDITS.md). The rest is built in code, and each model has a simple built-in stand-in that stays if its file fails to load
 - Hosted on GitHub Pages behind Cloudflare, deployed by GitHub Actions
 - No cookies. The site loads nothing from third parties itself; Cloudflare adds its Web Analytics beacon and Rocket Loader at the edge
 

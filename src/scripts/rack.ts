@@ -2,12 +2,15 @@
 // Things on it work the way they do on a real desk: the monitor unlocks to a
 // desktop of files, both lamps switch, the standing desk rises, the keys dip
 // as you type. Objects with a soft glow above them open a piece of the site.
-// Geometry and textures are all generated here, so there are no model or
-// image downloads and the CSP stays 'self'-only. Loaded lazily by Rack.astro,
-// only on devices that can run it.
+// Most geometry and every texture on it is generated here. Six objects are
+// real model files instead (public/models, see CREDITS.md there): each one
+// replaces a simple stand-in built here, and the stand-in stays if its file
+// does not load. Everything is same-origin, so the CSP stays 'self'-only.
+// Loaded lazily by Rack.astro, only on devices that can run it.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
@@ -206,6 +209,51 @@ export async function initRack(
   const hitBox = (w: number, h: number, d: number, x: number, y: number, z: number, id: string, parent: THREE.Object3D = root) =>
     markHot(box(w, h, d, hitMat, x, y, z, parent), id);
 
+  // Real models. The files are plain .gltf + .bin + .webp (no Draco or
+  // meshopt, which need WebAssembly, and no embedded images, which need
+  // blob: URLs: the CSP allows neither).
+  let disposed = false;
+  const gltf = new GLTFLoader();
+  // Lenses and clock glass: clear, without the cost of real refraction.
+  const glassMat = track(new THREE.MeshStandardMaterial({ color: "#e8f1fb", roughness: 0.05, transparent: true, opacity: 0.13, depthWrite: false }));
+  const arriving: Promise<void>[] = [];
+  /** Load /models/<name>/<name>.gltf and hand it to `place` once it is here. */
+  function withModel(name: string, place: (model: THREE.Group) => void) {
+    arriving.push(
+      gltf
+        .loadAsync(`/models/${name}/${name}.gltf`)
+        .then((file) => {
+          file.scene.traverse((o) => {
+            const m = o as THREE.Mesh;
+            if (!m.isMesh) return;
+            track(m.geometry);
+            const mat = m.material as THREE.MeshStandardMaterial;
+            track(mat);
+            for (const t of [mat.map, mat.normalMap, mat.roughnessMap, mat.aoMap]) {
+              if (!t) continue;
+              track(t);
+              t.anisotropy = maxAniso;
+            }
+            if (/_glass$/i.test(mat.name)) m.material = glassMat;
+            else m.castShadow = m.receiveShadow = true;
+          });
+          if (disposed) return;
+          place(file.scene);
+          dirty = true;
+        })
+        // A missing file, or a part that is not where the code expects it,
+        // costs that one model and nothing else.
+        .catch((err) => console.warn(`Model "${name}" was not used; keeping the simple one.`, err)),
+    );
+  }
+  /** A model part by name, in a group of its own so it can be placed freely. */
+  const part = (model: THREE.Object3D, name: string) => {
+    const g = new THREE.Group();
+    const o = model.getObjectByName(name);
+    if (o) g.add(o);
+    return g;
+  };
+
   // Soft reflections on metal, glass and glazed surfaces, from a generated
   // room (no image download).
   {
@@ -281,6 +329,34 @@ export async function initRack(
     );
   }
   hangLead(0);
+
+  // Wall clock, showing the visitor's own time. Each hand turns about the
+  // centre; `zero` is the angle its tip is modelled at.
+  const hands: { g: THREE.Group; zero: number }[] = [];
+  withModel("clock", (m) => {
+    m.position.set(-0.47, 1.16, WALL_Z + 0.003);
+    m.scale.setScalar(0.7);
+    for (const name of ["hours_hand", "minute_hand", "second_hand"]) {
+      const g = part(m, name);
+      const mesh = g.children[0] as THREE.Mesh | undefined;
+      let zero = 0;
+      if (mesh) {
+        // The tip is the vertex farthest from the centre.
+        mesh.updateMatrix();
+        const pos = mesh.geometry.attributes.position;
+        const v = new THREE.Vector3();
+        let far = 0;
+        for (let i = 0; i < pos.count; i++) {
+          v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrix);
+          const d = v.x * v.x + v.y * v.y;
+          if (d > far) (far = d), (zero = Math.atan2(v.y, v.x));
+        }
+      }
+      m.add(g);
+      hands.push({ g, zero });
+    }
+    scene.add(m);
+  });
 
   // Curtain on the right: a pleated sheet from ceiling to floor. It sways.
   let curtain: THREE.PlaneGeometry | null = null;
@@ -760,9 +836,12 @@ export async function initRack(
       g.fillRect((i / 28) * w, 0, w / 28, h);
     }
   });
-  cyl(0.046, 0.046, 0.008, std("#aebdb2", 0.6), 0, 0.004, 0, plant, 24);
-  cyl(0.04, 0.034, 0.062, track(new THREE.MeshStandardMaterial({ map: potTex, roughness: 0.7 })), 0, 0.039, 0, plant, 28);
-  cyl(0.036, 0.036, 0.004, std("#3a2c22", 0.95), 0, 0.068, 0, plant, 20);
+  // A simple stand-in, until the scanned haworthia arrives.
+  const plantSimple = new THREE.Group();
+  plant.add(plantSimple);
+  cyl(0.046, 0.046, 0.008, std("#aebdb2", 0.6), 0, 0.004, 0, plantSimple, 24);
+  cyl(0.04, 0.034, 0.062, track(new THREE.MeshStandardMaterial({ map: potTex, roughness: 0.7 })), 0, 0.039, 0, plantSimple, 28);
+  cyl(0.036, 0.036, 0.004, std("#3a2c22", 0.95), 0, 0.068, 0, plantSimple, 20);
   {
     const leaf = track(new THREE.ConeGeometry(0.009, 0.03, 6));
     const leafMat = std("#5f9d6c", 0.6);
@@ -775,19 +854,31 @@ export async function initRack(
         const r = [0.02, 0.012, 0.004][ring];
         m.position.set(Math.cos(a) * r, 0.076 + ring * 0.007, Math.sin(a) * r);
         m.rotation.set(Math.sin(a) * (0.95 - ring * 0.35), 0, -Math.cos(a) * (0.95 - ring * 0.35));
-        plant.add(m);
+        plantSimple.add(m);
       }
     }
   }
-  hitBox(0.12, 0.14, 0.12, 0, 0.06, 0, "aiops", plant);
+  withModel("plant", (m) => {
+    m.scale.setScalar(0.62);
+    m.rotation.y = 0.9;
+    plant.remove(plantSimple);
+    plant.add(m);
+  });
+  hitBox(0.13, 0.19, 0.13, 0, 0.09, 0, "aiops", plant);
   shadow(0.13, 0.13, -0.385, -0.2, TOP + 0.0012, 0.45);
 
-  // ── gooseneck lamp (right) ─────────────────────────────────────────────
+  // ── desk lamp (right) ──────────────────────────────────────────────────
+  // A gooseneck built here stands in until the architect lamp model arrives
+  // (see the lights section, where the model takes the light with it).
   const lampR = new THREE.Group();
   lampR.position.set(0.6, TOP, -0.24);
   rig.add(lampR);
-  cyl(0.058, 0.062, 0.012, white, 0, 0.006, 0, lampR, 32);
-  cyl(0.007, 0.007, 0.26, white, 0, 0.14, 0, lampR, 10);
+  const lampRSimple = new THREE.Group();
+  lampR.add(lampRSimple);
+  const cordR = new THREE.Group();
+  rig.add(cordR);
+  cyl(0.058, 0.062, 0.012, white, 0, 0.006, 0, lampRSimple, 32);
+  cyl(0.007, 0.007, 0.26, white, 0, 0.14, 0, lampRSimple, 10);
   const neck = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 0.26, 0),
     new THREE.Vector3(0, 0.33, 0.004),
@@ -795,8 +886,8 @@ export async function initRack(
     new THREE.Vector3(-0.06, 0.375, 0.034),
     new THREE.Vector3(-0.082, 0.35, 0.046),
   ]);
-  lampR.add(new THREE.Mesh(track(new THREE.TubeGeometry(neck, 24, 0.008, 8)), std("#e8b53a", 0.55)));
-  const head = cyl(0.012, 0.034, 0.06, track(new THREE.MeshStandardMaterial({ color: "#f3f1ec", roughness: 0.55, side: THREE.DoubleSide })), -0.098, 0.326, 0.056, lampR, 24, true);
+  lampRSimple.add(new THREE.Mesh(track(new THREE.TubeGeometry(neck, 24, 0.008, 8)), std("#e8b53a", 0.55)));
+  const head = cyl(0.012, 0.034, 0.06, track(new THREE.MeshStandardMaterial({ color: "#f3f1ec", roughness: 0.55, side: THREE.DoubleSide })), -0.098, 0.326, 0.056, lampRSimple, 24, true);
   head.rotation.set(0.5, 0, 0.62);
   const bulbGlow = glow(lampR, -0.114, 0.3, 0.07, "#ffae38", 0.13, 0.55);
   const bulbCore = glow(lampR, -0.114, 0.3, 0.07, "#fff0c8", 0.05, 1);
@@ -809,13 +900,13 @@ export async function initRack(
       new THREE.Vector3(0.3, TOP + 0.005, -0.31),
       new THREE.Vector3(0.24, TOP + 0.005, -0.34),
     ]);
-    rig.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.003, 6)), std("#e8b53a", 0.6)));
-    box(0.04, 0.012, 0.018, std("#f3f1ec", 0.5), 0.46, TOP + 0.007, -0.293);
+    cordR.add(new THREE.Mesh(track(new THREE.TubeGeometry(c, 30, 0.003, 6)), std("#e8b53a", 0.6)));
+    box(0.04, 0.012, 0.018, std("#f3f1ec", 0.5), 0.46, TOP + 0.007, -0.293, cordR);
   }
   const poolWallR = disc(1.0, 1.0, 0.52, TOP + 0.34, WALL_Z + 0.006, "#ffab40", 0.27, true);
   poolWallR.mesh.rotation.x = 0;
   const poolDeskR = disc(0.5, 0.42, 0.47, TOP + 0.0008, -0.12, "#ffab40", 0.22, true);
-  shadow(0.16, 0.16, 0.6, -0.24, TOP + 0.0012, 0.4);
+  const lampRShadow = shadow(0.16, 0.16, 0.6, -0.24, TOP + 0.0012, 0.4);
   // The desk lamp is a real switch: click it to turn it off and on.
   const lampRHit = box(0.2, 0.42, 0.18, hitMat, -0.03, 0.2, 0.02, lampR);
   lampRHit.userData.toggle = "lampR";
@@ -1002,7 +1093,7 @@ export async function initRack(
   lap.position.set(0.43, TOP, -0.06);
   lap.rotation.y = -0.05;
   rig.add(lap);
-  const lapBody = rbox(0.31, 0.013, 0.215, 0.006, std("#c9ccd0", 0.32, 0.9), 0, 0.0065, 0, lap);
+  const lapBody = rbox(0.31, 0.013, 0.215, 0.006, std("#c9ccd0", 0.45, 0.75), 0, 0.0065, 0, lap);
   markHot(lapBody, "signals");
   {
     const frame = std("#111214", 0.4);
@@ -1011,6 +1102,16 @@ export async function initRack(
     gl.position.set(0.02, 0.036, 0.03);
     gl.rotation.set(-0.12, 0.25, 0);
     lap.add(gl);
+    // Real spectacles replace the rings and rods below. They rest the way
+    // open glasses do, on the bottom of the rims and the ends of the arms.
+    withModel("glasses", (m) => {
+      const S = 0.88;
+      m.scale.setScalar(S);
+      gl.clear();
+      gl.position.set(0.035, 0.013 + 0.0228 * S, 0.055);
+      gl.rotation.set(0, 0.32, 0);
+      gl.add(m);
+    });
     for (const sx of [-1, 1]) {
       const r = new THREE.Mesh(ring, frame);
       r.position.set(sx * 0.026, 0, 0);
@@ -1066,6 +1167,50 @@ export async function initRack(
   hitBox(0.12, 0.05, 0.19, 0, 0.02, 0, "contact", phone);
   shadow(0.12, 0.2, -0.3, 0.13, TOP + 0.0046, 0.5);
   shadow(0.32, 0.26, -0.565, 0.19, TOP + 0.0012, 0.55);
+
+  // ── notebook, pen and pencil cup ───────────────────────────────────────
+  // Only as models: a bare desk does not need stand-ins for these.
+  withModel("notebook", (m) => {
+    const nb = part(m, "closed");
+    nb.position.set(0.505, TOP + 0.002, 0.225);
+    nb.rotation.y = -0.22;
+    rig.add(nb);
+    shadow(0.26, 0.28, 0.58, 0.22, TOP + 0.0012, 0.4);
+  });
+  withModel("stationery", (m) => {
+    const cup = part(m, "pencilcup");
+    cup.position.set(-0.235, TOP + 0.037, -0.285);
+    rig.add(cup);
+    shadow(0.11, 0.11, -0.235, -0.285, TOP + 0.0012, 0.35);
+    // Pencils and a pen stand in the cup, each leaning on the rim.
+    const box3 = new THREE.Box3();
+    [
+      ["pencil_new_a", 0.4, 0.5],
+      ["pencil_used", 2.6, 0.46],
+      ["pen_blue", 4.5, 0.52],
+    ].forEach(([name, turn, lean]) => {
+      const o = m.getObjectByName(name as string);
+      if (!o) return;
+      // Slide the part so its lower end sits at the pivot.
+      o.position.x -= box3.setFromObject(o).min.x;
+      const pivot = new THREE.Group();
+      pivot.add(o);
+      pivot.rotation.z = Math.PI / 2 - (lean as number);
+      pivot.position.set(-0.02, -0.031, 0);
+      const spin = new THREE.Group();
+      spin.rotation.y = turn as number;
+      spin.add(pivot);
+      cup.add(spin);
+    });
+    // A pen on the notebook, and an eraser beside it.
+    const pen = part(m, "pen_red");
+    pen.position.set(0.59, TOP + 0.031, 0.21);
+    pen.rotation.y = 0.35;
+    const eraser = part(m, "eraser");
+    eraser.position.set(0.47, TOP + 0.009, 0.33);
+    eraser.rotation.y = 0.5;
+    rig.add(pen, eraser);
+  });
 
   // ── books → one per role, newest on top ────────────────────────────────
   const covers = ["#2f4f46", "#34455f", "#8a4a3a", "#b88a2f"];
@@ -1148,7 +1293,7 @@ export async function initRack(
   );
   for (const h of hots) if (h.lift) (h.liftBase = h.lift.position.y), (h.liftNow = 0);
   // A soft point of light above each thing that opens.
-  const beaconY: Record<string, number> = { console: 0.23, aiops: 0.1, stack: 0.07, signals: 0.09, principles: -0.05, contact: 0.07 };
+  const beaconY: Record<string, number> = { console: 0.23, aiops: 0.15, stack: 0.07, signals: 0.09, principles: -0.05, contact: 0.07 };
   for (const h of hots) {
     const isBook = h.id.startsWith("role-");
     if (isBook && h.id !== "role-0") continue; // one beacon for the stack of books
@@ -1208,6 +1353,50 @@ export async function initRack(
   const lampRLight = new THREE.PointLight("#ffb347", 0.8, 1.7, 1.9);
   lampRLight.position.copy(worldOf(lampR, -0.12, 0.29, 0.09));
   rig.add(lampRLight);
+  // The architect lamp: clamped at the back of the desk, reaching in from
+  // the right. Its bulb becomes the light source, so the spot, the glows,
+  // the pools of light and the click target all move to it.
+  let bulbMat: THREE.MeshStandardMaterial | null = null;
+  // The model's bulb glows by itself and sits higher, so the painted glow
+  // and the spot ease off.
+  let lampRGain = 1;
+  withModel("lamp", (m) => {
+    m.position.set(0.56, TOP, -0.35);
+    m.rotation.y = 1.78;
+    m.scale.setScalar(0.7);
+    lampRGain = 0.7;
+    lampR.remove(lampRSimple);
+    rig.remove(cordR);
+    lampRShadow.mesh.visible = false;
+    rig.add(m);
+    rig.updateWorldMatrix(true, true);
+    const box3 = new THREE.Box3();
+    let bulb = new THREE.Vector3(0.45, TOP + 0.55, -0.32);
+    m.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || !/light/.test((mesh.material as THREE.Material).name)) return;
+      // The bulb glows, and must not shadow the light inside it.
+      bulbMat = mesh.material as THREE.MeshStandardMaterial;
+      bulbMat.emissive.set("#ffcf8a");
+      mesh.castShadow = false;
+      bulb = rig.worldToLocal(box3.setFromObject(mesh).getCenter(new THREE.Vector3()));
+    });
+    const aim = new THREE.Vector3(0.2, TOP, 0.02);
+    const dir = aim.clone().sub(bulb).normalize();
+    // Just outside the shade's mouth, or the shade would block its own light.
+    lampRSpot.position.copy(bulb).addScaledVector(dir, 0.1);
+    lampRSpot.target.position.copy(aim);
+    lampRLight.position.copy(bulb).addScaledVector(dir, 0.06);
+    for (const sprite of lampR.children) if ((sprite as THREE.Sprite).isSprite) sprite.position.copy(bulb).sub(lampR.position).addScaledVector(dir, 0.03);
+    poolWallR.mesh.position.set(bulb.x - 0.04, bulb.y - 0.16, WALL_Z + 0.006);
+    poolDeskR.mesh.position.set(bulb.x - 0.12, TOP + 0.0008, bulb.z + 0.2);
+    // One click target around the whole lamp.
+    const all = box3.setFromObject(m);
+    rig.worldToLocal(all.getCenter(lampRHit.position));
+    const size = all.getSize(new THREE.Vector3());
+    lampRHit.scale.set(size.x / 0.2, size.y / 0.42, Math.max(size.z, 0.1) / 0.18);
+    rig.add(lampRHit);
+  });
   const monLight = new THREE.PointLight("#a9cdfa", 0.3, 2.2, 1.6);
   monLight.position.copy(screen.getWorldPosition(new THREE.Vector3())).add(new THREE.Vector3(0, -0.05, 0.3));
   rig.add(monLight);
@@ -1716,7 +1905,7 @@ export async function initRack(
     const S = ramp(1.9, 0.8);
     lampLLight.intensity = 0.5 * breathe * L;
     lampLDown.intensity = 1.25 * L;
-    lampRSpot.intensity = 1.1 * lampRLevel;
+    lampRSpot.intensity = 1.1 * lampRLevel * lampRGain;
     (shade.material as THREE.MeshBasicMaterial).color.setRGB(0.22 + 0.78 * L, 0.2 + 0.68 * L, 0.16 + 0.44 * L);
     (screen.material as THREE.MeshBasicMaterial).color.setScalar(S);
     monLight.intensity = 0.3 * S;
@@ -1753,9 +1942,18 @@ export async function initRack(
     dustMat.opacity = 0.42 * Math.max(L, lampRLevel) * (1 - day * 0.6);
     const dim = 1 - day * 0.55;
     lampRLight.intensity = 0.4 * breathe * lampRLevel;
+    if (bulbMat) bulbMat.emissiveIntensity = 3 * lampRLevel;
+    if (hands.length) {
+      // The wall clock keeps the visitor's time; the second hand sweeps.
+      const now = new Date();
+      const sec = now.getSeconds() + (reduced ? 0 : now.getMilliseconds() / 1000);
+      const min = now.getMinutes() + sec / 60;
+      const turns = [(now.getHours() % 12) / 12 + min / 720, min / 60, sec / 60];
+      hands.forEach((h, i) => (h.g.rotation.z = Math.PI / 2 - turns[i] * Math.PI * 2 - h.zero));
+    }
     shadeGlow.opacity = (0.26 - day * 0.14) * L;
     bulbL.opacity = 0.9 * L;
-    bulbGlow.opacity = (0.55 - day * 0.25) * lampRLevel;
+    bulbGlow.opacity = (0.55 - day * 0.25) * lampRLevel * lampRGain * lampRGain;
     bulbCore.opacity = 0.15 + 0.85 * lampRLevel;
     poolWallL.mat.opacity = 0.34 * dim * L;
     poolDeskL.mat.opacity = 0.1 * dim * L;
@@ -1777,6 +1975,10 @@ export async function initRack(
     lens.uniforms.uTime.value = reduced ? 0 : time % 10;
     composer.render();
   }
+  // Give the models a moment so the desk does not change after it appears.
+  // On a slow connection the scene opens with the stand-ins and each model
+  // swaps in when it lands.
+  await Promise.race([Promise.all(arriving), new Promise((done) => setTimeout(done, 4000))]);
   frame();
 
   return {
@@ -1794,6 +1996,7 @@ export async function initRack(
       dirty = true;
     },
     dispose() {
+      disposed = true;
       cancelAnimationFrame(raf);
       clearInterval(minute);
       io.disconnect();
