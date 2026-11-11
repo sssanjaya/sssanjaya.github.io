@@ -219,11 +219,14 @@ export async function initRack(
   // Lenses and clock glass: clear, without the cost of real refraction.
   const glassMat = track(new THREE.MeshStandardMaterial({ color: "#e8f1fb", roughness: 0.05, transparent: true, opacity: 0.13, depthWrite: false }));
   const arriving: Promise<void>[] = [];
+  // Bumped when a model's files change, so a browser that cached the old
+  // .gltf fetches the new one. (Changed textures get new file names.)
+  const modelRev: Record<string, string> = { lamp: "?v=2" };
   /** Load /models/<name>/<name>.gltf and hand it to `place` once it is here. */
   function withModel(name: string, place: (model: THREE.Group) => void) {
     arriving.push(
       gltf
-        .loadAsync(`/models/${name}/${name}.gltf`)
+        .loadAsync(`/models/${name}/${name}.gltf${modelRev[name] ?? ""}`)
         .then((file) => {
           file.scene.traverse((o) => {
             const m = o as THREE.Mesh;

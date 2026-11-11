@@ -27,6 +27,8 @@ with [glTF-Transform](https://gltf-transform.dev):
 - geometry quantized (`KHR_mesh_quantization`)
 - refraction (`KHR_materials_transmission`) dropped; glass is drawn as plain
   blending by the scene
+- the lamp's orange enamel repainted white in its colour texture (the metal,
+  the black fittings and the shade's white inside are untouched)
 
 They are stored as `.gltf` + `.bin` + `.webp`, not `.glb`, and without Draco or
 meshopt compression. That is deliberate: the site's Content-Security-Policy
