@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="t2 d2">
+  <title id="t2">What each git add form stages during the same conflicted merge</title>
+  <desc id="d2">Lab results. With app.conf still holding markers: git add . stages all four paths, git add -u stages app.conf, main.py and notes.txt but not untracked debug.log, git add --resolved stages nothing and exits 128, and git add --resolved main.py stages only main.py. After app.conf is fixed, git add --resolved stages app.conf and main.py only.</desc>
+  <style>
+    .t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}
+    .h{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:18px;font-weight:600}
+    .m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}
+    .c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:15px}
+    .bad{font-family:ui-sans-serif,system-ui,sans-serif;fill:#ff6b6b;font-size:15px;font-weight:600}
+    .ok{font-family:ui-sans-serif,system-ui,sans-serif;fill:#5fd38d;font-size:15px;font-weight:600}
+    .n{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:15px}
+  </style>
+  <rect width="960" height="440" fill="#0d1218"/>
+  <text class="h" x="24" y="36">Which paths end up staged</text>
+  <text class="m" x="24" y="58">Same lab repo each time. Columns 1 to 4: app.conf still has markers. Column 5: after fixing it.</text>
+  <!-- headers -->
+  <text class="c" x="200" y="104">add .</text>
+  <text class="c" x="345" y="104">add -u</text>
+  <text class="c" x="480" y="94">add</text><text class="c" x="480" y="114">--resolved</text>
+  <text class="c" x="630" y="94">--resolved</text><text class="c" x="630" y="114">main.py</text>
+  <text class="c" x="790" y="94">--resolved</text><text class="m" x="790" y="114">after fix</text>
+  <line x1="24" y1="128" x2="936" y2="128" stroke="#2a3441" stroke-width="2"/>
+  <!-- rows -->
+  <text class="c" x="24" y="164">app.conf</text><text class="m" x="24" y="184">conflict, markers</text>
+  <text class="bad" x="200" y="172">staged</text><text class="bad" x="345" y="172">staged</text><text class="ok" x="480" y="172">refused</text><text class="n" x="630" y="172">left UU</text><text class="ok" x="790" y="172">staged (fixed)</text>
+  <line x1="24" y1="200" x2="936" y2="200" stroke="#2a3441" stroke-width="1"/>
+  <text class="c" x="24" y="236">main.py</text><text class="m" x="24" y="256">conflict, resolved</text>
+  <text class="ok" x="200" y="244">staged</text><text class="ok" x="345" y="244">staged</text><text class="n" x="480" y="244">not staged</text><text class="ok" x="630" y="244">staged</text><text class="ok" x="790" y="244">staged</text>
+  <line x1="24" y1="272" x2="936" y2="272" stroke="#2a3441" stroke-width="1"/>
+  <text class="c" x="24" y="308">notes.txt</text><text class="m" x="24" y="328">unrelated edit</text>
+  <text class="bad" x="200" y="316">staged</text><text class="bad" x="345" y="316">staged</text><text class="ok" x="480" y="316">untouched</text><text class="ok" x="630" y="316">untouched</text><text class="ok" x="790" y="316">untouched</text>
+  <line x1="24" y1="344" x2="936" y2="344" stroke="#2a3441" stroke-width="1"/>
+  <text class="c" x="24" y="380">debug.log</text><text class="m" x="24" y="400">untracked</text>
+  <text class="bad" x="200" y="388">staged</text><text class="ok" x="345" y="388">untouched</text><text class="ok" x="480" y="388">untouched</text><text class="ok" x="630" y="388">untouched</text><text class="ok" x="790" y="388">untouched</text>
+  <text class="m" x="200" y="428">exit 0</text><text class="m" x="345" y="428">exit 0</text><text class="m" x="480" y="428">exit 128</text><text class="m" x="630" y="428">exit 0</text><text class="m" x="790" y="428">exit 0</text>
+</svg>

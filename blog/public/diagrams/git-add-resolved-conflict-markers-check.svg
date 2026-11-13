@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="t3 d3">
+  <title id="t3">How git add --resolved decides</title>
+  <desc id="d3">Flowchart from builtin/add.c and merge-ll.c in Git 2.56.1. Collect index entries with a nonzero stage that match the pathspec. If none, exit 0 and do nothing. For each regular file, scan lines until a binary line: a line that starts with conflict-marker-size copies (default 7) of less-than, equals, greater-than or pipe, followed by whitespace, counts as a marker. If any path has a marker, print the list and exit 128 with nothing staged. Otherwise stage every collected path, and record deleted files as removed. An RST heading underlined with exactly seven equals signs is also matched.</desc>
+  <style>
+    .t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}
+    .h{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:18px;font-weight:600}
+    .m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}
+    .c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:15px}
+    .ca{font-family:ui-monospace,monospace;fill:#f5b14c;font-size:15px}
+    .bad{font-family:ui-sans-serif,system-ui,sans-serif;fill:#ff6b6b;font-size:16px;font-weight:600}
+    .ok{font-family:ui-sans-serif,system-ui,sans-serif;fill:#5fd38d;font-size:16px;font-weight:600}
+    .wn{font-family:ui-sans-serif,system-ui,sans-serif;fill:#f5b14c;font-size:16px;font-weight:600}
+    @media (prefers-reduced-motion: no-preference){
+      .dot{animation:mv 6s linear infinite}
+      @keyframes mv{0%{transform:translate(0,0)}30%{transform:translate(0,120px)}60%{transform:translate(0,240px)}100%{transform:translate(0,240px)}}
+    }
+  </style>
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8b98a8"/></marker></defs>
+  <rect width="960" height="520" fill="#0d1218"/>
+  <rect x="40" y="24" width="400" height="76" rx="10" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text class="t" x="60" y="54">1. Collect unmerged index entries</text>
+  <text class="m" x="60" y="80">stage 1, 2 or 3, matching the pathspec</text>
+  <path d="M240,102 L240,140" stroke="#8b98a8" stroke-width="2" marker-end="url(#a3)"/>
+  <rect x="40" y="144" width="400" height="96" rx="10" fill="none" stroke="#6cb6ff" stroke-width="2"/>
+  <text class="t" x="60" y="174">2. Scan each regular file, line by line</text>
+  <text class="m" x="60" y="198">stops early at the first marker or binary line</text>
+  <text class="m" x="60" y="222">symlinks and deleted files are not scanned</text>
+  <path d="M240,242 L240,280" stroke="#8b98a8" stroke-width="2" marker-end="url(#a3)"/>
+  <rect x="40" y="284" width="400" height="76" rx="10" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text class="t" x="60" y="314">3. Any marker in any path?</text>
+  <text class="m" x="60" y="340">one hit blocks the whole selection</text>
+  <circle class="dot" cx="24" cy="62" r="7" fill="#6cb6ff"/>
+  <path d="M140,362 L140,410" stroke="#ff6b6b" stroke-width="2" marker-end="url(#a3)"/>
+  <text class="bad" x="70" y="392">yes</text>
+  <path d="M340,362 L340,410" stroke="#5fd38d" stroke-width="2" marker-end="url(#a3)"/>
+  <text class="ok" x="356" y="392">no</text>
+  <rect x="40" y="414" width="190" height="86" rx="10" fill="none" stroke="#ff6b6b" stroke-width="2"/>
+  <text class="bad" x="56" y="444">exit 128</text>
+  <text class="m" x="56" y="468">list the paths,</text>
+  <text class="m" x="56" y="488">stage nothing</text>
+  <rect x="250" y="414" width="190" height="86" rx="10" fill="none" stroke="#5fd38d" stroke-width="2"/>
+  <text class="ok" x="266" y="444">stage all</text>
+  <text class="m" x="266" y="468">deleted files are</text>
+  <text class="m" x="266" y="488">staged as removals</text>
+  <!-- marker rule -->
+  <rect x="490" y="24" width="440" height="230" rx="10" fill="none" stroke="#2a3441" stroke-width="2"/>
+  <text class="h" x="510" y="54">What counts as a marker line</text>
+  <text class="t" x="510" y="84">N copies of one of  &lt; = &gt; |</text>
+  <text class="t" x="510" y="108">then whitespace (a space after &lt; and &gt;)</text>
+  <text class="m" x="510" y="134">N = conflict-marker-size attribute, default 7</text>
+  <text class="c" x="510" y="170">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</text><text class="bad" x="760" y="170">match</text>
+  <text class="c" x="510" y="196">=======</text><text class="bad" x="760" y="196">match</text>
+  <text class="c" x="510" y="222">========</text><text class="ok" x="760" y="222">no (8 chars)</text>
+  <rect x="490" y="284" width="440" height="216" rx="10" fill="none" stroke="#f5b14c" stroke-width="2"/>
+  <text class="wn" x="510" y="314">False positive in the lab</text>
+  <text class="c" x="510" y="346">Changelog</text>
+  <text class="ca" x="510" y="370">=======</text>
+  <text class="m" x="510" y="400">An RST heading underlined with exactly</text>
+  <text class="m" x="510" y="422">7 equals signs is refused as a marker.</text>
+  <text class="t" x="510" y="456">Fix: .gitattributes</text>
+  <text class="c" x="510" y="482">README.rst conflict-marker-size=32</text>
+</svg>
