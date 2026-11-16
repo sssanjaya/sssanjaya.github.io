@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="t d">
+  <title id="t">Two new guards on the pull_request_target path, and the gap between them</title>
+  <desc id="d">A pull request from a fork triggers pull_request_target. Gate 1 is the GitHub Actions default event policy, which blocks the event in public repositories without an applicable policy from December 2, 2026. If the event is allowed, the workflow runs from the default branch with secrets and a write token. Gate 2 is actions/checkout, which refuses to check out the fork repository, a pull request ref, or the pull request head SHA unless allow-unsafe-pr-checkout is true. A run step that uses gh pr checkout, git fetch, or a fork's artifact is not covered by Gate 2 and still runs fork code with secrets.</desc>
+  <style>
+    .t{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:16px}
+    .h{font-family:ui-sans-serif,system-ui,sans-serif;fill:#e6ebf2;font-size:17px;font-weight:600}
+    .m{font-family:ui-sans-serif,system-ui,sans-serif;fill:#8b98a8;font-size:14px}
+    .c{font-family:ui-monospace,monospace;fill:#e6ebf2;font-size:14px}
+    .g{font-family:ui-sans-serif,system-ui,sans-serif;fill:#5fd38d;font-size:14px}
+    .r{font-family:ui-sans-serif,system-ui,sans-serif;fill:#ff6b6b;font-size:14px}
+    .a{font-family:ui-monospace,monospace;fill:#f5b14c;font-size:14px}
+    @media (prefers-reduced-motion: no-preference){
+      .step{animation:pulse 6s infinite}
+      .s2{animation-delay:1.5s}.s3{animation-delay:3s}.s4{animation-delay:4.5s}
+      @keyframes pulse{0%,100%{opacity:.45}10%,30%{opacity:1}}
+    }
+  </style>
+  <defs>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6cb6ff"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff6b6b"/></marker>
+  </defs>
+  <rect width="960" height="620" fill="#0d1218"/>
+  <text class="h" x="30" y="38">pull_request_target after December 2, 2026</text>
+  <text class="m" x="30" y="62">Gate 1 stops the event. Gate 2 stops one way of fetching fork code. A run: step walks around Gate 2.</text>
+
+  <g class="step">
+    <rect x="30" y="95" width="230" height="130" rx="8" fill="#111a24" stroke="#ff6b6b" stroke-width="2"/>
+    <text class="h" x="46" y="127">Pull request</text>
+    <text class="h" x="46" y="149">from a fork</text>
+    <text class="c" x="46" y="177">mallory/app</text>
+    <text class="m" x="46" y="201">untrusted code</text>
+  </g>
+  <line x1="262" y1="160" x2="363" y2="160" stroke="#6cb6ff" stroke-width="2" marker-end="url(#ab)"/>
+
+  <g class="step s2">
+    <rect x="365" y="95" width="230" height="130" rx="8" fill="#111a24" stroke="#f5b14c" stroke-width="2"/>
+    <text class="h" x="381" y="127">Gate 1: event policy</text>
+    <text class="m" x="381" y="151">default rule, public repos</text>
+    <text class="g" x="381" y="177">no policy: failed run</text>
+    <text class="m" x="381" y="201">allowed: workflow runs</text>
+  </g>
+  <line x1="597" y1="160" x2="698" y2="160" stroke="#6cb6ff" stroke-width="2" marker-end="url(#ab)"/>
+  <text class="m" x="647" y="150" text-anchor="middle">allowed</text>
+
+  <g class="step s2">
+    <rect x="700" y="95" width="230" height="130" rx="8" fill="#111a24" stroke="#6cb6ff" stroke-width="2"/>
+    <text class="h" x="716" y="127">Workflow runs</text>
+    <text class="m" x="716" y="151">file from default branch</text>
+    <text class="m" x="716" y="175">secrets available</text>
+    <text class="m" x="716" y="199">write GITHUB_TOKEN</text>
+  </g>
+
+  <line x1="730" y1="227" x2="560" y2="318" stroke="#6cb6ff" stroke-width="2" marker-end="url(#ab)"/>
+  <text class="c" x="560" y="262" text-anchor="end">uses: actions/checkout</text>
+  <text class="c" x="560" y="282" text-anchor="end">ref: head.sha</text>
+  <line x1="845" y1="227" x2="845" y2="318" stroke="#ff6b6b" stroke-width="2" marker-end="url(#ar)"/>
+  <text class="c" x="855" y="278">run:</text>
+
+  <g class="step s3">
+    <rect x="365" y="320" width="300" height="150" rx="8" fill="#111a24" stroke="#5fd38d" stroke-width="2"/>
+    <text class="h" x="381" y="352">Gate 2: actions/checkout</text>
+    <text class="m" x="381" y="376">refuses fork repo, PR ref,</text>
+    <text class="m" x="381" y="398">or PR head SHA, unless</text>
+    <text class="a" x="381" y="422">allow-unsafe-pr-checkout</text>
+    <text class="g" x="381" y="452">default: step fails</text>
+  </g>
+
+  <g class="step s3">
+    <rect x="700" y="320" width="230" height="150" rx="8" fill="#111a24" stroke="#ff6b6b" stroke-width="2" stroke-dasharray="6 4"/>
+    <text class="h" x="716" y="352">Not covered</text>
+    <text class="c" x="716" y="380">gh pr checkout</text>
+    <text class="c" x="716" y="404">git fetch</text>
+    <text class="m" x="716" y="428">or a fork's artifact</text>
+  </g>
+
+  <g class="step s4">
+    <rect x="30" y="320" width="230" height="150" rx="8" fill="#1f1416" stroke="#ff6b6b" stroke-width="2"/>
+    <text class="h" x="46" y="352">Fork code runs</text>
+    <text class="h" x="46" y="374">with secrets</text>
+    <text class="c" x="46" y="404">make test</text>
+    <text class="r" x="46" y="430">pwn request</text>
+  </g>
+
+  <line x1="363" y1="420" x2="262" y2="420" stroke="#ff6b6b" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar)"/>
+  <text class="r" x="312" y="445" text-anchor="middle">opt-in</text>
+
+  <path d="M815 472 L815 540 L145 540 L145 474" fill="none" stroke="#ff6b6b" stroke-width="2" marker-end="url(#ar)"/>
+  <text class="r" x="480" y="568" text-anchor="middle">bypasses Gate 2: the fork's code still runs with secrets</text>
+  <text class="m" x="480" y="596" text-anchor="middle">Sources: GitHub changelog 2026-11-02, actions/checkout v7.0.1 source, GitHub Docs</text>
+</svg>
