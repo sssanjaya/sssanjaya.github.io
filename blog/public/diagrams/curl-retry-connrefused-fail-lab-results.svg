@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 642" width="960" height="642" role="img" aria-labelledby="t d">
+<title id="t">curl retry lab: seconds until curl exits, per scenario</title>
+<desc id="d">Port opens at 5 s, --retry 5: 0.0 s, exit 7, gave up; Port opens at 5 s, --retry 5 --retry-connrefused: 7.0 s, exit 0, got ok; 404 for 5 s, --retry 5: 0.0 s, exit 0 on a 404 body; 404 for 5 s, --fail --retry 5 --retry-all-errors: 7.0 s, exit 0, got ok; 503 + Retry-After: 3 for 5 s, --retry 5: 6.0 s, exit 0, got ok; Port opens at 40 s, --retry 5 --retry-connrefused: 31.0 s, exit 7, gave up; Port opens at 40 s, --retry 60 --retry-connrefused --retry-delay 1 --retry-max-time 60: 40.1 s, exit 0, got ok.</desc>
+<rect width="960" height="642" fill="#0d1218"/>
+<g font-family="ui-sans-serif, system-ui, sans-serif">
+<text x="40" y="40" fill="#e6ebf2" font-size="20" font-weight="600">Seconds until curl exits, seven lab runs</text>
+<text x="40" y="66" fill="#8b98a8" font-size="15">curl 8.5.0, local Python test server. Bar color = outcome for a deploy script.</text>
+<line x1="40.0" y1="102" x2="40.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="40.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">0</text>
+<line x1="128.0" y1="102" x2="128.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="128.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">5</text>
+<line x1="216.0" y1="102" x2="216.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="216.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">10</text>
+<line x1="304.0" y1="102" x2="304.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="304.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">15</text>
+<line x1="392.0" y1="102" x2="392.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="392.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">20</text>
+<line x1="480.0" y1="102" x2="480.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="480.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">25</text>
+<line x1="568.0" y1="102" x2="568.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="568.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">30</text>
+<line x1="656.0" y1="102" x2="656.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="656.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">35</text>
+<line x1="744.0" y1="102" x2="744.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="744.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">40</text>
+<line x1="832.0" y1="102" x2="832.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="832.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">45</text>
+<line x1="920.0" y1="102" x2="920.0" y2="572" stroke="#2a3441" stroke-width="1"/>
+<text x="920.0" y="594" fill="#8b98a8" font-size="14" text-anchor="middle">50</text>
+<text x="480.0" y="620" fill="#8b98a8" font-size="14" text-anchor="middle">elapsed wall-clock time (seconds)</text>
+<text x="40" y="124" fill="#e6ebf2" font-size="14">Port opens at 5 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--retry 5</tspan></text>
+<rect x="40" y="132" width="4.0" height="24" rx="3" fill="#ff6b6b"/>
+<text x="54.0" y="150" fill="#e6ebf2" font-size="14">0.0 s  <tspan fill="#8b98a8">exit 7, gave up</tspan></text>
+<text x="40" y="190" fill="#e6ebf2" font-size="14">Port opens at 5 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--retry 5 --retry-connrefused</tspan></text>
+<rect x="40" y="198" width="123.2" height="24" rx="3" fill="#5fd38d"/>
+<text x="173.2" y="216" fill="#e6ebf2" font-size="14">7.0 s  <tspan fill="#8b98a8">exit 0, got ok</tspan></text>
+<text x="40" y="256" fill="#e6ebf2" font-size="14">404 for 5 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--retry 5</tspan></text>
+<rect x="40" y="264" width="4.0" height="24" rx="3" fill="#f5b14c"/>
+<text x="54.0" y="282" fill="#e6ebf2" font-size="14">0.0 s  <tspan fill="#8b98a8">exit 0 on a 404 body</tspan></text>
+<text x="40" y="322" fill="#e6ebf2" font-size="14">404 for 5 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--fail --retry 5 --retry-all-errors</tspan></text>
+<rect x="40" y="330" width="123.2" height="24" rx="3" fill="#5fd38d"/>
+<text x="173.2" y="348" fill="#e6ebf2" font-size="14">7.0 s  <tspan fill="#8b98a8">exit 0, got ok</tspan></text>
+<text x="40" y="388" fill="#e6ebf2" font-size="14">503 + Retry-After: 3 for 5 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--retry 5</tspan></text>
+<rect x="40" y="396" width="105.6" height="24" rx="3" fill="#5fd38d"/>
+<text x="155.6" y="414" fill="#e6ebf2" font-size="14">6.0 s  <tspan fill="#8b98a8">exit 0, got ok</tspan></text>
+<text x="40" y="454" fill="#e6ebf2" font-size="14">Port opens at 40 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--retry 5 --retry-connrefused</tspan></text>
+<rect x="40" y="462" width="545.6" height="24" rx="3" fill="#ff6b6b"/>
+<text x="595.6" y="480" fill="#e6ebf2" font-size="14">31.0 s  <tspan fill="#8b98a8">exit 7, gave up</tspan></text>
+<text x="40" y="520" fill="#e6ebf2" font-size="14">Port opens at 40 s  <tspan fill="#6cb6ff" font-family="ui-monospace, monospace">--retry 60 --retry-connrefused --retry-delay 1 --retry-max-time 60</tspan></text>
+<rect x="40" y="528" width="705.8" height="24" rx="3" fill="#5fd38d"/>
+<text x="755.8" y="546" fill="#e6ebf2" font-size="14">40.1 s  <tspan fill="#8b98a8">exit 0, got ok</tspan></text>
+</g></svg>
