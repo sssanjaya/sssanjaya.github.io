@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 590" width="900" height="590" role="img" aria-labelledby="t d">
+<title id="t">Which failures curl --retry retries</title>
+<desc id="d">Decision chart for curl 8.5.0 with --retry 5. Timeouts, DNS failures, and HTTP 408, 429, 500, 502, 503, 504 are retried. Connection refused and HTTP 404 are not retried. --retry-all-errors retries everything.</desc>
+<rect width="900" height="590" fill="#0d1218"/>
+<g font-family="ui-sans-serif, system-ui, sans-serif">
+<text x="30" y="42" fill="#e6ebf2" font-size="20" font-weight="600">What happens on a failed attempt with <tspan fill="#6cb6ff" font-family="ui-monospace, monospace" font-weight="400">curl --retry 5</tspan></text>
+<text x="30" y="68" fill="#8b98a8" font-size="15">curl 8.5.0 (Ubuntu 24.04): sandbox runs plus the curl man page</text>
+<text x="30" y="104" fill="#8b98a8" font-size="14">FAILURE</text><text x="490" y="104" fill="#8b98a8" font-size="14">WHAT --retry DOES</text>
+<rect x="30" y="116" width="370" height="60" rx="8" fill="#141b24" stroke="#2a3441"/>
+<text x="48" y="152" fill="#e6ebf2" font-size="16">Timeout (exit 28)</text>
+<line x1="400" y1="146" x2="474" y2="146" stroke="#2a3441" stroke-width="2"/><path d="M474 140 L484 146 L474 152 Z" fill="#2a3441"/>
+<rect x="490" y="116" width="380" height="60" rx="8" fill="#141b24" stroke="#5fd38d" stroke-width="2"/>
+<text x="508" y="141" fill="#5fd38d" font-size="16" font-weight="600">Retried</text>
+<text x="508" y="163" fill="#8b98a8" font-size="14">with doubling delay 1s, 2s, 4s</text>
+<rect x="30" y="192" width="370" height="60" rx="8" fill="#141b24" stroke="#2a3441"/>
+<text x="48" y="228" fill="#e6ebf2" font-size="16">DNS lookup failed (exit 6)</text>
+<line x1="400" y1="222" x2="474" y2="222" stroke="#2a3441" stroke-width="2"/><path d="M474 216 L484 222 L474 228 Z" fill="#2a3441"/>
+<rect x="490" y="192" width="380" height="60" rx="8" fill="#141b24" stroke="#5fd38d" stroke-width="2"/>
+<text x="508" y="217" fill="#5fd38d" font-size="16" font-weight="600">Retried</text>
+<text x="508" y="239" fill="#8b98a8" font-size="14">logged as “Problem : timeout”</text>
+<rect x="30" y="268" width="370" height="60" rx="8" fill="#141b24" stroke="#2a3441"/>
+<text x="48" y="304" fill="#e6ebf2" font-size="16">HTTP 408 429 500 502 503 504</text>
+<line x1="400" y1="298" x2="474" y2="298" stroke="#2a3441" stroke-width="2"/><path d="M474 292 L484 298 L474 304 Z" fill="#2a3441"/>
+<rect x="490" y="268" width="380" height="60" rx="8" fill="#141b24" stroke="#5fd38d" stroke-width="2"/>
+<text x="508" y="293" fill="#5fd38d" font-size="16" font-weight="600">Retried</text>
+<text x="508" y="315" fill="#8b98a8" font-size="14">waits for Retry-After if sent</text>
+<rect x="30" y="344" width="370" height="60" rx="8" fill="#141b24" stroke="#2a3441"/>
+<text x="48" y="380" fill="#e6ebf2" font-size="16">Connection refused (exit 7)</text>
+<line x1="400" y1="374" x2="474" y2="374" stroke="#2a3441" stroke-width="2"/><path d="M474 368 L484 374 L474 380 Z" fill="#2a3441"/>
+<rect x="490" y="344" width="380" height="60" rx="8" fill="#141b24" stroke="#ff6b6b" stroke-width="2"/>
+<text x="508" y="369" fill="#ff6b6b" font-size="16" font-weight="600">Not retried</text>
+<text x="508" y="391" fill="#8b98a8" font-size="14">fails in 0 s; needs --retry-connrefused</text>
+<rect x="30" y="420" width="370" height="60" rx="8" fill="#141b24" stroke="#2a3441"/>
+<text x="48" y="456" fill="#e6ebf2" font-size="16">HTTP 404 and most other 4xx</text>
+<line x1="400" y1="450" x2="474" y2="450" stroke="#2a3441" stroke-width="2"/><path d="M474 444 L484 450 L474 456 Z" fill="#2a3441"/>
+<rect x="490" y="420" width="380" height="60" rx="8" fill="#141b24" stroke="#ff6b6b" stroke-width="2"/>
+<text x="508" y="445" fill="#ff6b6b" font-size="16" font-weight="600">Not retried</text>
+<text x="508" y="467" fill="#8b98a8" font-size="14">exit 0 and the error body, unless --fail</text>
+<rect x="30" y="504" width="840" height="64" rx="8" fill="#141b24" stroke="#f5b14c" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="48" y="530" fill="#f5b14c" font-size="16" font-weight="600" font-family="ui-monospace, monospace">--retry-all-errors <tspan font-family="ui-sans-serif, system-ui, sans-serif" fill="#e6ebf2" font-weight="400" font-size="15">retries every failure above. Add --fail so 4xx counts as one.</tspan></text>
+<text x="48" y="553" fill="#8b98a8" font-size="14">The curl man page calls it the “sledgehammer” and warns against using it by default.</text>
+</g></svg>
