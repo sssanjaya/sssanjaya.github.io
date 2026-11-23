@@ -38,6 +38,8 @@ item must be from the past 7 days.
   hook and link it. Evergreen techniques are fine when every claim is sourced
   and every command is run.
 - Never cover a technique an existing post already covers.
+- Tools not in use, never write about them: Prometheus, Datadog. When unsure
+  whether a tool is in use, pick a different topic.
 - Primary sources first: official docs, man pages, release notes, vendor
   advisories, CVE records, official postmortems, conference talks, and
   standards. Skip marketing and funding news.
