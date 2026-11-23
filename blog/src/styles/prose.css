@@ -154,6 +154,44 @@
 .prose pre code {
   font-family: inherit;
 }
+/* Copy button, added to each code block by the script in pages/[slug].astro. */
+.prose .codewrap {
+  position: relative;
+  margin-top: 1.4em;
+}
+.prose .codewrap .copy {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  padding: 5px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--fg-2);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.prose .codewrap .copy:hover,
+.prose .codewrap .copy:focus-visible {
+  border-color: var(--ok-line);
+  color: var(--ok);
+}
+.prose .codewrap .copy.done {
+  border-color: var(--ok-line);
+  color: var(--ok);
+}
+/* Keep the first line of code and the language label clear of the button. */
+.prose .codewrap pre {
+  margin-top: 0;
+  padding-top: 44px;
+}
+.prose .codewrap pre[class*="language-"]::before {
+  top: 14px;
+  right: auto;
+  left: 20px;
+}
 /* Language label, e.g. "yaml", in the block's corner. */
 .prose pre[class*="language-"]::before {
   position: absolute;
@@ -247,4 +285,12 @@
     border-left: 0;
     border-right: 0;
   }
+}
+
+/* Plain-text blocks hold prompts and prose output: wrap long lines so they
+   read without sideways scrolling. Code in other languages keeps its lines. */
+.prose pre.language-text,
+.prose pre.language-text code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
