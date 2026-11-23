@@ -136,6 +136,55 @@ const structuredData = {
   </article>
 </BlogLayout>
 
+<script>
+  // Copy button on every code block. Astro bundles this script and adds its
+  // hash to the CSP. The button copies the block's plain text.
+  for (const pre of document.querySelectorAll<HTMLPreElement>(".prose pre")) {
+    const wrap = document.createElement("div");
+    wrap.className = "codewrap";
+    pre.before(wrap);
+    wrap.append(pre);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy";
+    btn.textContent = "Copy";
+    btn.setAttribute("aria-label", "Copy code to clipboard");
+    let timer: number | undefined;
+    btn.addEventListener("click", async () => {
+      const text = (pre.querySelector("code") ?? pre).textContent ?? "";
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      } catch {
+        // Fallback for browsers that block the async clipboard API.
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.append(ta);
+        ta.select();
+        try {
+          ok = document.execCommand("copy");
+        } catch {
+          ok = false;
+        }
+        ta.remove();
+      }
+      btn.textContent = ok ? "Copied" : "Press Ctrl+C";
+      btn.classList.toggle("done", ok);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("done");
+      }, 2000);
+    });
+    wrap.append(btn);
+  }
+</script>
+
 <style>
   .post {
     padding-top: 56px;
