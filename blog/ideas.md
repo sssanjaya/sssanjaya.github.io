@@ -90,3 +90,16 @@ This file is public in the repo. Customer names, internal hostnames,
 credentials, and anything under NDA do not belong here.
 
 ## Queue
+
+Each bullet is one post: the title to use, then the problem it solves. The
+routine takes the top bullet, writes the post, and removes the bullet.
+
+- **Diff Before Merge: Review a Change You Did Not Write.** A prompt that walks a diff from an AI agent or a colleague: what it claims to do, what it actually touches, what is untested, and the three questions to ask before approving.
+- **Chat to Timeline: Turn an Incident Thread Into a Postmortem.** Paste a messy chat export; get a timestamped timeline, the decisions made, the open questions, and a draft summary with nothing invented.
+- **Chore to Routine: Hand a Weekly Task to a Scheduled Agent.** How-to post. Take one manual weekly chore and turn it into a Claude Code routine: the prompt, the schedule, what it may touch, and how it reports back. Run it and show the real output.
+- **Meeting to Owners: Cut a Transcript Into Decisions and Dates.** A prompt that turns a transcript or rough notes into decisions, owners, deadlines, and the things nobody agreed to own.
+- **Brief the Agent: Write a Task an AI Can Finish Without You.** A prompt that interviews you for the goal, the done-check, the limits, and the context, then writes a task brief an agent can complete without coming back with questions.
+- **Codebase in an Hour: A Guided Tour for a New Joiner.** A prompt for Claude Code that maps a repo for someone new: where a request enters, the five files that matter, how to run it, and a first safe change to make.
+- **Backlog Triage: Close, Merge or Do 50 Stale Tickets.** A prompt that sorts an exported ticket list into close, merge, do this week, and ask the owner, with a one-line reason for each.
+- **CLAUDE.md From Scratch: Teach Claude Code Your Repo.** How-to post. Build a CLAUDE.md for a real repo step by step, and show the same task done before and after the file exists.
+- **Say No Clearly: Decline a Request Without a Long Thread.** A prompt that drafts a short, firm, kind refusal: what you cannot do, why in one line, and what you can offer instead.
