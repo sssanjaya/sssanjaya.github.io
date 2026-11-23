@@ -64,6 +64,28 @@ its topic list, and its rule that the news item must be from the past 7 days.
 - Sources: link the official docs for every claim about how Claude Code or
   another tool behaves. Skip marketing and funding news.
 
+## Email digest
+
+After a post is merged, send it as an email. One recipient only.
+
+- Template: `blog/email/prompt-of-the-day.html`. Copy it, keep the layout and
+  inline styles exactly, and replace only the text: preheader, issue number
+  (count of posts published so far) and date, the chip, title, one-sentence
+  pitch, the Fixes / How / You get rows, one example input, four "How it
+  runs" steps, the first lines of the prompt, the skill path, and "Do this
+  now". Every line must restate something the post says. The button links to
+  the post URL.
+- Keep it short: the email is the 30-second version, the post has the full
+  prompt.
+- Send with the Resend API (`POST https://api.resend.com/emails`, key in
+  `$RESEND_API_KEY`), from `Prompt of the Day <prompts@sanjayhona.com.np>`,
+  to the address in `$CLAUDE_CODE_USER_EMAIL`, subject "<prompt name>: <what
+  it does>". Include a plain-text part.
+- Never write the recipient address or the API key into the repo, a commit,
+  a PR, or the post. Never add other recipients.
+- If the key is missing or the send fails, say so in the final summary and
+  do not retry more than once. The post stays published either way.
+
 This file is public in the repo. Customer names, internal hostnames,
 credentials, and anything under NDA do not belong here.
 
