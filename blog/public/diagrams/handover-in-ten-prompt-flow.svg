@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 560" width="920" height="560" role="img" aria-labelledby="t d">
+<title id="t">How the Handover in Ten prompt runs</title>
+<desc id="d">Flow diagram. Input: work in progress that lives in one person's head. The prompt asks up to eight questions, one at a time, in four groups: the state right now, what only you know, the next three actions, and guardrails and people. It then writes a one-page note, rereads it as a stranger and asks up to three more questions, and ends with one action to do before leaving.</desc>
+<rect width="920" height="560" fill="#0d1218"/>
+<g font-family="ui-sans-serif, system-ui, sans-serif">
+<text x="30" y="42" fill="#e6ebf2" font-size="21" font-weight="600" text-anchor="start" >Handover in Ten: from one person's head to one page</text>
+<text x="30" y="68" fill="#8b98a8" font-size="15" font-weight="400" text-anchor="start" >Up to eight questions, one at a time, then a note that is tested before you leave</text>
+<rect x="30" y="100" width="250" height="84" rx="10" fill="#141b24" stroke="#ff6b6b" stroke-width="2"/>
+<text x="48" y="132" fill="#e6ebf2" font-size="17" font-weight="600" text-anchor="start" >Work in progress</text>
+<text x="48" y="156" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >half done, lives in your head</text>
+<line x1="280" y1="142" x2="320.0" y2="142.0" stroke="#8b98a8" stroke-width="2"/><path d="M320.0 136.0 L330 142 L320.0 148.0 Z" fill="#8b98a8"/>
+<rect x="330" y="92" width="560" height="244" rx="10" fill="#141b24" stroke="#6cb6ff" stroke-width="2"/>
+<text x="350" y="122" fill="#6cb6ff" font-size="14" font-weight="600" text-anchor="start" >THE QUESTIONS</text>
+<text x="870" y="122" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="end" >steps 1 to 8</text>
+<circle cx="366" cy="152" r="14" fill="#0d1218" stroke="#6cb6ff" stroke-width="2"/>
+<text x="366" y="157" fill="#6cb6ff" font-size="15" font-weight="600" text-anchor="middle" >1</text>
+<text x="392" y="150" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="start" >State right now</text>
+<text x="392" y="170" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >what is broken, what is still running</text>
+<circle cx="366" cy="200" r="14" fill="#0d1218" stroke="#6cb6ff" stroke-width="2"/>
+<text x="366" y="205" fill="#6cb6ff" font-size="15" font-weight="600" text-anchor="middle" >2</text>
+<text x="392" y="198" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="start" >What only you know</text>
+<text x="392" y="218" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >workarounds and expected oddities</text>
+<circle cx="366" cy="248" r="14" fill="#0d1218" stroke="#6cb6ff" stroke-width="2"/>
+<text x="366" y="253" fill="#6cb6ff" font-size="15" font-weight="600" text-anchor="middle" >3</text>
+<text x="392" y="246" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="start" >Next three actions</text>
+<text x="392" y="266" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >in order, each with a check</text>
+<circle cx="366" cy="296" r="14" fill="#0d1218" stroke="#6cb6ff" stroke-width="2"/>
+<text x="366" y="301" fill="#6cb6ff" font-size="15" font-weight="600" text-anchor="middle" >4</text>
+<text x="392" y="294" fill="#e6ebf2" font-size="16" font-weight="600" text-anchor="start" >Guardrails and people</text>
+<text x="392" y="314" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >do not touch, first sign of trouble, who to ask</text>
+<line x1="610" y1="336" x2="610.0" y2="366.0" stroke="#8b98a8" stroke-width="2"/><path d="M616.0 366.0 L610 376 L604.0 366.0 Z" fill="#8b98a8"/>
+<rect x="330" y="376" width="560" height="76" rx="10" fill="#141b24" stroke="#5fd38d" stroke-width="2"/>
+<text x="350" y="407" fill="#5fd38d" font-size="17" font-weight="600" text-anchor="start" >One-page note</text>
+<text x="350" y="431" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >state, actions, traps, do not touch, who to ask, unknowns</text>
+<line x1="330" y1="414" x2="290.0" y2="414.0" stroke="#8b98a8" stroke-width="2"/><path d="M290.0 420.0 L280 414 L290.0 408.0 Z" fill="#8b98a8"/>
+<rect x="30" y="376" width="250" height="76" rx="10" fill="#141b24" stroke="#f5b14c" stroke-width="2"/>
+<text x="48" y="407" fill="#f5b14c" font-size="17" font-weight="600" text-anchor="start" >Cold-read test</text>
+<text x="48" y="431" fill="#8b98a8" font-size="14" font-weight="400" text-anchor="start" >reread as a stranger</text>
+<path d="M155 452 L155 500 L610 500 L610 462" fill="none" stroke="#f5b14c" stroke-width="2" stroke-dasharray="6 5"/>
+<path d="M604 464 L610 452 L616 464 Z" fill="#f5b14c"/>
+<text x="382" y="524" fill="#f5b14c" font-size="14" font-weight="400" text-anchor="middle" >up to 3 more questions, answers folded back into the note</text>
+<text x="890" y="524" fill="#5fd38d" font-size="14" font-weight="600" text-anchor="end" >ends with: Do this now</text>
+</g>
+</svg>
